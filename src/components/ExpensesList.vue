@@ -9,6 +9,118 @@
       </div>
     </div>
 
+    <!-- Filtros -->
+    <div class="grid grid-cols-1 md:grid-cols-5 gap-3 mb-4">
+      <!-- Búsqueda -->
+      <div>
+        <input
+          v-model="searchQuery"
+          type="text"
+          class="input-field"
+          placeholder="Buscar por descripción..."
+        />
+      </div>
+      <!-- Categoría -->
+      <div>
+        <AppSelect
+          v-model="selectedCategoryId"
+          :options="categoryFilterOptions"
+          placeholder="Todas las categorías"
+        />
+      </div>
+      <!-- Periodo -->
+      <div>
+        <AppSelect
+          v-model="period"
+          :options="periodOptions"
+          placeholder="Mes actual"
+        />
+      </div>
+      <!-- Orden -->
+      <div>
+        <AppSelect
+          v-model="sortOrder"
+          :options="sortOptions"
+          placeholder="Más recientes primero"
+        />
+      </div>
+      <!-- Rango de fechas -->
+      <div>
+        <button
+          ref="rangeBtnRef"
+          type="button"
+          class="input-field flex items-center justify-between"
+          @click="toggleRange"
+        >
+          <span class="truncate text-left">{{ rangeLabel }}</span>
+          <svg class="h-4 w-4 text-gray-400 ml-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+          </svg>
+        </button>
+      </div>
+    </div>
+
+    <!-- Popover de rango personalizado -->
+    <Teleport to="body">
+      <Transition
+        enter-active-class="ease-out duration-150"
+        enter-from-class="opacity-0 scale-95"
+        enter-to-class="opacity-100 scale-100"
+        leave-active-class="ease-in duration-100"
+        leave-from-class="opacity-100 scale-100"
+        leave-to-class="opacity-0 scale-95"
+      >
+        <div
+          v-if="showRange"
+          class="fixed z-[60] bg-white border border-gray-200 rounded-lg shadow-xl p-3 w-[320px]"
+          :style="rangePickerStyle"
+          @click.stop
+        >
+          <!-- Presets -->
+          <div class="flex flex-wrap gap-2 mb-3">
+            <button class="px-2 py-1 text-xs rounded-md bg-gray-100 hover:bg-gray-200" @click="applyPreset('7')">Últimos 7 días</button>
+            <button class="px-2 py-1 text-xs rounded-md bg-gray-100 hover:bg-gray-200" @click="applyPreset('30')">Últimos 30 días</button>
+            <button class="px-2 py-1 text-xs rounded-md bg-gray-100 hover:bg-gray-200" @click="applyPreset('thisMonth')">Este mes</button>
+            <button class="px-2 py-1 text-xs rounded-md bg-gray-100 hover:bg-gray-200" @click="applyPreset('lastMonth')">Mes anterior</button>
+          </div>
+          <!-- Header calendario -->
+          <div class="flex items-center justify-between mb-2">
+            <button class="p-1 rounded hover:bg-gray-100" @click="rangePrevMonth">
+              <svg class="h-4 w-4 text-gray-600" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" /></svg>
+            </button>
+            <div class="text-sm font-medium text-gray-900">{{ rangeMonthName }} {{ rangeYear }}</div>
+            <button class="p-1 rounded hover:bg-gray-100" @click="rangeNextMonth">
+              <svg class="h-4 w-4 text-gray-600" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" /></svg>
+            </button>
+          </div>
+          <!-- Días -->
+          <div class="grid grid-cols-7 gap-1 mb-1 text-[11px] text-gray-500">
+            <div v-for="d in ['D','L','M','M','J','V','S']" :key="d" class="text-center py-1">{{ d }}</div>
+          </div>
+          <div class="grid grid-cols-7 gap-1">
+            <button
+              v-for="day in rangeCalendarDays"
+              :key="day.date"
+              @click="onPick(day.date)"
+              :class="[
+                'h-8 w-8 rounded-md text-xs font-medium transition-colors',
+                !day.isCurrentMonth ? 'text-gray-300' : 'text-gray-700 hover:bg-primary-50',
+                day.isInRange ? 'bg-primary-100 text-primary-900' : '',
+                day.isStart || day.isEnd ? 'bg-primary-600 text-white hover:bg-primary-700' : ''
+              ]"
+            >
+              {{ day.day }}
+            </button>
+          </div>
+          <!-- Footer -->
+          <div class="flex justify-between mt-3 pt-2 border-t border-gray-200">
+            <button class="text-xs text-gray-600 hover:text-gray-800" @click="clearRange">Limpiar</button>
+            <button class="text-xs text-primary-600 hover:text-primary-700" @click="applyRange">Aplicar</button>
+          </div>
+        </div>
+      </Transition>
+    </Teleport>
+
     <div v-if="loading" class="text-center py-8">
       <div class="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-primary-600"></div>
       <p class="mt-2 text-gray-500">Cargando gastos...</p>
@@ -23,53 +135,79 @@
       <p class="text-gray-500">No hay gastos registrados este mes</p>
     </div>
 
-    <div v-else class="space-y-3">
-      <div
-        v-for="expense in currentMonthExpenses"
-        :key="expense.id"
-        :class="[
-          'flex items-center justify-between p-4 rounded-lg border',
-          expense.isFixed 
-            ? 'bg-blue-50 border-blue-200 shadow-sm' 
-            : 'bg-gray-50 border-gray-200'
-        ]"
-      >
-        <div class="flex-1">
-          <div class="flex items-center space-x-3">
-            <div class="flex-shrink-0">
-              <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-primary-100 text-primary-800">
-                {{ expense.category.name }}
-              </span>
-            </div>
+    <div v-else>
+      <!-- Skeletons cuando se filtra -->
+      <div v-if="isFiltering" class="space-y-3">
+        <div v-for="i in 5" :key="i" class="p-4 rounded-lg border border-gray-200 bg-gray-50 animate-pulse">
+          <div class="h-3 w-32 bg-gray-200 rounded mb-2"></div>
+          <div class="h-3 w-20 bg-gray-200 rounded"></div>
+        </div>
+      </div>
+
+      <!-- Contador -->
+      <div class="flex items-center justify-between text-xs text-gray-500 mb-2" v-else>
+        <span>Mostrando {{ Math.min(shownCount, totalFiltered) }} de {{ totalFiltered }}</span>
+      </div>
+
+      <!-- Lista agrupada por fecha -->
+      <transition-group name="fade" tag="div" class="space-y-4" v-if="!isFiltering">
+        <div v-for="group in groupedPagedExpenses" :key="group.key" class="space-y-2">
+          <div class="sticky top-16 bg-white/70 backdrop-blur text-xs text-gray-600 font-medium px-1">{{ group.label }}</div>
+          <div
+            v-for="expense in group.items"
+            :key="expense.id"
+            :class="[
+              'flex items-center justify-between p-4 rounded-xl border transition hover:shadow-sm',
+              expense.isFixed ? 'bg-blue-50 border-blue-200' : 'bg-gray-50 border-gray-200'
+            ]"
+          >
             <div class="flex-1">
-              <div class="flex items-center space-x-2">
-                <h3 class="text-sm font-medium text-gray-900">{{ expense.description }}</h3>
-                <!-- Label prominente de gasto fijo -->
-                <div v-if="expense.isFixed" class="flex items-center space-x-2">
-                  <span class="inline-flex items-center px-2 py-1 rounded-md text-xs font-bold bg-blue-600 text-white uppercase tracking-wide">
-                    FIX
+              <div class="flex items-center space-x-3">
+                <div class="flex-shrink-0">
+                  <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-primary-100 text-primary-800">
+                    {{ expense.category.name }}
                   </span>
-                  <span class="text-xs font-medium text-blue-600">Fijo</span>
+                </div>
+                <div class="flex-1">
+                  <div class="flex items-center space-x-2">
+                    <h3 class="text-sm font-medium text-gray-900">{{ expense.description }}</h3>
+                    <span v-if="expense.isFixed" class="inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-bold bg-blue-600 text-white uppercase tracking-wide">Fijo</span>
+                  </div>
+                  <div class="flex items-center space-x-4 mt-1">
+                    <p class="text-xs text-gray-500">{{ format(new Date(expense.date), 'dd/MM/yyyy') }}</p>
+                    <div v-if="expense.isFixed && expense.fixedExpenseId" class="flex items-center space-x-1">
+                      <svg class="h-3 w-3 text-blue-500" fill="currentColor" viewBox="0 0 20 20">
+                        <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z" clip-rule="evenodd" />
+                      </svg>
+                      <span class="text-xs text-blue-600">Paga el {{ getDayOfMonth(expense.fixedExpenseId) }}</span>
+                    </div>
+                  </div>
                 </div>
               </div>
-              <div class="flex items-center space-x-4 mt-1">
-                <p class="text-sm text-gray-500">{{ format(new Date(expense.date), 'dd/MM/yyyy') }}</p>
-                                 <!-- Mostrar día de pago para gastos fijos -->
-                 <div v-if="expense.isFixed && expense.fixedExpenseId" class="flex items-center space-x-1">
-                   <svg class="h-3 w-3 text-blue-500" fill="currentColor" viewBox="0 0 20 20">
-                     <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z" clip-rule="evenodd" />
-                   </svg>
-                   <span class="text-xs text-blue-600">Paga el {{ getDayOfMonth(expense.fixedExpenseId) }}</span>
-                 </div>
-              </div>
+            </div>
+            <div class="text-right">
+              <p class="text-sm font-semibold text-gray-900">
+                ${{ expense.amount.toLocaleString('es-ES', { minimumFractionDigits: 2 }) }}
+              </p>
             </div>
           </div>
         </div>
-        <div class="text-right">
-          <p class="text-sm font-semibold text-gray-900">
-            ${{ expense.amount.toLocaleString('es-ES', { minimumFractionDigits: 2 }) }}
-          </p>
-        </div>
+      </transition-group>
+    </div>
+
+    <div v-if="totalFiltered > 0 && !isFiltering" class="mt-4">
+      <div class="flex justify-center">
+        <button
+          v-if="shownCount < totalFiltered"
+          class="inline-flex items-center px-4 py-2 rounded-lg text-white bg-gradient-to-r from-primary-600 to-primary-700 hover:from-primary-700 hover:to-primary-800 shadow-sm transition"
+          @click="onLoadMore"
+        >
+          <svg v-if="loadingMore" class="animate-spin -ml-1 mr-2 h-4 w-4 text-white" fill="none" viewBox="0 0 24 24">
+            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+          </svg>
+          {{ loadingMore ? 'Cargando...' : 'Cargar más' }}
+        </button>
       </div>
     </div>
 
@@ -85,10 +223,11 @@
 </template>
 
 <script setup>
-import { computed, onMounted } from 'vue'
+import { ref, computed, onMounted, watch } from 'vue'
 import { format } from 'date-fns'
 import { es } from 'date-fns/locale'
 import { useExpenseStore } from '../stores/expenseStore'
+import AppSelect from './ui/AppSelect.vue'
 
 const expenseStore = useExpenseStore()
 
@@ -129,4 +268,250 @@ const getDayOfMonth = (fixedExpenseId) => {
   // Formatear la fecha en español
   return format(paymentDate, 'EEEE d \'de\' MMMM', { locale: es })
 }
+
+// Estado de filtros y paginación
+const searchQuery = ref('')
+const selectedCategoryId = ref('')
+const period = ref('month') // month | 7 | 30 | all
+const sortOrder = ref('desc') // desc | asc
+const pageSize = ref(10)
+const shownCount = ref(pageSize.value)
+
+watch([searchQuery, selectedCategoryId, period, sortOrder], () => {
+  shownCount.value = pageSize.value
+})
+
+// Opciones para selects
+const categoryFilterOptions = computed(() => [
+  { label: 'Todas las categorías', value: '' },
+  ...((expenseStore.activeCategories || []).map(c => ({ label: c.name, value: String(c.id) })))
+])
+
+const periodOptions = [
+  { label: 'Mes actual', value: 'month' },
+  { label: 'Últimos 7 días', value: '7' },
+  { label: 'Últimos 30 días', value: '30' },
+  { label: 'Todos', value: 'all' }
+]
+
+const sortOptions = [
+  { label: 'Más recientes primero', value: 'desc' },
+  { label: 'Más antiguos primero', value: 'asc' }
+]
+
+// Lista base por periodo
+const baseByPeriod = computed(() => {
+  const all = expenseStore.expenses || []
+  const now = new Date()
+  if (period.value === '7' || period.value === '30') {
+    const days = Number(period.value)
+    const cutoff = new Date(now)
+    cutoff.setDate(now.getDate() - days)
+    return all.filter(e => new Date(e.date) >= cutoff)
+  }
+  if (period.value === 'all') return all
+  // mes actual
+  return currentMonthExpenses.value
+})
+
+// (Se redefine más abajo integrando rango personalizado)
+
+// Ordenar y paginar
+const sortedExpenses = computed(() => {
+  return [...filteredExpenses.value].sort((a, b) => {
+    const da = new Date(a.date).getTime()
+    const db = new Date(b.date).getTime()
+    return sortOrder.value === 'asc' ? da - db : db - da
+  })
+})
+
+const totalFiltered = computed(() => sortedExpenses.value.length)
+const pagedExpenses = computed(() => sortedExpenses.value.slice(0, shownCount.value))
+
+const loadingMore = ref(false)
+const onLoadMore = async () => {
+  if (loadingMore.value) return
+  loadingMore.value = true
+  // micro delay para ver spinner
+  await new Promise(r => setTimeout(r, 350))
+  shownCount.value = Math.min(shownCount.value + pageSize.value, totalFiltered.value)
+  loadingMore.value = false
+}
+
+// Chips activos
+const activeChips = computed(() => {
+  const chips = []
+  if (searchQuery.value) chips.push({ key: 'q', label: `Búsqueda: "${searchQuery.value}"`, onClear: () => (searchQuery.value = '') })
+  if (selectedCategoryId.value) {
+    const cat = expenseStore.activeCategories.find(c => String(c.id) === String(selectedCategoryId.value))
+    chips.push({ key: 'cat', label: `Categoría: ${cat ? cat.name : selectedCategoryId.value}`, onClear: () => (selectedCategoryId.value = '') })
+  }
+  if (period.value !== 'month') {
+    const map = { '7': 'Últimos 7 días', '30': 'Últimos 30 días', all: 'Todos' }
+    chips.push({ key: 'period', label: `Periodo: ${map[period.value] || 'Mes actual'}`, onClear: () => (period.value = 'month') })
+  }
+  if (sortOrder.value !== 'desc') chips.push({ key: 'sort', label: 'Orden: antiguos primero', onClear: () => (sortOrder.value = 'desc') })
+  return chips
+})
+
+// Estado de filtrado para mostrar skeletons breves
+const isFiltering = ref(false)
+let filterTimer = null
+watch([searchQuery, selectedCategoryId, period, sortOrder], () => {
+  isFiltering.value = true
+  clearTimeout(filterTimer)
+  filterTimer = setTimeout(() => {
+    isFiltering.value = false
+  }, 180)
+})
+
+// Rango de fechas elegante
+const showRange = ref(false)
+const rangeBtnRef = ref(null)
+const rangeStart = ref(null) // Date|null
+const rangeEnd = ref(null)   // Date|null
+const tempStart = ref(null)
+const tempEnd = ref(null)
+const rangeCursor = ref(new Date())
+
+const rangeYear = computed(() => rangeCursor.value.getFullYear())
+const rangeMonth = computed(() => rangeCursor.value.getMonth())
+const rangeMonthName = computed(() => format(new Date(rangeYear.value, rangeMonth.value, 1), 'MMMM', { locale: es }))
+
+const toggleRange = async () => {
+  tempStart.value = rangeStart.value
+  tempEnd.value = rangeEnd.value
+  showRange.value = !showRange.value
+}
+
+const rangePickerStyle = computed(() => {
+  if (!rangeBtnRef.value || !showRange.value) return {}
+  const rect = rangeBtnRef.value.getBoundingClientRect()
+  const top = rect.bottom + 6
+  const left = Math.min(rect.left, window.innerWidth - 340)
+  return { top: `${top}px`, left: `${left}px` }
+})
+
+const rangePrevMonth = () => {
+  const d = new Date(rangeCursor.value)
+  d.setMonth(d.getMonth() - 1)
+  rangeCursor.value = d
+}
+const rangeNextMonth = () => {
+  const d = new Date(rangeCursor.value)
+  d.setMonth(d.getMonth() + 1)
+  rangeCursor.value = d
+}
+
+const rangeCalendarDays = computed(() => {
+  const y = rangeYear.value
+  const m = rangeMonth.value
+  const first = new Date(y, m, 1)
+  const start = new Date(first)
+  start.setDate(first.getDate() - first.getDay())
+  const days = []
+  for (let i = 0; i < 42; i++) {
+    const d = new Date(start)
+    d.setDate(start.getDate() + i)
+    const isCurrentMonth = d.getMonth() === m
+    const inRange = tempStart.value && tempEnd.value && d >= tempStart.value && d <= tempEnd.value
+    const isStart = tempStart.value && d.toDateString() === tempStart.value.toDateString()
+    const isEnd = tempEnd.value && d.toDateString() === tempEnd.value.toDateString()
+    days.push({
+      date: new Date(d),
+      day: d.getDate(),
+      isCurrentMonth,
+      isInRange: !!inRange,
+      isStart: !!isStart,
+      isEnd: !!isEnd
+    })
+  }
+  return days
+})
+
+const onPick = (date) => {
+  if (!tempStart.value || (tempStart.value && tempEnd.value)) {
+    tempStart.value = new Date(date)
+    tempEnd.value = null
+    return
+  }
+  // picking end
+  if (new Date(date) < tempStart.value) {
+    tempEnd.value = tempStart.value
+    tempStart.value = new Date(date)
+  } else {
+    tempEnd.value = new Date(date)
+  }
+}
+
+const clearRange = () => {
+  tempStart.value = null
+  tempEnd.value = null
+}
+
+const applyRange = () => {
+  rangeStart.value = tempStart.value
+  rangeEnd.value = tempEnd.value
+  showRange.value = false
+}
+
+const rangeLabel = computed(() => {
+  if (rangeStart.value && rangeEnd.value) {
+    return `${format(rangeStart.value, 'dd/MM/yyyy')} - ${format(rangeEnd.value, 'dd/MM/yyyy')}`
+  }
+  return 'Rango personalizado'
+})
+
+// Aplicar rango al filtrar
+watch([rangeStart, rangeEnd], () => {
+  if (rangeStart.value && rangeEnd.value) {
+    period.value = 'custom'
+  } else if (!rangeStart.value && !rangeEnd.value && period.value === 'custom') {
+    period.value = 'month'
+  }
+  shownCount.value = pageSize.value
+})
+
+// Integrar rango en baseByPeriod
+const _baseByPeriodOrig = baseByPeriod
+const baseByPeriodWithRange = computed(() => {
+  // si hay rango, priorizarlo
+  if (period.value === 'custom' && rangeStart.value && rangeEnd.value) {
+    const all = expenseStore.expenses || []
+    return all.filter(e => {
+      const d = new Date(e.date)
+      return d >= rangeStart.value && d <= rangeEnd.value
+    })
+  }
+  return _baseByPeriodOrig.value
+})
+
+// Reemplazar usos siguientes
+const filteredExpenses = computed(() => {
+  const query = searchQuery.value.trim().toLowerCase()
+  const cat = selectedCategoryId.value
+  return baseByPeriodWithRange.value.filter(e => {
+    const matchesCat = !cat || String(e.categoryId) === String(cat)
+    const matchesSearch = !query || (e.description || '').toLowerCase().includes(query)
+    return matchesCat && matchesSearch
+  })
+})
+
+// Agrupar por fecha (día)
+const groupedPagedExpenses = computed(() => {
+  const groups = {}
+  for (const e of pagedExpenses.value) {
+    const d = new Date(e.date)
+    const key = format(d, 'yyyy-MM-dd')
+    if (!groups[key]) groups[key] = []
+    groups[key].push(e)
+  }
+  return Object.keys(groups)
+    .sort((a, b) => (sortOrder.value === 'asc' ? a.localeCompare(b) : b.localeCompare(a)))
+    .map(key => ({
+      key,
+      label: format(new Date(key), 'EEEE d \"de\" MMMM', { locale: es }),
+      items: groups[key]
+    }))
+})
 </script>

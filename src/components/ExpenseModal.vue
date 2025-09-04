@@ -96,24 +96,14 @@
                 </div>
 
                 <div>
-                  <label for="category" class="block text-sm font-medium text-gray-700 mb-1">
+                  <label class="block text-sm font-medium text-gray-700 mb-1">
                     Categoría
                   </label>
-                  <select
-                    id="category"
+                  <AppSelect
                     v-model="form.categoryId"
-                    class="input-field"
-                    required
-                  >
-                    <option value="">Selecciona una categoría</option>
-                    <option 
-                      v-for="category in expenseStore.activeCategories" 
-                      :key="category.id"
-                      :value="category.id"
-                    >
-                      {{ category.name }}
-                    </option>
-                  </select>
+                    :options="categoryOptions"
+                    placeholder="Selecciona una categoría"
+                  />
                 </div>
 
                 <div class="datepicker-container">
@@ -312,6 +302,7 @@
 import { ref, reactive, onMounted, onUnmounted, computed, watch, nextTick } from 'vue'
 import { format } from 'date-fns'
 import { useExpenseStore } from '../stores/expenseStore'
+import AppSelect from './ui/AppSelect.vue'
 
 const props = defineProps({
   isOpen: {
@@ -359,6 +350,11 @@ onMounted(async () => {
   form.date = format(new Date(), 'yyyy-MM-dd')
   selectedDate.value = new Date()
 })
+
+// Opciones para AppSelect (categorías)
+const categoryOptions = computed(() =>
+  (expenseStore.activeCategories || []).map(c => ({ label: c.name, value: c.id }))
+)
 
 // Computed properties para el datepicker
 const currentYear = computed(() => currentDate.value.getFullYear())
