@@ -1,0 +1,87 @@
+<template>
+  <div class="space-y-6">
+    <div class="flex justify-between items-start">
+      <div>
+        <h1 class="text-2xl font-bold text-gray-900">Presupuesto</h1>
+        <p class="text-gray-600 mt-1">Configura y gestiona tu presupuesto mensual</p>
+      </div>
+      <button
+        @click="showModal = true"
+        class="btn-primary inline-flex items-center space-x-2"
+      >
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+        </svg>
+        <span>Agregar Gasto</span>
+      </button>
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <div>
+        <BudgetForm />
+      </div>
+      
+      <div>
+        <BudgetProgress />
+      </div>
+    </div>
+
+    <!-- Información adicional -->
+    <div class="card">
+      <h3 class="text-lg font-semibold text-gray-900 mb-4">Consejos para el Presupuesto</h3>
+      <div class="space-y-3 text-sm text-gray-600">
+        <div class="flex items-start space-x-3">
+          <div class="flex-shrink-0 w-2 h-2 bg-primary-500 rounded-full mt-2"></div>
+          <p>Establece un presupuesto realista basado en tus ingresos mensuales</p>
+        </div>
+        <div class="flex items-start space-x-3">
+          <div class="flex-shrink-0 w-2 h-2 bg-primary-500 rounded-full mt-2"></div>
+          <p>Revisa regularmente tus gastos para ajustar el presupuesto si es necesario</p>
+        </div>
+        <div class="flex items-start space-x-3">
+          <div class="flex-shrink-0 w-2 h-2 bg-primary-500 rounded-full mt-2"></div>
+          <p>Mantén un registro de todos tus gastos fijos para una mejor planificación</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Modal para agregar gastos -->
+    <ExpenseModal 
+      :is-open="showModal"
+      @close="showModal = false"
+      @expense-added="handleExpenseAdded"
+    />
+
+    <!-- Floating Action Button para móvil -->
+    <div class="lg:hidden fixed bottom-6 right-6 z-30">
+      <button
+        @click="showModal = true"
+        class="btn-primary rounded-full w-14 h-14 shadow-lg hover:shadow-xl transition-all duration-200 flex items-center justify-center"
+      >
+        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+        </svg>
+      </button>
+    </div>
+  </div>
+</template>
+
+<script setup>
+import { ref } from 'vue'
+import BudgetForm from '../components/BudgetForm.vue'
+import BudgetProgress from '../components/BudgetProgress.vue'
+import ExpenseModal from '../components/ExpenseModal.vue'
+
+const showModal = ref(false)
+
+const handleExpenseAdded = () => {
+  // El modal se cierra automáticamente después de agregar el gasto
+  // Aquí podrías agregar lógica adicional si es necesario
+}
+</script>
+
+<style scoped>
+.btn-primary {
+  @apply inline-flex justify-center items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-primary-600 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500;
+}
+</style>

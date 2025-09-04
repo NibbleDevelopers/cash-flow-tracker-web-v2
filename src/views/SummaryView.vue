@@ -1,0 +1,237 @@
+<template>
+  <div class="space-y-6">
+    <div class="flex justify-between items-start">
+      <div>
+        <h1 class="text-2xl font-bold text-gray-900">Resumen</h1>
+        <p class="text-gray-600 mt-1">Vista general de tus finanzas mensuales</p>
+      </div>
+      <button
+        @click="showModal = true"
+        class="btn-primary inline-flex items-center space-x-2"
+      >
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+        </svg>
+        <span>Agregar Gasto</span>
+      </button>
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <!-- Progreso del presupuesto -->
+      <div>
+        <BudgetProgress />
+      </div>
+
+      <!-- Estadísticas del mes -->
+      <div class="card">
+        <h2 class="text-lg font-semibold text-gray-900 mb-4">Estadísticas del Mes</h2>
+        
+        <div class="space-y-4">
+          <div class="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
+            <span class="text-sm text-gray-600">Total de gastos</span>
+            <span class="font-semibold text-gray-900">
+              ${{ totalSpent.toLocaleString('es-ES', { minimumFractionDigits: 2 }) }}
+            </span>
+          </div>
+          
+          <div class="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
+            <span class="text-sm text-gray-600">Presupuesto asignado</span>
+            <span class="font-semibold text-gray-900">
+              ${{ budget.amount.toLocaleString('es-ES', { minimumFractionDigits: 2 }) }}
+            </span>
+          </div>
+          
+          <div class="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
+            <span class="text-sm text-gray-600">Gastos registrados</span>
+            <span class="font-semibold text-gray-900">{{ currentMonthExpenses.length }}</span>
+          </div>
+          
+          <div class="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
+            <span class="text-sm text-gray-600">Promedio por gasto</span>
+            <span class="font-semibold text-gray-900">
+              ${{ averageExpense.toLocaleString('es-ES', { minimumFractionDigits: 2 }) }}
+            </span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Categorías de gastos -->
+    <div class="card">
+      <h2 class="text-lg font-semibold text-gray-900 mb-4">Gastos por Categoría</h2>
+      
+      <div v-if="expensesByCategory.length === 0" class="text-center py-8">
+        <p class="text-gray-500">No hay gastos registrados este mes</p>
+      </div>
+      
+      <div v-else class="space-y-3">
+        <div
+          v-for="category in expensesByCategory"
+          :key="category.category.id"
+          class="flex items-center justify-between p-3 bg-gray-50 rounded-lg"
+        >
+          <div class="flex items-center space-x-3">
+            <div class="w-3 h-3 rounded-full" :style="{ backgroundColor: category.category.color }"></div>
+            <span class="text-sm font-medium text-gray-900">{{ category.category.name }}</span>
+          </div>
+          <div class="text-right">
+            <p class="text-sm font-semibold text-gray-900">
+              ${{ category.amount.toLocaleString('es-ES', { minimumFractionDigits: 2 }) }}
+            </p>
+            <p class="text-xs text-gray-500">{{ category.percentage.toFixed(1) }}%</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Estadísticas de gastos fijos -->
+    <div class="card">
+      <h2 class="text-lg font-semibold text-gray-900 mb-4">Gastos Fijos del Mes</h2>
+      
+      <div v-if="fixedExpensesThisMonth.length === 0" class="text-center py-8">
+        <p class="text-gray-500">No hay gastos fijos este mes</p>
+      </div>
+      
+      <div v-else class="space-y-3">
+        <div
+          v-for="expense in fixedExpensesThisMonth"
+          :key="expense.id"
+          class="flex items-center justify-between p-3 bg-blue-50 border border-blue-200 rounded-lg"
+        >
+          <div class="flex items-center space-x-3">
+            <div class="flex-shrink-0">
+              <svg class="h-5 w-5 text-blue-600" fill="currentColor" viewBox="0 0 20 20">
+                <path fill-rule="evenodd" d="M6.267 3.455a3.066 3.066 0 001.745-.723 3.066 3.066 0 013.976 0 3.066 3.066 0 001.745.723 3.066 3.066 0 012.812 2.812c.051.643.304 1.254.723 1.745a3.066 3.066 0 010 3.976 3.066 3.066 0 00-.723 1.745 3.066 3.066 0 01-2.812 2.812 3.066 3.066 0 00-1.745.723 3.066 3.066 0 01-3.976 0 3.066 3.066 0 00-1.745-.723 3.066 3.066 0 01-2.812-2.812 3.066 3.066 0 00-.723-1.745 3.066 3.066 0 010-3.976 3.066 3.066 0 00.723-1.745 3.066 3.066 0 012.812-2.812zm7.44 5.252a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" />
+              </svg>
+            </div>
+            <div>
+              <p class="text-sm font-medium text-gray-900">{{ expense.description }}</p>
+              <div class="flex items-center space-x-2 mt-1">
+                <span class="text-xs text-blue-600 font-medium">Fijo</span>
+                <span class="text-xs text-gray-500">•</span>
+                <span class="text-xs text-gray-500">Paga el día {{ getDayOfMonth(expense.fixedExpenseId) }}</span>
+              </div>
+            </div>
+          </div>
+          <span class="text-sm font-semibold text-gray-900">
+            ${{ expense.amount.toLocaleString('es-ES', { minimumFractionDigits: 2 }) }}
+          </span>
+        </div>
+        
+        <div class="mt-4 pt-3 border-t border-blue-200">
+          <div class="flex justify-between items-center">
+            <span class="text-sm font-medium text-blue-700">Total gastos fijos:</span>
+            <span class="text-sm font-bold text-blue-700">
+              ${{ totalFixedExpenses.toLocaleString('es-ES', { minimumFractionDigits: 2 }) }}
+            </span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Lista de gastos recientes -->
+    <div class="card">
+      <h2 class="text-lg font-semibold text-gray-900 mb-4">Gastos Recientes</h2>
+      
+      <div v-if="recentExpenses.length === 0" class="text-center py-8">
+        <p class="text-gray-500">No hay gastos registrados</p>
+      </div>
+      
+      <div v-else class="space-y-2">
+        <div
+          v-for="expense in recentExpenses.slice(0, 5)"
+          :key="expense.id"
+          :class="[
+            'flex items-center justify-between p-3 border rounded-lg',
+            expense.isFixed ? 'border-blue-200 bg-blue-50' : 'border-gray-200'
+          ]"
+        >
+          <div class="flex items-center space-x-3">
+            <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-primary-100 text-primary-800">
+              {{ expense.category.name }}
+            </span>
+            <div>
+              <div class="flex items-center space-x-2">
+                <p class="text-sm font-medium text-gray-900">{{ expense.description }}</p>
+                <span v-if="expense.isFixed" class="inline-flex items-center px-1.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                  Fijo
+                </span>
+              </div>
+              <p class="text-xs text-gray-500">{{ format(new Date(expense.date), 'dd/MM/yyyy') }}</p>
+            </div>
+          </div>
+          <span class="text-sm font-semibold text-gray-900">
+            ${{ expense.amount.toLocaleString('es-ES', { minimumFractionDigits: 2 }) }}
+          </span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Modal para agregar gastos -->
+    <ExpenseModal 
+      :is-open="showModal"
+      @close="showModal = false"
+      @expense-added="handleExpenseAdded"
+    />
+
+    <!-- Floating Action Button para móvil -->
+    <div class="lg:hidden fixed bottom-6 right-6 z-30">
+      <button
+        @click="showModal = true"
+        class="btn-primary rounded-full w-14 h-14 shadow-lg hover:shadow-xl transition-all duration-200 flex items-center justify-center"
+      >
+        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+        </svg>
+      </button>
+    </div>
+  </div>
+</template>
+
+<script setup>
+import { ref, computed } from 'vue'
+import { format } from 'date-fns'
+import { useExpenseStore } from '../stores/expenseStore'
+import BudgetProgress from '../components/BudgetProgress.vue'
+import ExpenseModal from '../components/ExpenseModal.vue'
+
+const expenseStore = useExpenseStore()
+const showModal = ref(false)
+
+const budget = computed(() => expenseStore.budget)
+const totalSpent = computed(() => expenseStore.totalSpent)
+const currentMonthExpenses = computed(() => expenseStore.currentMonthExpenses)
+const fixedExpensesThisMonth = computed(() => expenseStore.fixedExpensesThisMonth)
+const totalFixedExpenses = computed(() => expenseStore.totalFixedExpenses)
+
+const averageExpense = computed(() => {
+  if (currentMonthExpenses.value.length === 0) return 0
+  return totalSpent.value / currentMonthExpenses.value.length
+})
+
+const recentExpenses = computed(() => {
+  return [...currentMonthExpenses.value].sort((a, b) => new Date(b.date) - new Date(a.date))
+})
+
+const expensesByCategory = computed(() => expenseStore.expensesByCategory)
+
+// Función para obtener el día del mes de un gasto fijo
+const getDayOfMonth = (fixedExpenseId) => {
+  const fixedExpense = expenseStore.fixedExpenses.find(fe => fe.id === fixedExpenseId)
+  if (fixedExpense && fixedExpense.dayOfMonth) {
+    return fixedExpense.dayOfMonth
+  }
+  return 'N/A'
+}
+
+const handleExpenseAdded = () => {
+  // El modal se cierra automáticamente después de agregar el gasto
+  // Aquí podrías agregar lógica adicional si es necesario
+}
+</script>
+
+<style scoped>
+.btn-primary {
+  @apply inline-flex justify-center items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-primary-600 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500;
+}
+</style>
