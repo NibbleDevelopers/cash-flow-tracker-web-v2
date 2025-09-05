@@ -15,7 +15,7 @@
 
     <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
       <div class="lg:col-span-2">
-        <ExpensesListComponent />
+        <ExpensesListComponent @edit-expense="openEdit" @delete-expense="confirmDelete" />
       </div>
       
       <div class="lg:col-span-1 space-y-6">
@@ -27,8 +27,10 @@
     <!-- Modal para agregar gastos -->
     <ExpenseModal 
       :is-open="showModal"
-      @close="showModal = false"
-      @expense-added="handleExpenseAdded"
+      :expense="editingExpense"
+      @close="closeModal"
+      @expense-added="afterChange"
+      @expense-updated="afterChange"
     />
 
     <!-- Floating Action Button para móvil -->
@@ -55,10 +57,30 @@ import { useExpenseStore } from '../stores/expenseStore'
 
 const expenseStore = useExpenseStore()
 const showModal = ref(false)
+const editingExpense = ref(null)
 
-const handleExpenseAdded = () => {
-  // El modal se cierra automáticamente después de agregar el gasto
-  // Aquí podrías agregar lógica adicional si es necesario
+const openEdit = (expense) => {
+  editingExpense.value = expense
+  showModal.value = true
+}
+
+const confirmDelete = async (expense) => {
+  const confirmed = window.confirm('¿Eliminar este gasto?')
+  if (!confirmed) return
+  try {
+    await expenseStore.deleteExpense(expense.id)
+  } catch (e) {
+    // noop (error ya gestionado en store)
+  }
+}
+
+const closeModal = () => {
+  showModal.value = false
+  editingExpense.value = null
+}
+
+const afterChange = () => {
+  closeModal()
 }
 </script>
 

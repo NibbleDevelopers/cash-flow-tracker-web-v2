@@ -183,6 +183,52 @@ export const useExpenseStore = defineStore('expense', () => {
     }
   }
 
+  const updateExpense = async (expenseData) => {
+    loading.value = true
+    error.value = null
+
+    try {
+      const id = expenseData.id
+      const payload = {
+        date: expenseData.date,
+        description: expenseData.description,
+        amount: parseFloat(expenseData.amount),
+        categoryId: parseInt(expenseData.categoryId),
+        isFixed: !!expenseData.isFixed,
+        fixedExpenseId: expenseData.fixedExpenseId ?? null
+      }
+
+      await googleSheetsService.updateExpense(id, payload)
+
+      // Refrescar lista para mantener categorías embebidas correctas
+      await loadExpenses()
+      return { id, ...payload }
+    } catch (err) {
+      error.value = 'Error al actualizar el gasto'
+      console.error('Error updating expense:', err)
+      throw err
+    } finally {
+      loading.value = false
+    }
+  }
+
+  const deleteExpense = async (id) => {
+    loading.value = true
+    error.value = null
+    try {
+      await googleSheetsService.deleteExpense(id)
+      // Optimista: remover localmente
+      expenses.value = expenses.value.filter(e => String(e.id) !== String(id))
+      return true
+    } catch (err) {
+      error.value = 'Error al eliminar el gasto'
+      console.error('Error deleting expense:', err)
+      throw err
+    } finally {
+      loading.value = false
+    }
+  }
+
   const updateBudget = async (newBudget) => {
     loading.value = true
     error.value = null
@@ -249,12 +295,12 @@ export const useExpenseStore = defineStore('expense', () => {
     
     try {
       const newFixedExpense = {
-        id: Math.max(...fixedExpenses.value.map(f => f.id), 0) + 1,
+        id: Date.now().toString(),
         name: fixedExpenseData.name,
         amount: parseFloat(fixedExpenseData.amount),
         categoryId: parseInt(fixedExpenseData.categoryId),
         dayOfMonth: parseInt(fixedExpenseData.dayOfMonth),
-        active: true
+        active: fixedExpenseData.active !== false
       }
 
       await googleSheetsService.addFixedExpense(newFixedExpense)
@@ -275,17 +321,41 @@ export const useExpenseStore = defineStore('expense', () => {
     error.value = null
     
     try {
-      await googleSheetsService.updateFixedExpense(fixedExpenseData)
+      const id = fixedExpenseData.id
+      const payload = {
+        name: fixedExpenseData.name,
+        amount: parseFloat(fixedExpenseData.amount),
+        categoryId: parseInt(fixedExpenseData.categoryId),
+        dayOfMonth: parseInt(fixedExpenseData.dayOfMonth),
+        active: fixedExpenseData.active !== false
+      }
+      await googleSheetsService.updateFixedExpense(id, payload)
       
       const index = fixedExpenses.value.findIndex(f => f.id === fixedExpenseData.id)
       if (index !== -1) {
-        fixedExpenses.value[index] = fixedExpenseData
+        fixedExpenses.value[index] = { id, ...payload }
       }
       
-      return fixedExpenseData
+      return { id, ...payload }
     } catch (err) {
       error.value = 'Error al actualizar el gasto fijo'
       console.error('Error updating fixed expense:', err)
+      throw err
+    } finally {
+      loading.value = false
+    }
+  }
+
+  const deleteFixedExpense = async (id) => {
+    loading.value = true
+    error.value = null
+    try {
+      await googleSheetsService.deleteFixedExpense(id)
+      fixedExpenses.value = fixedExpenses.value.filter(f => String(f.id) !== String(id))
+      return true
+    } catch (err) {
+      error.value = 'Error al eliminar el gasto fijo'
+      console.error('Error deleting fixed expense:', err)
       throw err
     } finally {
       loading.value = false
@@ -348,11 +418,14 @@ export const useExpenseStore = defineStore('expense', () => {
     loadBudget,
     loadFixedExpenses,
     addExpense,
+    updateExpense,
+    deleteExpense,
     updateBudget,
     addCategory,
     updateCategory,
     addFixedExpense,
     updateFixedExpense,
+    deleteFixedExpense,
     generateFixedExpensesForMonth,
     clearError
   }

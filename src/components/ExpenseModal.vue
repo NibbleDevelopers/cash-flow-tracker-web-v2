@@ -36,7 +36,7 @@
             <div class="bg-gradient-to-r from-primary-600 to-primary-700 px-6 py-4">
               <div class="flex items-center justify-between">
                 <h3 class="text-lg font-semibold text-white">
-                  Agregar Nuevo Gasto
+                  {{ isEditMode ? 'Editar Gasto' : 'Agregar Nuevo Gasto' }}
                 </h3>
                 <button
                   @click="closeModal"
@@ -286,7 +286,7 @@
                       <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
                       <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                     </svg>
-                    {{ loading ? 'Agregando...' : 'Agregar Gasto' }}
+                    {{ loading ? (isEditMode ? 'Guardando...' : 'Agregando...') : (isEditMode ? 'Guardar Cambios' : 'Agregar Gasto') }}
                   </button>
                 </div>
               </form>
@@ -308,12 +308,16 @@ const props = defineProps({
   isOpen: {
     type: Boolean,
     required: true
+  },
+  expense: {
+    type: Object,
+    default: null
   }
 })
 
 
 
-const emit = defineEmits(['close', 'expense-added'])
+const emit = defineEmits(['close', 'expense-added', 'expense-updated'])
 
 const expenseStore = useExpenseStore()
 
@@ -325,6 +329,29 @@ const form = reactive({
   isFixed: false,
   dayOfMonth: ''
 })
+const isEditMode = computed(() => !!props.expense)
+
+watch(
+  () => props.isOpen,
+  (open) => {
+    if (open) {
+      if (isEditMode.value) {
+        // Prefill fields from expense
+        form.description = props.expense.description || ''
+        form.amount = String(props.expense.amount ?? '')
+        form.categoryId = String(props.expense.categoryId ?? '')
+        form.date = props.expense.date || format(new Date(), 'yyyy-MM-dd')
+        form.isFixed = !!props.expense.isFixed
+        form.dayOfMonth = ''
+        selectedDate.value = new Date(form.date)
+        currentDate.value = new Date(form.date)
+      } else {
+        resetForm()
+      }
+    }
+  }
+)
+
 
 const error = ref('')
 const descriptionInput = ref(null)
@@ -496,11 +523,16 @@ const handleSubmit = async () => {
       return
     }
     
-    await expenseStore.addExpense(form)
-    emit('expense-added')
+    if (isEditMode.value && props.expense?.id) {
+      await expenseStore.updateExpense({ id: props.expense.id, ...form })
+      emit('expense-updated')
+    } else {
+      await expenseStore.addExpense(form)
+      emit('expense-added')
+    }
     closeModal()
   } catch (err) {
-    error.value = 'Error al agregar el gasto. Inténtalo de nuevo.'
+    error.value = isEditMode.value ? 'Error al actualizar el gasto. Inténtalo de nuevo.' : 'Error al agregar el gasto. Inténtalo de nuevo.'
   }
 }
 

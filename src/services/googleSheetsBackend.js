@@ -10,9 +10,8 @@ class GoogleSheetsBackendService {
 
   // Hacer request al backend
   async makeRequest(endpoint, options = {}) {
+    const url = `${this.baseUrl}${endpoint}`
     try {
-      const url = `${this.baseUrl}${endpoint}`
-      
       const response = await fetch(url, {
         ...options,
         headers: {
@@ -26,7 +25,12 @@ class GoogleSheetsBackendService {
         throw new Error(`HTTP error! status: ${response.status}, message: ${errorText}`)
       }
 
-      return await response.json()
+      if (response.status === 204) return {}
+      try {
+        return await response.json()
+      } catch (_) {
+        return {}
+      }
     } catch (error) {
       console.error('Error making request to backend:', error)
       throw error
@@ -150,16 +154,31 @@ class GoogleSheetsBackendService {
   }
 
   // Actualizar gasto existente
-  async updateExpense(expense) {
+  async updateExpense(id, data) {
     try {
-      const response = await this.makeRequest(`/expenses/${expense.id}`, {
+      console.log('Updating expense:', id, data)
+      const idForBody = isNaN(Number(id)) ? id : Number(id)
+      const response = await this.makeRequest(`/expenses/${id}`, {
         method: 'PUT',
-        body: JSON.stringify(expense)
+        body: JSON.stringify({...data })
       })
 
       return response
     } catch (error) {
       console.error('Error updating expense:', error)
+      throw error
+    }
+  }
+
+  // Eliminar gasto
+  async deleteExpense(id) {
+    try {
+      const response = await this.makeRequest(`/expenses/${id}`, {
+        method: 'DELETE'
+      })
+      return response
+    } catch (error) {
+      console.error('Error deleting expense:', error)
       throw error
     }
   }
@@ -299,16 +318,29 @@ class GoogleSheetsBackendService {
   }
 
   // Actualizar gasto fijo
-  async updateFixedExpense(fixedExpense) {
+  async updateFixedExpense(id, data) {
     try {
-      const response = await this.makeRequest('/fixed-expenses', {
+      const response = await this.makeRequest(`/fixed-expenses/${id}`, {
         method: 'PUT',
-        body: JSON.stringify(fixedExpense)
+        body: JSON.stringify(data)
       })
 
       return response
     } catch (error) {
       console.error('Error updating fixed expense:', error)
+      throw error
+    }
+  }
+
+  // Eliminar gasto fijo
+  async deleteFixedExpense(id) {
+    try {
+      const response = await this.makeRequest(`/fixed-expenses/${id}`, {
+        method: 'DELETE'
+      })
+      return response
+    } catch (error) {
+      console.error('Error deleting fixed expense:', error)
       throw error
     }
   }

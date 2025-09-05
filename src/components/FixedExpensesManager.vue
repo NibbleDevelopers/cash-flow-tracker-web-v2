@@ -2,106 +2,10 @@
   <div class="card">
     <div class="flex justify-between items-center mb-4">
       <h2 class="text-lg font-semibold text-gray-900">Gastos Fijos</h2>
-      <button
-        @click="showAddForm = !showAddForm"
-        class="btn-primary"
-      >
-        {{ showAddForm ? 'Cancelar' : 'Agregar Gasto Fijo' }}
-      </button>
+      <button @click="openCreate" class="btn-primary">Agregar Gasto Fijo</button>
     </div>
 
-    <!-- Formulario para agregar gasto fijo -->
-    <div v-if="showAddForm" class="mb-6 p-4 bg-gray-50 rounded-lg">
-      <form @submit.prevent="handleSubmit" class="space-y-4">
-        <div>
-          <label for="name" class="block text-sm font-medium text-gray-700 mb-1">
-            Nombre del Gasto
-          </label>
-          <input
-            id="name"
-            v-model="form.name"
-            type="text"
-            required
-            class="input-field"
-            placeholder="Ej: Netflix, Luz, Teléfono..."
-          />
-        </div>
-
-        <div>
-          <label for="amount" class="block text-sm font-medium text-gray-700 mb-1">
-            Monto
-          </label>
-          <input
-            id="amount"
-            v-model="form.amount"
-            type="number"
-            step="0.01"
-            min="0"
-            required
-            class="input-field"
-            placeholder="0.00"
-          />
-        </div>
-
-        <div>
-          <label for="category" class="block text-sm font-medium text-gray-700 mb-1">
-            Categoría
-          </label>
-          <select
-            id="category"
-            v-model="form.categoryId"
-            class="input-field"
-            required
-          >
-            <option value="">Selecciona una categoría</option>
-            <option 
-              v-for="category in expenseStore.activeCategories" 
-              :key="category.id"
-              :value="category.id"
-            >
-              {{ category.name }}
-            </option>
-          </select>
-        </div>
-
-        <div>
-          <label for="dayOfMonth" class="block text-sm font-medium text-gray-700 mb-1">
-            Día del mes
-          </label>
-          <input
-            id="dayOfMonth"
-            v-model="form.dayOfMonth"
-            type="number"
-            min="1"
-            max="31"
-            required
-            class="input-field"
-            placeholder="15"
-          />
-          <p class="text-xs text-gray-500 mt-1">
-            El gasto se generará automáticamente este día de cada mes
-          </p>
-        </div>
-
-        <div class="flex space-x-3">
-          <button
-            type="submit"
-            :disabled="loading"
-            class="btn-primary flex-1"
-            :class="{ 'opacity-50 cursor-not-allowed': loading }"
-          >
-            {{ loading ? 'Agregando...' : 'Agregar Gasto Fijo' }}
-          </button>
-          <button
-            type="button"
-            @click="resetForm"
-            class="btn-secondary"
-          >
-            Limpiar
-          </button>
-        </div>
-      </form>
-    </div>
+    <!-- Formulario inline eliminado en favor del modal -->
 
     <!-- Lista de gastos fijos -->
     <div v-if="expenseStore.activeFixedExpenses.length === 0" class="text-center py-8">
@@ -136,12 +40,26 @@
           <p class="text-sm font-semibold text-gray-900">
             ${{ fixedExpense.amount.toLocaleString('es-ES', { minimumFractionDigits: 2 }) }}
           </p>
-          <button
-            @click="editFixedExpense(fixedExpense)"
-            class="text-xs text-blue-600 hover:text-blue-800 mt-1"
-          >
-            Editar
-          </button>
+          <div class="mt-2 flex justify-end gap-2">
+            <button
+              class="p-1.5 rounded-md border border-gray-200 bg-white text-gray-600 hover:bg-gray-50 hover:text-primary-700"
+              title="Editar"
+              @click="editFixedExpense(fixedExpense)"
+            >
+              <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5h2m-6 14h10a2 2 0 002-2v-5.586a1 1 0 00-.293-.707l-6.414-6.414A1 1 0 0011.586 4H6a2 2 0 00-2 2v10a2 2 0 002 2z"/>
+              </svg>
+            </button>
+            <button
+              class="p-1.5 rounded-md border border-gray-200 bg-white text-red-600 hover:bg-red-50"
+              title="Eliminar"
+              @click="onDeleteFixed(fixedExpense)"
+            >
+              <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6M9 7h6m-7 0V5a2 2 0 012-2h2a2 2 0 012 2v2"/>
+              </svg>
+            </button>
+          </div>
         </div>
       </div>
     </div>
@@ -171,6 +89,23 @@
     <div v-if="error" class="mt-4 p-3 bg-red-50 border border-red-200 rounded-lg">
       <p class="text-sm text-red-600">{{ error }}</p>
     </div>
+
+    <!-- Modal de edición de gasto fijo -->
+    <FixedExpenseModal
+      :is-open="showEdit"
+      :fixed-expense="editing"
+      mode="edit"
+      @close="onCloseEdit"
+      @updated="onUpdated"
+    />
+
+    <!-- Modal de creación de gasto fijo -->
+    <FixedExpenseModal
+      :is-open="creating"
+      mode="create"
+      @close="onCloseCreate"
+      @created="onCreated"
+    />
   </div>
 </template>
 
@@ -178,43 +113,27 @@
 import { ref, reactive, computed } from 'vue'
 import { format } from 'date-fns'
 import { useExpenseStore } from '../stores/expenseStore'
+import FixedExpenseModal from './FixedExpenseModal.vue'
 
 const expenseStore = useExpenseStore()
 
-const showAddForm = ref(false)
 const error = ref('')
-
-const form = reactive({
-  name: '',
-  amount: '',
-  categoryId: '',
-  dayOfMonth: ''
-})
 
 const currentMonth = computed(() => format(new Date(), 'yyyy-MM'))
 
-const resetForm = () => {
-  form.name = ''
-  form.amount = ''
-  form.categoryId = ''
-  form.dayOfMonth = ''
-  error.value = ''
-}
-
-const handleSubmit = async () => {
-  try {
-    error.value = ''
-    await expenseStore.addFixedExpense(form)
-    resetForm()
-    showAddForm.value = false
-  } catch (err) {
-    error.value = 'Error al agregar el gasto fijo. Inténtalo de nuevo.'
-  }
-}
+const openCreate = () => { creating.value = true }
 
 const editFixedExpense = (fixedExpense) => {
-  // TODO: Implementar edición
-  console.log('Editar gasto fijo:', fixedExpense)
+  editing.value = fixedExpense
+  showEdit.value = true
+}
+
+const onDeleteFixed = async (fixedExpense) => {
+  const ok = window.confirm('¿Eliminar este gasto fijo?')
+  if (!ok) return
+  try {
+    await expenseStore.deleteFixedExpense(fixedExpense.id)
+  } catch (_) {}
 }
 
 const generateFixedExpenses = async () => {
@@ -236,4 +155,12 @@ const getCategoryName = (categoryId) => {
 }
 
 const loading = computed(() => expenseStore.loading)
+
+const showEdit = ref(false)
+const editing = ref(null)
+const creating = ref(false)
+const onCloseEdit = () => { showEdit.value = false; editing.value = null }
+const onUpdated = () => { onCloseEdit() }
+const onCloseCreate = () => { creating.value = false }
+const onCreated = () => { creating.value = false }
 </script>
