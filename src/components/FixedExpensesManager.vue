@@ -114,8 +114,11 @@ import { ref, reactive, computed } from 'vue'
 import { format } from 'date-fns'
 import { useExpenseStore } from '../stores/expenseStore'
 import FixedExpenseModal from './FixedExpenseModal.vue'
+import { useConfirm } from '../composables/useConfirm'
+import { push } from 'notivue'
 
 const expenseStore = useExpenseStore()
+const confirm = useConfirm()
 
 const error = ref('')
 
@@ -129,11 +132,20 @@ const editFixedExpense = (fixedExpense) => {
 }
 
 const onDeleteFixed = async (fixedExpense) => {
-  const ok = window.confirm('¿Eliminar este gasto fijo?')
+  const ok = await confirm.show({
+    title: 'Eliminar gasto fijo',
+    message: '¿Seguro que deseas eliminar este gasto fijo?',
+    confirmText: 'Eliminar',
+    cancelText: 'Cancelar',
+    variant: 'danger'
+  })
   if (!ok) return
   try {
     await expenseStore.deleteFixedExpense(fixedExpense.id)
-  } catch (_) {}
+    push.success('Gasto fijo eliminado')
+  } catch (_) {
+    push.error('No se pudo eliminar el gasto fijo')
+  }
 }
 
 const generateFixedExpenses = async () => {
@@ -160,7 +172,7 @@ const showEdit = ref(false)
 const editing = ref(null)
 const creating = ref(false)
 const onCloseEdit = () => { showEdit.value = false; editing.value = null }
-const onUpdated = () => { onCloseEdit() }
+const onUpdated = () => { onCloseEdit(); push.success('Gasto fijo actualizado') }
 const onCloseCreate = () => { creating.value = false }
-const onCreated = () => { creating.value = false }
+const onCreated = () => { creating.value = false; push.success('Gasto fijo creado') }
 </script>

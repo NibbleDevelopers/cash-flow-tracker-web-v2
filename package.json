@@ -14,9 +14,12 @@
     "@heroicons/vue": "^2.2.0",
     "axios": "^1.6.2",
     "date-fns": "^2.30.0",
+    "notivue": "^2.4.5",
     "pinia": "^2.1.7",
+    "v3confirm": "^1.1.1",
     "vue": "^3.4.0",
-    "vue-router": "^4.2.5"
+    "vue-router": "^4.2.5",
+    "vue3-confirm-dialog": "^0.1.1"
   },
   "devDependencies": {
     "@vitejs/plugin-vue": "^4.5.2",

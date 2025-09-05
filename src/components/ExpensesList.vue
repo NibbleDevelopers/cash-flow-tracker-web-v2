@@ -248,8 +248,11 @@ import { format } from 'date-fns'
 import { es } from 'date-fns/locale'
 import { useExpenseStore } from '../stores/expenseStore'
 import AppSelect from './ui/AppSelect.vue'
+import { useConfirm } from '../composables/useConfirm'
+import { push } from 'notivue'
 
 const expenseStore = useExpenseStore()
+const confirm = useConfirm()
 const emit = defineEmits(['edit-expense', 'delete-expense'])
 
 const currentMonthExpenses = computed(() => expenseStore.currentMonthExpenses)
@@ -538,5 +541,20 @@ const groupedPagedExpenses = computed(() => {
 
 // Handlers
 const onEdit = (expense) => emit('edit-expense', expense)
-const onDelete = (expense) => emit('delete-expense', expense)
+const onDelete = async (expense) => {
+  const ok = await confirm.show({
+    title: 'Eliminar gasto',
+    message: '¿Eliminar este gasto? Esta acción no se puede deshacer.',
+    confirmText: 'Eliminar',
+    cancelText: 'Cancelar',
+    variant: 'danger'
+  })
+  if (!ok) return
+  try {
+    await expenseStore.deleteExpense(expense.id)
+    push.success('Gasto eliminado')
+  } catch (e) {
+    push.error('No se pudo eliminar el gasto')
+  }
+}
 </script>

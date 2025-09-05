@@ -54,6 +54,7 @@ import ExpensesListComponent from '../components/ExpensesList.vue'
 import BudgetProgress from '../components/BudgetProgress.vue'
 import FixedExpensesManager from '../components/FixedExpensesManager.vue'
 import { useExpenseStore } from '../stores/expenseStore'
+import { push } from 'notivue'
 
 const expenseStore = useExpenseStore()
 const showModal = ref(false)
@@ -65,12 +66,12 @@ const openEdit = (expense) => {
 }
 
 const confirmDelete = async (expense) => {
-  const confirmed = window.confirm('¿Eliminar este gasto?')
-  if (!confirmed) return
+  // Delegado al componente hijo con dialog; este es fallback si se usa el evento
   try {
     await expenseStore.deleteExpense(expense.id)
+    push.success('Gasto eliminado')
   } catch (e) {
-    // noop (error ya gestionado en store)
+    push.error('No se pudo eliminar el gasto')
   }
 }
 
@@ -79,9 +80,7 @@ const closeModal = () => {
   editingExpense.value = null
 }
 
-const afterChange = () => {
-  closeModal()
-}
+const afterChange = () => { closeModal(); push.success('Cambios guardados') }
 </script>
 
 <style scoped>
