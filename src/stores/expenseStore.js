@@ -367,17 +367,12 @@ export const useExpenseStore = defineStore('expense', () => {
     error.value = null
     
     try {
-      const generatedExpenses = await googleSheetsService.generateFixedExpensesForMonth(month)
+      const result = await googleSheetsService.generateFixedExpensesForMonth(month)
       
-      // Agregar los gastos generados a la lista de gastos
-      for (const expense of generatedExpenses) {
-        await googleSheetsService.addExpense(expense)
-      }
-      
-      // Recargar gastos
+      // Recargar gastos para reflejar lo generado por el backend
       await loadExpenses()
       
-      return generatedExpenses
+      return result
     } catch (err) {
       error.value = 'Error al generar gastos fijos'
       console.error('Error generating fixed expenses:', err)

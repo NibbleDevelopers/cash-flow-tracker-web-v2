@@ -152,12 +152,10 @@ const generateFixedExpenses = async () => {
   try {
     error.value = ''
     await expenseStore.generateFixedExpensesForMonth(currentMonth.value)
-    error.value = 'Gastos fijos generados correctamente para este mes'
-    setTimeout(() => {
-      error.value = ''
-    }, 3000)
+    push.success('Gastos fijos generados correctamente')
   } catch (err) {
     error.value = 'Error al generar gastos fijos. Inténtalo de nuevo.'
+    push.error('No se pudieron generar los gastos fijos')
   }
 }
 
