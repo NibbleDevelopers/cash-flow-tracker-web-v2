@@ -74,6 +74,7 @@
           v-if="showRange"
           class="fixed z-[60] bg-white border border-gray-200 rounded-lg shadow-xl p-3 w-[320px]"
           :style="rangePickerStyle"
+          ref="rangePopoverRef"
           @click.stop
         >
           <!-- Presets -->
@@ -243,7 +244,7 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted, watch } from 'vue'
+import { ref, computed, onMounted, onBeforeUnmount, watch } from 'vue'
 import { format } from 'date-fns'
 import { es } from 'date-fns/locale'
 import { useExpenseStore } from '../stores/expenseStore'
@@ -392,6 +393,7 @@ watch([searchQuery, selectedCategoryId, period, sortOrder], () => {
 // Rango de fechas elegante
 const showRange = ref(false)
 const rangeBtnRef = ref(null)
+const rangePopoverRef = ref(null)
 const rangeStart = ref(null) // Date|null
 const rangeEnd = ref(null)   // Date|null
 const tempStart = ref(null)
@@ -478,6 +480,31 @@ const applyRange = () => {
   rangeEnd.value = tempEnd.value
   showRange.value = false
 }
+
+// Cerrar al hacer clic fuera o con Escape
+const onGlobalPointerDown = (event) => {
+  if (!showRange.value) return
+  const target = event.target
+  const pop = rangePopoverRef.value
+  const btn = rangeBtnRef.value
+  if ((pop && pop.contains(target)) || (btn && btn.contains(target))) return
+  showRange.value = false
+}
+
+const onGlobalKeyDown = (event) => {
+  if (!showRange.value) return
+  if (event.key === 'Escape') showRange.value = false
+}
+
+onMounted(() => {
+  document.addEventListener('mousedown', onGlobalPointerDown)
+  document.addEventListener('keydown', onGlobalKeyDown)
+})
+
+onBeforeUnmount(() => {
+  document.removeEventListener('mousedown', onGlobalPointerDown)
+  document.removeEventListener('keydown', onGlobalKeyDown)
+})
 
 const rangeLabel = computed(() => {
   if (rangeStart.value && rangeEnd.value) {
