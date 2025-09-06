@@ -108,7 +108,21 @@ export const useExpenseStore = defineStore('expense', () => {
 
   const loadBudget = async () => {
     try {
-      budget.value = await googleSheetsService.getBudget()
+      const b = await googleSheetsService.getBudget()
+      // Asegurar que sea para el mes actual; si no, normalizar
+      const currentMonth = format(new Date(), 'yyyy-MM')
+      if (!b || typeof b !== 'object') {
+        budget.value = { amount: 0, month: currentMonth }
+      } else {
+        budget.value = {
+          month: typeof b.month === 'string' ? b.month : currentMonth,
+          amount: parseFloat(b.amount) || 0
+        }
+        // Si vino de otro mes, ajustar a mes actual pero mantener amount
+        if (budget.value.month !== currentMonth) {
+          budget.value = { month: currentMonth, amount: budget.value.amount }
+        }
+      }
     } catch (err) {
       error.value = 'Error al cargar el presupuesto'
       console.error('Error loading budget:', err)
@@ -240,9 +254,10 @@ export const useExpenseStore = defineStore('expense', () => {
       }
 
       await googleSheetsService.updateBudget(budgetData)
-      budget.value = budgetData
+      // Re-cargar para asegurar que tomamos el del mes actual desde la lista completa
+      await loadBudget()
       
-      return budgetData
+      return budget.value
     } catch (err) {
       error.value = 'Error al actualizar el presupuesto'
       console.error('Error updating budget:', err)

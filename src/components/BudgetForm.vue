@@ -115,6 +115,7 @@
 import { ref, reactive, onMounted, computed } from 'vue'
 import { format } from 'date-fns'
 import { useExpenseStore } from '../stores/expenseStore'
+import { push } from 'notivue'
 
 const expenseStore = useExpenseStore()
 
@@ -201,6 +202,7 @@ const handleSubmit = async () => {
     
     await expenseStore.updateBudget(form)
     success.value = true
+    push.success('Presupuesto actualizado correctamente')
     
     // Ocultar mensaje de éxito después de 3 segundos
     setTimeout(() => {
@@ -208,6 +210,7 @@ const handleSubmit = async () => {
     }, 3000)
   } catch (err) {
     error.value = 'Error al actualizar el presupuesto. Inténtalo de nuevo.'
+    push.error('No se pudo actualizar el presupuesto')
   }
 }
 </script>

@@ -187,28 +187,14 @@ class GoogleSheetsBackendService {
   async getBudget() {
     try {
       const response = await this.makeRequest('/budget')
-      
-      // Verificar si la respuesta tiene la estructura esperada
-      let values = []
-      if (Array.isArray(response)) {
-        values = response
-      } else if (response && Array.isArray(response.values)) {
-        values = response.values
-      } else if (response && Array.isArray(response.data)) {
-        values = response.data
-      } else {
-        console.warn('Unexpected budget response structure:', response)
-        return { amount: 0, month: new Date().toISOString().slice(0, 7) }
-      }
-      
-      if (values.length > 1) {
-        return {
-          amount: parseFloat(values[1][1]) || 0,
-          month: values[1][0] || new Date().toISOString().slice(0, 7)
-        }
-      }
-      
-      return { amount: 0, month: new Date().toISOString().slice(0, 7) }
+      const currentMonth = new Date().toISOString().slice(0, 7)
+
+      // La API devuelve: { success: true, data: [["yyyy-MM","amount"], ...], count: N }
+      const rows = Array.isArray(response?.data) ? response.data : []
+      const budgets = rows.map(r => ({ month: String(r?.[0] || ''), amount: parseFloat(r?.[1]) || 0 }))
+      const match = budgets.find(b => b.month === currentMonth)
+      if (match) return match
+      return { month: currentMonth, amount: 0 }
     } catch (error) {
       console.error('Error fetching budget:', error)
       return { amount: 0, month: new Date().toISOString().slice(0, 7) }
