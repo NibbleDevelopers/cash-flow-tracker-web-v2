@@ -1,6 +1,7 @@
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
 import { format, startOfMonth, endOfMonth, isWithinInterval } from 'date-fns'
+import { parseLocalDate } from '../utils/date.js'
 import googleSheetsService from '../services/googleSheetsBackend.js'
 
 export const useExpenseStore = defineStore('expense', () => {
@@ -8,6 +9,7 @@ export const useExpenseStore = defineStore('expense', () => {
   const expenses = ref([])
   const categories = ref([])
   const budget = ref({ amount: 0, month: '' })
+  const budgetsByMonth = ref({})
   const fixedExpenses = ref([])
   const loading = ref(false)
   const error = ref(null)
@@ -19,7 +21,7 @@ export const useExpenseStore = defineStore('expense', () => {
     const monthEnd = endOfMonth(now)
     
     return expenses.value.filter(expense => {
-      const expenseDate = new Date(expense.date)
+      const expenseDate = parseLocalDate(expense.date)
       return isWithinInterval(expenseDate, { start: monthStart, end: monthEnd })
     })
   })
@@ -126,6 +128,14 @@ export const useExpenseStore = defineStore('expense', () => {
     } catch (err) {
       error.value = 'Error al cargar el presupuesto'
       console.error('Error loading budget:', err)
+    }
+  }
+
+  const loadBudgets = async () => {
+    try {
+      budgetsByMonth.value = await googleSheetsService.getBudgets()
+    } catch (err) {
+      console.error('Error loading budgets:', err)
     }
   }
 
@@ -406,6 +416,7 @@ export const useExpenseStore = defineStore('expense', () => {
     expenses,
     categories,
     budget,
+    budgetsByMonth,
     fixedExpenses,
     loading,
     error,
@@ -426,6 +437,7 @@ export const useExpenseStore = defineStore('expense', () => {
     loadExpenses,
     loadCategories,
     loadBudget,
+    loadBudgets,
     loadFixedExpenses,
     addExpense,
     updateExpense,

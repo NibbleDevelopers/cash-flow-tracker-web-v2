@@ -201,6 +201,24 @@ class GoogleSheetsBackendService {
     }
   }
 
+  // Obtener todos los presupuestos en mapa { 'yyyy-MM': amount }
+  async getBudgets() {
+    try {
+      const response = await this.makeRequest('/budget')
+      const rows = Array.isArray(response?.data) ? response.data : []
+      const map = {}
+      for (const r of rows) {
+        const month = String(r?.[0] || '')
+        const amount = parseFloat(r?.[1]) || 0
+        if (month) map[month] = amount
+      }
+      return map
+    } catch (error) {
+      console.error('Error fetching budgets:', error)
+      return {}
+    }
+  }
+
   // Actualizar presupuesto mensual
   async updateBudget(budget) {
     try {

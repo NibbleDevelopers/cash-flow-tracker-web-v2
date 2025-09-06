@@ -157,7 +157,7 @@
                   Fijo
                 </span>
               </div>
-              <p class="text-xs text-gray-500">{{ format(new Date(expense.date), 'dd/MM/yyyy') }}</p>
+              <p class="text-xs text-gray-500">{{ format(parseLocalDate(expense.date), 'dd/MM/yyyy') }}</p>
             </div>
           </div>
           <span class="text-sm font-semibold text-gray-900">
@@ -194,6 +194,7 @@ import { format } from 'date-fns'
 import { useExpenseStore } from '../stores/expenseStore'
 import BudgetProgress from '../components/BudgetProgress.vue'
 import ExpenseModal from '../components/ExpenseModal.vue'
+import { parseLocalDate } from '../utils/date'
 
 const expenseStore = useExpenseStore()
 const showModal = ref(false)
@@ -210,7 +211,7 @@ const averageExpense = computed(() => {
 })
 
 const recentExpenses = computed(() => {
-  return [...currentMonthExpenses.value].sort((a, b) => new Date(b.date) - new Date(a.date))
+  return [...currentMonthExpenses.value].sort((a, b) => parseLocalDate(b.date) - parseLocalDate(a.date))
 })
 
 const expensesByCategory = computed(() => expenseStore.expensesByCategory)

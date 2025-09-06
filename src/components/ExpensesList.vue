@@ -175,7 +175,7 @@
                     <span v-if="expense.isFixed" class="inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-bold bg-blue-600 text-white uppercase tracking-wide">Fijo</span>
               </div>
               <div class="flex items-center space-x-4 mt-1">
-                    <p class="text-xs text-gray-500">{{ format(new Date(expense.date), 'dd/MM/yyyy') }}</p>
+                    <p class="text-xs text-gray-500">{{ format(parseLocalDate(expense.date), 'dd/MM/yyyy') }}</p>
                  <div v-if="expense.isFixed && expense.fixedExpenseId" class="flex items-center space-x-1">
                    <svg class="h-3 w-3 text-blue-500" fill="currentColor" viewBox="0 0 20 20">
                      <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z" clip-rule="evenodd" />
@@ -251,6 +251,7 @@ import { useExpenseStore } from '../stores/expenseStore'
 import AppSelect from './ui/AppSelect.vue'
 import { useConfirm } from '../composables/useConfirm'
 import { push } from 'notivue'
+import { parseLocalDate } from '../utils/date'
 
 const expenseStore = useExpenseStore()
 const confirm = useConfirm()
@@ -332,7 +333,7 @@ const baseByPeriod = computed(() => {
     const days = Number(period.value)
     const cutoff = new Date(now)
     cutoff.setDate(now.getDate() - days)
-    return all.filter(e => new Date(e.date) >= cutoff)
+    return all.filter(e => parseLocalDate(e.date) >= cutoff)
   }
   if (period.value === 'all') return all
   // mes actual
@@ -344,8 +345,8 @@ const baseByPeriod = computed(() => {
 // Ordenar y paginar
 const sortedExpenses = computed(() => {
   return [...filteredExpenses.value].sort((a, b) => {
-    const da = new Date(a.date).getTime()
-    const db = new Date(b.date).getTime()
+    const da = parseLocalDate(a.date).getTime()
+    const db = parseLocalDate(b.date).getTime()
     return sortOrder.value === 'asc' ? da - db : db - da
   })
 })
@@ -530,7 +531,7 @@ const baseByPeriodWithRange = computed(() => {
   if (period.value === 'custom' && rangeStart.value && rangeEnd.value) {
     const all = expenseStore.expenses || []
     return all.filter(e => {
-      const d = new Date(e.date)
+      const d = parseLocalDate(e.date)
       return d >= rangeStart.value && d <= rangeEnd.value
     })
   }
@@ -552,7 +553,7 @@ const filteredExpenses = computed(() => {
 const groupedPagedExpenses = computed(() => {
   const groups = {}
   for (const e of pagedExpenses.value) {
-    const d = new Date(e.date)
+    const d = parseLocalDate(e.date)
     const key = format(d, 'yyyy-MM-dd')
     if (!groups[key]) groups[key] = []
     groups[key].push(e)
@@ -561,7 +562,7 @@ const groupedPagedExpenses = computed(() => {
     .sort((a, b) => (sortOrder.value === 'asc' ? a.localeCompare(b) : b.localeCompare(a)))
     .map(key => ({
       key,
-      label: format(new Date(key), 'EEEE d \"de\" MMMM', { locale: es }),
+      label: format(parseLocalDate(key), 'EEEE d \"de\" MMMM', { locale: es }),
       items: groups[key]
     }))
 })

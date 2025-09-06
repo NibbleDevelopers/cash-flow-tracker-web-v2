@@ -112,7 +112,7 @@
 </template>
 
 <script setup>
-import { ref, reactive, onMounted, computed } from 'vue'
+import { ref, reactive, onMounted, onBeforeUnmount, computed } from 'vue'
 import { format } from 'date-fns'
 import { useExpenseStore } from '../stores/expenseStore'
 import { push } from 'notivue'
@@ -135,7 +135,21 @@ onMounted(() => {
   if (expenseStore.budget.amount > 0) {
     form.amount = expenseStore.budget.amount.toString()
   }
+  window.addEventListener('budget:edit-month', onExternalEditMonth)
 })
+
+onBeforeUnmount(() => {
+  window.removeEventListener('budget:edit-month', onExternalEditMonth)
+})
+
+const onExternalEditMonth = (e) => {
+  const m = e?.detail?.month
+  if (typeof m === 'string' && m.length >= 7) {
+    form.month = m
+    const amount = expenseStore.budgetsByMonth?.[m] || ''
+    form.amount = amount === '' ? '' : String(amount)
+  }
+}
 
 const loading = computed(() => expenseStore.loading)
 
@@ -203,6 +217,8 @@ const handleSubmit = async () => {
     await expenseStore.updateBudget(form)
     success.value = true
     push.success('Presupuesto actualizado correctamente')
+    // refrescar mapa anual
+    await expenseStore.loadBudgets()
     
     // Ocultar mensaje de éxito después de 3 segundos
     setTimeout(() => {

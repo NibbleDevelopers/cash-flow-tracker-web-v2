@@ -26,7 +26,18 @@
                 </div>
                 <div>
                   <label class="block text-sm font-medium text-gray-700 mb-1">Monto</label>
-                  <input v-model="localForm.amount" required type="number" step="0.01" min="0" class="input-field" placeholder="0.00" />
+                  <div class="relative">
+                    <input v-model="localForm.amount" required type="number" step="0.01" min="0" class="input-field pr-20" placeholder="0.00" />
+                    <div class="absolute inset-y-0 right-0 flex items-center">
+                      <div class="flex items-center bg-primary-600 text-white px-3 py-2 rounded-r-md">
+                        <span class="text-sm font-medium">$</span>
+                        <span class="text-xs ml-1">USD</span>
+                        <svg class="w-3 h-3 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+                        </svg>
+                      </div>
+                    </div>
+                  </div>
                 </div>
                 <div>
                   <label class="block text-sm font-medium text-gray-700 mb-1">Categoría</label>
