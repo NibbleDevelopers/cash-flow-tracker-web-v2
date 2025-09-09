@@ -12,29 +12,149 @@ class GoogleSheetsBackendService {
   // Hacer request al backend
   async makeRequest(endpoint, options = {}) {
     const url = `${this.baseUrl}${endpoint}`
+    
     try {
       const response = await fetch(url, {
         ...options,
         headers: {
           'Content-Type': 'application/json',
+          'Accept': 'application/json',
           ...options.headers
         }
       })
 
       if (!response.ok) {
-        const errorText = await response.text()
-        throw new Error(`HTTP error! status: ${response.status}, message: ${errorText}`)
+        let errorMessage = `Error ${response.status}: ${response.statusText}`
+        
+        try {
+          const errorData = await response.json()
+          errorMessage = errorData.message || errorData.error || errorMessage
+        } catch {
+          // Si no se puede parsear como JSON, usar el texto plano
+          const errorText = await response.text()
+          if (errorText) {
+            errorMessage = errorText
+          }
+        }
+        
+        throw new Error(errorMessage)
       }
 
+      // Respuesta exitosa
       if (response.status === 204) return {}
+      
       try {
         return await response.json()
-      } catch (_) {
+      } catch (parseError) {
+        console.warn('Failed to parse response as JSON:', parseError)
         return {}
       }
     } catch (error) {
+      // Mejorar mensajes de error para el usuario
+      if (error.name === 'TypeError' && error.message.includes('fetch')) {
+        throw new Error('No se pudo conectar con el servidor. Verifica tu conexión a internet.')
+      }
+      
       console.error('Error making request to backend:', error)
       throw error
+    }
+  }
+
+  // ==========================
+  // Deudas (Debts) API
+  // ==========================
+  async getDebts() {
+    try {
+      const response = await this.makeRequest('/debts')
+      // Estructura esperada: { success, data: string[][], count }
+      const rows = Array.isArray(response?.data) ? response.data : []
+      return rows.map(row => ({
+        id: row?.[0] || '',
+        name: row?.[1] || '',
+        issuer: row?.[2] || '',
+        creditLimit: parseFloat(row?.[3]) || 0,
+        balance: parseFloat(row?.[4]) || 0,
+        dueDay: parseInt(row?.[5]) || null,
+        cutOffDay: parseInt(row?.[6]) || null,
+        maskPan: row?.[7] || '',
+        interesEfectivo: parseFloat(row?.[8]) || 0,
+        brand: row?.[9] || '',
+        active: String(row?.[10]).toUpperCase() === 'TRUE' || row?.[10] === true
+      }))
+    } catch (error) {
+      console.error('Error fetching debts:', error)
+      return []
+    }
+  }
+
+  async createDebt(payload) {
+    try {
+      const response = await this.makeRequest('/debts', {
+        method: 'POST',
+        body: JSON.stringify(payload)
+      })
+      return response?.data || response
+    } catch (error) {
+      console.error('Error creating debt:', error)
+      throw error
+    }
+  }
+
+  async updateDebt(id, payload) {
+    try {
+      const response = await this.makeRequest(`/debts/${id}`, {
+        method: 'PUT',
+        body: JSON.stringify(payload)
+      })
+      return response?.data || response
+    } catch (error) {
+      console.error('Error updating debt:', error)
+      throw error
+    }
+  }
+
+  async deleteDebt(id) {
+    try {
+      const response = await this.makeRequest(`/debts/${id}`, {
+        method: 'DELETE'
+      })
+      return response
+    } catch (error) {
+      console.error('Error deleting debt:', error)
+      throw error
+    }
+  }
+
+  async getDebtSummary(id) {
+    try {
+      const response = await this.makeRequest(`/debts/${id}/summary`)
+      return response?.data || response
+    } catch (error) {
+      console.error('Error fetching debt summary:', error)
+      return null
+    }
+  }
+
+  async getAllDebtsSummary() {
+    try {
+      const response = await this.makeRequest('/debts/summary')
+      return Array.isArray(response?.data) ? response.data : []
+    } catch (error) {
+      console.error('Error fetching debts summary:', error)
+      return []
+    }
+  }
+
+  async getDebtInstallments(id, { months, start } = {}) {
+    try {
+      const params = new URLSearchParams()
+      if (months != null) params.set('months', String(months))
+      if (start) params.set('start', start)
+      const response = await this.makeRequest(`/debts/${id}/installments?${params.toString()}`)
+      return response?.data || response
+    } catch (error) {
+      console.error('Error fetching debt installments:', error)
+      return null
     }
   }
 

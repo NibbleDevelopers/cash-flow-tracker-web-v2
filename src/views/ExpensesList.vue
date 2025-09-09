@@ -19,7 +19,7 @@
       </div>
       
       <div class="lg:col-span-1 space-y-6">
-        <BudgetProgress />
+        <BudgetProgress amount-size="sm" />
         <FixedExpensesManager />
       </div>
     </div>

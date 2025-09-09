@@ -40,7 +40,7 @@ export const useExpenseStore = defineStore('expense', () => {
   })
 
   const isOverBudget = computed(() => {
-    return totalSpent.value > budget.value.amount
+    return budget.value.amount > 0 && totalSpent.value > budget.value.amount
   })
 
   const activeCategories = computed(() => {

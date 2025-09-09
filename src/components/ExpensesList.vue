@@ -10,53 +10,63 @@
     </div>
 
     <!-- Filtros -->
-    <div class="grid grid-cols-1 md:grid-cols-5 gap-3 mb-4">
-      <!-- Búsqueda -->
-      <div>
-        <input
-          v-model="searchQuery"
-          type="text"
-          class="input-field"
-          placeholder="Buscar por descripción..."
-        />
+    <div class="space-y-4 mb-6">
+      <!-- Fila 1: Búsqueda y Categoría -->
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div class="flex flex-col">
+          <label class="block text-sm font-medium text-gray-700 mb-2">Buscar gastos</label>
+          <input
+            v-model="searchQuery"
+            type="text"
+            class="input-field h-10"
+            placeholder="Buscar por descripción..."
+          />
+        </div>
+        <div class="flex flex-col">
+          <label class="block text-sm font-medium text-gray-700 mb-2">Categoría</label>
+          <AppSelect
+            v-model="selectedCategoryId"
+            :options="categoryFilterOptions"
+            placeholder="Todas las categorías"
+            class="h-10"
+          />
+        </div>
       </div>
-      <!-- Categoría -->
-      <div>
-        <AppSelect
-          v-model="selectedCategoryId"
-          :options="categoryFilterOptions"
-          placeholder="Todas las categorías"
-        />
-      </div>
-      <!-- Periodo -->
-      <div>
-        <AppSelect
-          v-model="period"
-          :options="periodOptions"
-          placeholder="Mes actual"
-        />
-      </div>
-      <!-- Orden -->
-      <div>
-        <AppSelect
-          v-model="sortOrder"
-          :options="sortOptions"
-          placeholder="Más recientes primero"
-        />
-      </div>
-      <!-- Rango de fechas -->
-      <div>
-        <button
-          ref="rangeBtnRef"
-          type="button"
-          class="input-field flex items-center justify-between"
-          @click="toggleRange"
-        >
-          <span class="truncate text-left">{{ rangeLabel }}</span>
-          <svg class="h-4 w-4 text-gray-400 ml-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-          </svg>
-        </button>
+      
+      <!-- Fila 2: Periodo, Orden y Rango de fechas -->
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div class="flex flex-col">
+          <label class="block text-sm font-medium text-gray-700 mb-2">Periodo</label>
+          <AppSelect
+            v-model="period"
+            :options="periodOptions"
+            placeholder="Mes actual"
+            class="h-10"
+          />
+        </div>
+        <div class="flex flex-col">
+          <label class="block text-sm font-medium text-gray-700 mb-2">Ordenar por</label>
+          <AppSelect
+            v-model="sortOrder"
+            :options="sortOptions"
+            placeholder="Más recientes primero"
+            class="h-10"
+          />
+        </div>
+        <div class="flex flex-col">
+          <label class="block text-sm font-medium text-gray-700 mb-2">Rango personalizado</label>
+          <button
+            ref="rangeBtnRef"
+            type="button"
+            class="input-field flex items-center justify-between h-10"
+            @click="toggleRange"
+          >
+            <span class="truncate text-left">{{ rangeLabel }}</span>
+            <svg class="h-4 w-4 text-gray-400 ml-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+            </svg>
+          </button>
+        </div>
       </div>
     </div>
 
