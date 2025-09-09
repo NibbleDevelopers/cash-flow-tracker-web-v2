@@ -8,6 +8,7 @@ class GoogleSheetsBackendService {
     this.baseUrl = API_BASE_URL
   }
 
+
   // Hacer request al backend
   async makeRequest(endpoint, options = {}) {
     const url = `${this.baseUrl}${endpoint}`

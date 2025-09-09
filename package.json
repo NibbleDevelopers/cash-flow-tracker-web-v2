@@ -12,6 +12,7 @@
   "dependencies": {
     "@headlessui/vue": "^1.7.23",
     "@heroicons/vue": "^2.2.0",
+    "apexcharts": "^5.3.5",
     "axios": "^1.6.2",
     "date-fns": "^2.30.0",
     "notivue": "^2.4.5",
@@ -19,6 +20,7 @@
     "v3confirm": "^1.1.1",
     "vue": "^3.4.0",
     "vue-router": "^4.2.5",
+    "vue3-apexcharts": "^1.8.0",
     "vue3-confirm-dialog": "^0.1.1"
   },
   "devDependencies": {

@@ -2,8 +2,8 @@
   <div class="space-y-6">
     <div class="flex justify-between items-start">
       <div>
-        <h1 class="text-2xl font-bold text-gray-900">Resumen</h1>
-        <p class="text-gray-600 mt-1">Vista general de tus finanzas mensuales</p>
+        <h1 class="text-2xl font-bold text-gray-900">Dashboard de Análisis</h1>
+        <p class="text-gray-600 mt-1">Vista general y análisis detallado de tus finanzas</p>
       </div>
       <button
         @click="showModal = true"
@@ -16,45 +16,35 @@
       </button>
     </div>
 
-    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-      <!-- Progreso del presupuesto -->
-      <div>
-        <BudgetProgress />
-      </div>
+    <!-- Métricas clave -->
+    <KeyMetricsCards
+      :total-spent="totalSpent"
+      :remaining-budget="remainingBudget"
+      :budget-progress="budgetProgress"
+      :average-daily="averageDailyExpense"
+      :total-fixed-expenses="totalFixedExpenses"
+      :expenses-count="currentMonthExpenses.length"
+      :fixed-expenses-count="fixedExpensesThisMonth.length"
+    />
 
-      <!-- Estadísticas del mes -->
-      <div class="card">
-        <h2 class="text-lg font-semibold text-gray-900 mb-4">Estadísticas del Mes</h2>
-        
-        <div class="space-y-4">
-          <div class="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
-            <span class="text-sm text-gray-600">Total de gastos</span>
-            <span class="font-semibold text-gray-900">
-              ${{ totalSpent.toLocaleString('es-ES', { minimumFractionDigits: 2 }) }}
-            </span>
-          </div>
-          
-          <div class="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
-            <span class="text-sm text-gray-600">Presupuesto asignado</span>
-            <span class="font-semibold text-gray-900">
-              ${{ budget.amount.toLocaleString('es-ES', { minimumFractionDigits: 2 }) }}
-            </span>
-          </div>
-          
-          <div class="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
-            <span class="text-sm text-gray-600">Gastos registrados</span>
-            <span class="font-semibold text-gray-900">{{ currentMonthExpenses.length }}</span>
-          </div>
-          
-          <div class="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
-            <span class="text-sm text-gray-600">Promedio por gasto</span>
-            <span class="font-semibold text-gray-900">
-              ${{ averageExpense.toLocaleString('es-ES', { minimumFractionDigits: 2 }) }}
-            </span>
-          </div>
-        </div>
-      </div>
-    </div>
+    <!-- Progreso del presupuesto -->
+    <BudgetProgress />
+
+    <!-- Gráfico de gastos por categoría -->
+    <ExpensesByCategoryChart :expenses-by-category="expensesByCategory" />
+
+    <!-- Gráfico de gastos diarios -->
+    <DailyExpensesChart 
+      :daily-data="dailyExpensesData" 
+      :current-month="currentMonth"
+    />
+
+    <!-- Gráfico de progreso mensual -->
+    <MonthlyProgressChart 
+      :daily-data="dailyExpensesData" 
+      :budget="budget.amount"
+      :current-month="currentMonth"
+    />
 
     <!-- Categorías de gastos -->
     <div class="card">
@@ -194,6 +184,10 @@ import { format } from 'date-fns'
 import { useExpenseStore } from '../stores/expenseStore'
 import BudgetProgress from '../components/BudgetProgress.vue'
 import ExpenseModal from '../components/ExpenseModal.vue'
+import KeyMetricsCards from '../components/charts/KeyMetricsCards.vue'
+import ExpensesByCategoryChart from '../components/charts/ExpensesByCategoryChart.vue'
+import DailyExpensesChart from '../components/charts/DailyExpensesChart.vue'
+import MonthlyProgressChart from '../components/charts/MonthlyProgressChart.vue'
 import { parseLocalDate } from '../utils/date'
 
 const expenseStore = useExpenseStore()
@@ -201,9 +195,16 @@ const showModal = ref(false)
 
 const budget = computed(() => expenseStore.budget)
 const totalSpent = computed(() => expenseStore.totalSpent)
+const remainingBudget = computed(() => expenseStore.remainingBudget)
+const budgetProgress = computed(() => expenseStore.budgetProgress)
 const currentMonthExpenses = computed(() => expenseStore.currentMonthExpenses)
 const fixedExpensesThisMonth = computed(() => expenseStore.fixedExpensesThisMonth)
 const totalFixedExpenses = computed(() => expenseStore.totalFixedExpenses)
+const averageDailyExpense = computed(() => expenseStore.averageDailyExpense)
+const dailyExpensesData = computed(() => expenseStore.dailyExpensesData)
+const monthlyTrendsData = computed(() => expenseStore.monthlyTrendsData)
+
+const currentMonth = computed(() => format(new Date(), 'yyyy-MM'))
 
 const averageExpense = computed(() => {
   if (currentMonthExpenses.value.length === 0) return 0

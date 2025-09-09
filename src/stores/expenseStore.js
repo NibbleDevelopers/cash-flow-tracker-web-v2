@@ -84,6 +84,73 @@ export const useExpenseStore = defineStore('expense', () => {
     return fixedExpensesThisMonth.value.reduce((total, expense) => total + expense.amount, 0)
   })
 
+  // Nuevas propiedades computadas para gráficos
+  const averageDailyExpense = computed(() => {
+    if (currentMonthExpenses.value.length === 0) return 0
+    const now = new Date()
+    const daysInMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate()
+    return totalSpent.value / daysInMonth
+  })
+
+  const dailyExpensesData = computed(() => {
+    const now = new Date()
+    const monthStart = startOfMonth(now)
+    const monthEnd = endOfMonth(now)
+    const daysInMonth = monthEnd.getDate()
+    
+    // Crear array con todos los días del mes
+    const dailyData = []
+    for (let day = 1; day <= daysInMonth; day++) {
+      const date = new Date(now.getFullYear(), now.getMonth(), day)
+      const dateStr = format(date, 'yyyy-MM-dd')
+      
+      // Calcular gastos para este día
+      const dayExpenses = expenses.value.filter(expense => {
+        const expenseDate = parseLocalDate(expense.date)
+        return format(expenseDate, 'yyyy-MM-dd') === dateStr
+      })
+      
+      const dayTotal = dayExpenses.reduce((sum, expense) => sum + expense.amount, 0)
+      
+      dailyData.push({
+        date: dateStr,
+        amount: dayTotal
+      })
+    }
+    
+    return dailyData
+  })
+
+  const monthlyTrendsData = computed(() => {
+    const trends = []
+    const now = new Date()
+    
+    // Obtener datos de los últimos 6 meses
+    for (let i = 5; i >= 0; i--) {
+      const monthDate = new Date(now.getFullYear(), now.getMonth() - i, 1)
+      const monthStr = format(monthDate, 'yyyy-MM')
+      const monthStart = startOfMonth(monthDate)
+      const monthEnd = endOfMonth(monthDate)
+      
+      // Calcular gastos del mes
+      const monthExpenses = expenses.value.filter(expense => {
+        const expenseDate = parseLocalDate(expense.date)
+        return isWithinInterval(expenseDate, { start: monthStart, end: monthEnd })
+      })
+      
+      const monthTotal = monthExpenses.reduce((sum, expense) => sum + expense.amount, 0)
+      const monthBudget = budgetsByMonth.value[monthStr] || 0
+      
+      trends.push({
+        month: monthStr,
+        expenses: monthTotal,
+        budget: monthBudget
+      })
+    }
+    
+    return trends
+  })
+
   // Actions
   const loadExpenses = async () => {
     loading.value = true
@@ -432,6 +499,9 @@ export const useExpenseStore = defineStore('expense', () => {
     expensesByCategory,
     fixedExpensesThisMonth,
     totalFixedExpenses,
+    averageDailyExpense,
+    dailyExpensesData,
+    monthlyTrendsData,
     
     // Actions
     loadExpenses,
