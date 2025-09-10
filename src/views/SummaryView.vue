@@ -46,6 +46,13 @@
       :current-month="currentMonth"
     />
 
+    <!-- Calendario de gastos -->
+    <ExpensesCalendar 
+      :daily-data="dailyExpensesData"
+      :expenses="currentMonthExpenses"
+      :fixed-expenses="fixedExpenses"
+    />
+
     <!-- Categorías de gastos -->
     <div class="card">
       <h2 class="text-lg font-semibold text-gray-900 mb-4">Gastos por Categoría</h2>
@@ -245,6 +252,7 @@ import KeyMetricsCards from '../components/charts/KeyMetricsCards.vue'
 import ExpensesByCategoryChart from '../components/charts/ExpensesByCategoryChart.vue'
 import DailyExpensesChart from '../components/charts/DailyExpensesChart.vue'
 import MonthlyProgressChart from '../components/charts/MonthlyProgressChart.vue'
+import ExpensesCalendar from '../components/charts/ExpensesCalendar.vue'
 import { parseLocalDate } from '../utils/date'
 
 const expenseStore = useExpenseStore()
@@ -310,6 +318,7 @@ const handleExpenseAdded = () => {
   // El modal se cierra automáticamente después de agregar el gasto
   // Aquí podrías agregar lógica adicional si es necesario
 }
+
 </script>
 
 <style scoped>
