@@ -277,7 +277,6 @@ class GoogleSheetsBackendService {
   // Actualizar gasto existente
   async updateExpense(id, data) {
     try {
-      console.log('Updating expense:', id, data)
       const idForBody = isNaN(Number(id)) ? id : Number(id)
       const response = await this.makeRequest(`/expenses/${id}`, {
         method: 'PUT',
@@ -360,7 +359,6 @@ class GoogleSheetsBackendService {
     try {
       // Por ahora, solo agregamos la categoría localmente
       // En el futuro, podemos agregar un endpoint en el backend
-      console.log('Adding category:', category)
       return category
     } catch (error) {
       console.error('Error adding category:', error)
@@ -373,7 +371,6 @@ class GoogleSheetsBackendService {
     try {
       // Por ahora, solo actualizamos la categoría localmente
       // En el futuro, podemos agregar un endpoint en el backend
-      console.log('Updating category:', category)
       return category
     } catch (error) {
       console.error('Error updating category:', error)

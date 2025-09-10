@@ -282,6 +282,21 @@
                         </svg>
                         Generar Plan
                       </button>
+                      <button 
+                        v-if="installmentsData?.schedule?.length > 0"
+                        class="btn-secondary px-4 py-2 text-sm inline-flex items-center" 
+                        @click="createExpensesFromInstallments"
+                        :disabled="creatingExpenses"
+                      >
+                        <svg v-if="creatingExpenses" class="animate-spin -ml-1 mr-2 h-4 w-4 text-gray-500" fill="none" viewBox="0 0 24 24">
+                          <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                          <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                        </svg>
+                        <svg v-else class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                        </svg>
+                        {{ creatingExpenses ? 'Creando...' : 'Crear Gastos Automáticos' }}
+                      </button>
                     </div>
                     <div class="text-sm text-gray-500">
                       Mostrando {{ installmentsData?.schedule?.length || 0 }} cuotas
@@ -352,6 +367,9 @@
 <script setup>
 import { ref, onMounted, computed } from 'vue'
 import { useDebtStore } from '../stores/debtStore'
+import { useExpenseStore } from '../stores/expenseStore'
+import { useNotifications } from '../composables/useNotifications'
+import { useConfirm } from '../composables/useConfirm'
 import { storeToRefs } from 'pinia'
 import DebtForm from '../components/DebtForm.vue'
 import { Dialog, DialogPanel, DialogTitle, TransitionChild, TransitionRoot } from '@headlessui/vue'
@@ -359,6 +377,9 @@ import { PencilSquareIcon, ChartBarIcon, CalendarDaysIcon, TrashIcon } from '@he
 import LoadingSkeleton from '../components/ui/LoadingSkeleton.vue'
 
 const debtStore = useDebtStore()
+const expenseStore = useExpenseStore()
+const { showSuccess, showError, showWarning } = useNotifications()
+const confirm = useConfirm()
 const { debts, loading, totalBalance, totalCreditLimit, utilizationRate, activeDebts } = storeToRefs(debtStore)
 
 // Estado local del componente
@@ -368,6 +389,7 @@ const formModel = ref({})
 const summaryData = ref(null)
 const installmentsData = ref(null)
 const installmentMonths = ref(6)
+const creatingExpenses = ref(false)
 
 // Computed para UI
 const activeCount = computed(() => activeDebts.value.length)
@@ -403,8 +425,9 @@ const getCardTypeColor = (brand) => {
   return colors[brand] || '#6B7280'
 }
 
-onMounted(() => {
-  if (!debts.value?.length) debtStore.loadDebts()
+onMounted(async () => {
+  if (!debts.value?.length) await debtStore.loadDebts()
+  if (!expenseStore.categories?.length) await expenseStore.loadCategories()
 })
 
 const openCreate = () => {
@@ -454,6 +477,152 @@ const reloadInstallments = async () => {
     installmentMonths.value = months
     installmentsData.value = await debtStore.fetchDebtInstallments(installmentsData.value.debt.id, { months })
   }
+}
+
+const createExpensesFromInstallments = async () => {
+  if (!installmentsData.value?.schedule?.length || !installmentsData.value?.debt) {
+    return
+  }
+
+  creatingExpenses.value = true
+  
+  try {
+    // Primero, asegurarnos de que existe una categoría para pagos de créditos
+    let creditCategory = await ensureCreditPaymentCategory()
+    
+    const debt = installmentsData.value.debt
+    const paymentAmount = installmentsData.value.payment
+    const dueDay = debt.dueDay || 15 // Usar el día de pago de la deuda o 15 por defecto
+    
+    // Verificar si ya existe un gasto fijo para esta deuda
+    const existingFixedExpense = expenseStore.fixedExpenses.find(fe => 
+      fe.name === `Pago ${debt.name}` && fe.categoryId === creditCategory.id
+    )
+    
+    // Variable para contar gastos eliminados
+    let deletedExpensesCount = 0
+    
+    // Si existe un gasto fijo anterior, eliminar gastos relacionados
+    if (existingFixedExpense) {
+      const confirmReplace = await confirm.show({
+        title: 'Reemplazar Plan de Cuotas',
+        message: `Ya existe un plan de cuotas para "${debt.name}".\n\n¿Deseas reemplazarlo con el nuevo plan de ${installmentsData.value.schedule.length} cuotas?\n\nEsto eliminará los gastos anteriores y creará los nuevos.`,
+        confirmText: 'Reemplazar',
+        cancelText: 'Cancelar',
+        variant: 'warning'
+      })
+      
+      if (!confirmReplace) {
+        return
+      }
+      
+      // Eliminar gastos existentes relacionados con este crédito
+      deletedExpensesCount = await removeExistingCreditExpenses(debt.name, creditCategory.id, existingFixedExpense.id)
+      
+      // Eliminar el gasto fijo anterior
+      await expenseStore.deleteFixedExpense(existingFixedExpense.id)
+    }
+    
+    // Crear un gasto fijo para el pago mensual del crédito
+    const fixedExpenseData = {
+      name: `Pago ${debt.name}`,
+      amount: paymentAmount,
+      categoryId: creditCategory.id,
+      dayOfMonth: dueDay,
+      active: true
+    }
+    
+    // Crear el gasto fijo primero
+    const createdFixedExpense = await expenseStore.addFixedExpense(fixedExpenseData)
+    
+    // Crear gastos individuales para cada cuota del plan actual
+    const expensesCreated = []
+    for (const installment of installmentsData.value.schedule) {
+      const expenseData = {
+        date: installment.date,
+        description: `Cuota ${installment.period} - ${debt.name}`,
+        amount: installment.payment,
+        categoryId: creditCategory.id,
+        isFixed: true, // Marcar como gasto fijo
+        fixedExpenseId: createdFixedExpense.id // Asignar el ID del gasto fijo
+      }
+      
+      try {
+        const createdExpense = await expenseStore.addExpense(expenseData)
+        expensesCreated.push(createdExpense)
+      } catch (error) {
+        // Error silencioso para gastos individuales, continuar con los demás
+      }
+    }
+    
+    const action = existingFixedExpense ? 'actualizado' : 'creado'
+    const replacementMessage = existingFixedExpense 
+      ? `Se eliminaron ${deletedExpensesCount} gastos anteriores y se crearon ${expensesCreated.length} nuevos.`
+      : 'Se creó un gasto fijo para futuros pagos automáticos.'
+    
+    const successMessage = `Plan de cuotas ${action} exitosamente para "${debt.name}"\n\n` +
+          `💰 Monto por cuota: ${formatCurrency(paymentAmount)}\n` +
+          `📅 Día de pago: ${dueDay} de cada mes\n` +
+          `🏷️ Categoría: ${creditCategory.name}\n` +
+          `📊 Total de cuotas: ${expensesCreated.length}\n\n` +
+          replacementMessage
+          
+    // Cerrar el modal antes de mostrar la notificación
+    installmentsData.value = null
+    
+    // Mostrar notificación de éxito
+    showSuccess(successMessage, `Plan de Cuotas ${action.charAt(0).toUpperCase() + action.slice(1)}`)
+          
+  } catch (error) {
+    // Cerrar el modal antes de mostrar el error
+    installmentsData.value = null
+    showError('Error al crear los gastos automáticos. Inténtalo de nuevo.', 'Error en Plan de Cuotas')
+  } finally {
+    creatingExpenses.value = false
+  }
+}
+
+const removeExistingCreditExpenses = async (debtName, categoryId, fixedExpenseId) => {
+  // Buscar gastos existentes relacionados con este crédito
+  const existingExpenses = expenseStore.expenses.filter(expense => {
+    // Buscar por descripción que contenga el nombre de la deuda y "Cuota"
+    const isCreditExpense = expense.description?.toLowerCase().includes('cuota') && 
+                           expense.description?.toLowerCase().includes(debtName.toLowerCase())
+    
+    // O buscar por fixedExpenseId
+    const hasMatchingFixedExpenseId = expense.fixedExpenseId === fixedExpenseId
+    
+    return (isCreditExpense || hasMatchingFixedExpenseId) && expense.categoryId === categoryId
+  })
+  
+  // Eliminar cada gasto encontrado
+  for (const expense of existingExpenses) {
+    try {
+      await expenseStore.deleteExpense(expense.id)
+    } catch (error) {
+      // Error silencioso, continuar con los demás
+    }
+  }
+  
+  return existingExpenses.length
+}
+
+const ensureCreditPaymentCategory = async () => {
+  // Buscar la categoría "Crédito" específica
+  let creditCategory = expenseStore.categories.find(cat => 
+    cat.name.toLowerCase() === 'crédito' || cat.name.toLowerCase() === 'credito'
+  )
+  
+  if (!creditCategory) {
+    // Si no existe, mostrar mensaje para que el usuario la cree
+    showWarning(
+      'Por favor, crea primero una categoría llamada "Crédito" en la sección de gastos.\n\nUna vez creada, podrás usar esta funcionalidad para generar gastos automáticos.',
+      'Categoría Requerida'
+    )
+    throw new Error('Categoría "Crédito" no encontrada')
+  }
+  
+  return creditCategory
 }
 </script>
 

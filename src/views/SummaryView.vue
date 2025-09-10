@@ -119,6 +119,63 @@
       </div>
     </div>
 
+    <!-- Resumen de gastos de crédito -->
+    <div class="card">
+      <h2 class="text-lg font-semibold text-gray-900 mb-4">Gastos de Crédito del Mes</h2>
+      
+      <div v-if="creditExpensesThisMonth.length === 0" class="text-center py-8">
+        <div class="text-gray-400 mb-2">
+          <svg class="mx-auto h-12 w-12" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
+          </svg>
+        </div>
+        <p class="text-gray-500">No hay gastos de crédito este mes</p>
+        <p class="text-xs text-gray-400 mt-1">Los pagos de tarjetas de crédito aparecerán aquí</p>
+      </div>
+      
+      <div v-else class="space-y-3">
+        <div
+          v-for="expense in creditExpensesThisMonth"
+          :key="expense.id"
+          class="flex items-center justify-between p-3 bg-red-50 border border-red-200 rounded-lg"
+        >
+          <div class="flex items-center space-x-3">
+            <div class="flex-shrink-0">
+              <svg class="h-5 w-5 text-red-600" fill="currentColor" viewBox="0 0 20 20">
+                <path fill-rule="evenodd" d="M4 4a2 2 0 00-2 2v4a2 2 0 002 2V6h10a2 2 0 00-2-2H4zm2 6a2 2 0 012-2h8a2 2 0 012 2v4a2 2 0 01-2 2H8a2 2 0 01-2-2v-4zm6 4a2 2 0 100-4 2 2 0 000 4z" clip-rule="evenodd" />
+              </svg>
+            </div>
+            <div>
+              <p class="text-sm font-medium text-gray-900">{{ expense.description }}</p>
+              <div class="flex items-center space-x-2 mt-1">
+                <span class="text-xs text-red-600 font-medium">Crédito</span>
+                <span class="text-xs text-gray-500">{{ format(parseLocalDate(expense.date), 'dd/MM/yyyy') }}</span>
+              </div>
+            </div>
+          </div>
+          <div class="text-right">
+            <p class="text-sm font-semibold text-gray-900">
+              ${{ expense.amount.toLocaleString('es-ES', { minimumFractionDigits: 2 }) }}
+            </p>
+            <p class="text-xs text-gray-500">{{ expense.category.name }}</p>
+          </div>
+        </div>
+        
+        <!-- Total de gastos de crédito -->
+        <div class="mt-4 pt-3 border-t border-red-200">
+          <div class="flex justify-between items-center">
+            <span class="text-sm font-medium text-gray-700">Total gastos de crédito:</span>
+            <span class="text-lg font-bold text-red-600">
+              ${{ totalCreditExpenses.toLocaleString('es-ES', { minimumFractionDigits: 2 }) }}
+            </span>
+          </div>
+          <p class="text-xs text-gray-500 mt-1">
+            {{ creditExpensesThisMonth.length }} {{ creditExpensesThisMonth.length === 1 ? 'pago' : 'pagos' }} de crédito este mes
+          </p>
+        </div>
+      </div>
+    </div>
+
     <!-- Lista de gastos recientes -->
     <div class="card">
       <h2 class="text-lg font-semibold text-gray-900 mb-4">Gastos Recientes</h2>
@@ -216,6 +273,29 @@ const recentExpenses = computed(() => {
 })
 
 const expensesByCategory = computed(() => expenseStore.expensesByCategory)
+
+// Gastos de crédito del mes actual
+const creditExpensesThisMonth = computed(() => {
+  return currentMonthExpenses.value.filter(expense => {
+    // Verificar por categoría específica "Crédito"
+    const categoryName = expense.category?.name?.toLowerCase() || ''
+    if (categoryName === 'crédito' || categoryName === 'credito') {
+      return true
+    }
+    
+    // También verificar por descripción que contenga "cuota" (para gastos generados automáticamente)
+    const description = expense.description?.toLowerCase() || ''
+    if (description.includes('cuota') && (description.includes('crédito') || description.includes('credito'))) {
+      return true
+    }
+    
+    return false
+  })
+})
+
+const totalCreditExpenses = computed(() => {
+  return creditExpensesThisMonth.value.reduce((total, expense) => total + expense.amount, 0)
+})
 
 // Función para obtener el día del mes de un gasto fijo
 const getDayOfMonth = (fixedExpenseId) => {

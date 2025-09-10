@@ -8,7 +8,7 @@
       leave-from-class="opacity-100"
       leave-to-class="opacity-0"
     >
-      <div v-if="state.isOpen" class="fixed inset-0 z-50 flex items-center justify-center">
+      <div v-if="state.isOpen" class="fixed inset-0 z-[60] flex items-center justify-center">
         <div class="absolute inset-0 bg-black/40" @click="onCancel"></div>
         <div class="relative z-10 w-full max-w-md mx-4 rounded-xl bg-white shadow-2xl border border-gray-200">
           <div :class="['px-5 py-4 rounded-t-xl text-white', headerClass]">

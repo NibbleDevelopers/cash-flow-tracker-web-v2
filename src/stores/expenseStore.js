@@ -227,13 +227,13 @@ export const useExpenseStore = defineStore('expense', () => {
         amount: parseFloat(expenseData.amount),
         categoryId: parseInt(expenseData.categoryId),
         isFixed: expenseData.isFixed || false,
-        fixedExpenseId: null // Se asignará después si es fijo
+        fixedExpenseId: expenseData.fixedExpenseId || null // Usar el ID proporcionado o null
       }
 
       await googleSheetsService.addExpense(newExpense)
       
-             // Si es un gasto fijo, también lo agregamos a la lista de gastos fijos
-       if (expenseData.isFixed && expenseData.dayOfMonth) {
+             // Si es un gasto fijo y no tiene fixedExpenseId, crear el gasto fijo
+       if (expenseData.isFixed && expenseData.dayOfMonth && !expenseData.fixedExpenseId) {
          // Verificar si ya existe un gasto fijo similar
          const exists = await googleSheetsService.checkFixedExpenseExists(
            expenseData.description, 

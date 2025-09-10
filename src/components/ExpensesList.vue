@@ -183,6 +183,12 @@
               <div class="flex items-center space-x-2">
                 <h3 class="text-sm font-medium text-gray-900">{{ expense.description }}</h3>
                     <span v-if="expense.isFixed" class="inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-bold bg-blue-600 text-white uppercase tracking-wide">Fijo</span>
+                    <span v-if="isCreditPayment(expense)" class="inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-bold bg-red-600 text-white uppercase tracking-wide">
+                      <svg class="w-3 h-3 mr-1" fill="currentColor" viewBox="0 0 20 20">
+                        <path fill-rule="evenodd" d="M4 4a2 2 0 00-2 2v4a2 2 0 002 2V6h10a2 2 0 00-2-2H4zm2 6a2 2 0 012-2h8a2 2 0 012 2v4a2 2 0 01-2 2H8a2 2 0 01-2-2v-4zm6 4a2 2 0 100-4 2 2 0 000 4z" clip-rule="evenodd" />
+                      </svg>
+                      Crédito
+                    </span>
               </div>
               <div class="flex items-center space-x-4 mt-1">
                     <p class="text-xs text-gray-500">{{ format(parseLocalDate(expense.date), 'dd/MM/yyyy') }}</p>
@@ -303,6 +309,23 @@ const getDayOfMonth = (fixedExpenseId) => {
   
   // Formatear la fecha en español
   return format(paymentDate, 'EEEE d \'de\' MMMM', { locale: es })
+}
+
+// Función para identificar si un gasto es un pago de crédito
+const isCreditPayment = (expense) => {
+  // Verificar por categoría específica "Crédito"
+  const categoryName = expense.category?.name?.toLowerCase() || ''
+  if (categoryName === 'crédito' || categoryName === 'credito') {
+    return true
+  }
+  
+  // También verificar por descripción que contenga "cuota" (para gastos generados automáticamente)
+  const description = expense.description?.toLowerCase() || ''
+  if (description.includes('cuota') && (description.includes('crédito') || description.includes('credito'))) {
+    return true
+  }
+  
+  return false
 }
 
 // Estado de filtros y paginación
