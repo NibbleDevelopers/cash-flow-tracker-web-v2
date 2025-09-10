@@ -1,13 +1,13 @@
 <template>
   <div class="space-y-6">
     <div class="flex items-center justify-between">
-      <h2 class="text-xl font-semibold">Deudas</h2>
-      <button class="btn-primary" @click="openCreate">Nueva deuda</button>
+      <h2 class="text-xl font-semibold">Créditos</h2>
+      <button class="btn-primary" @click="openCreate">Nuevo crédito</button>
     </div>
 
     <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
       <div class="card">
-        <div class="text-xs text-gray-500">Total deudas</div>
+        <div class="text-xs text-gray-500">Total créditos</div>
         <div class="text-2xl font-semibold">
           <span v-if="!loading">{{ formatCurrency(totalBalance) }}</span>
           <LoadingSkeleton v-else type="text" width="6rem" />
@@ -16,7 +16,7 @@
       <div class="card">
         <div class="text-xs text-gray-500">Límite total</div>
         <div class="text-2xl font-semibold">
-          <span v-if="!loading">{{ formatCurrency(totalLimit) }}</span>
+          <span v-if="!loading">{{ formatCurrency(totalCreditLimit) }}</span>
           <LoadingSkeleton v-else type="text" width="6rem" />
         </div>
       </div>
@@ -47,9 +47,9 @@
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
             </svg>
           </div>
-          <h3 class="text-lg font-medium text-gray-900 mb-2">Sin deudas registradas</h3>
+          <h3 class="text-lg font-medium text-gray-900 mb-2">Sin créditos registrados</h3>
           <p class="text-gray-500 mb-4">Comienza agregando tu primera tarjeta de crédito o préstamo</p>
-          <button class="btn-primary" @click="openCreate">Agregar primera deuda</button>
+          <button class="btn-primary" @click="openCreate">Agregar primer crédito</button>
         </div>
         <div v-else class="overflow-x-auto">
           <table class="min-w-full divide-y divide-gray-200">
@@ -101,7 +101,9 @@
                     <ChartBarIcon class="h-5 w-5" />
                   </button>
                   <button class="btn-secondary inline-flex items-center justify-center" @click="openInstallments(d)" title="Cuotas" aria-label="Cuotas">
-                    <CalendarDaysIcon class="h-5 w-5" />
+                    <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                    </svg>
                   </button>
                   <button class="btn-secondary inline-flex items-center justify-center" @click="confirmDelete(d)" title="Eliminar" aria-label="Eliminar">
                     <TrashIcon class="h-5 w-5" />
@@ -153,41 +155,197 @@
       </dl>
     </div>
 
-    <div v-if="installmentsData" class="card">
-      <div class="flex items-center justify-between mb-2">
-        <h3 class="text-lg font-medium">Plan de cuotas: {{ installmentsData?.debt?.name }}</h3>
-        <button class="btn-secondary" @click="installmentsData = null">Cerrar</button>
-      </div>
-      <div class="flex items-center space-x-2 mb-3">
-        <label class="text-sm">Meses</label>
-        <input v-model.number="installmentMonths" type="number" min="1" max="120" class="input-field w-32" />
-        <button class="btn-primary" @click="reloadInstallments">Recalcular</button>
-      </div>
-      <div class="overflow-x-auto">
-        <table class="min-w-full divide-y divide-gray-200">
-          <thead class="bg-gray-50">
-            <tr>
-              <th class="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase">Periodo</th>
-              <th class="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase">Fecha</th>
-              <th class="px-3 py-2 text-right text-xs font-medium text-gray-500 uppercase">Pago</th>
-              <th class="px-3 py-2 text-right text-xs font-medium text-gray-500 uppercase">Interés</th>
-              <th class="px-3 py-2 text-right text-xs font-medium text-gray-500 uppercase">Capital</th>
-              <th class="px-3 py-2 text-right text-xs font-medium text-gray-500 uppercase">Saldo</th>
-            </tr>
-          </thead>
-          <tbody class="divide-y divide-gray-200 bg-white">
-            <tr v-for="row in installmentsData.schedule" :key="row.period">
-              <td class="px-3 py-2">{{ row.period }}</td>
-              <td class="px-3 py-2">{{ row.date }}</td>
-              <td class="px-3 py-2 text-right">{{ formatCurrency(row.payment) }}</td>
-              <td class="px-3 py-2 text-right">{{ formatCurrency(row.interest) }}</td>
-              <td class="px-3 py-2 text-right">{{ formatCurrency(row.principal) }}</td>
-              <td class="px-3 py-2 text-right">{{ formatCurrency(row.remainingBalance) }}</td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
-    </div>
+    <!-- Modal de Plan de Cuotas -->
+    <TransitionRoot as="template" :show="!!installmentsData">
+      <Dialog class="relative z-50" @close="installmentsData = null">
+        <TransitionChild
+          as="template"
+          enter="ease-out duration-300"
+          enter-from="opacity-0"
+          enter-to="opacity-100"
+          leave="ease-in duration-200"
+          leave-from="opacity-100"
+          leave-to="opacity-0"
+        >
+          <div class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" />
+        </TransitionChild>
+
+        <div class="fixed inset-0 z-10 overflow-y-auto">
+          <div class="flex min-h-full items-end justify-center p-4 text-center sm:items-center sm:p-0">
+            <TransitionChild
+              as="template"
+              enter="ease-out duration-300"
+              enter-from="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95"
+              enter-to="opacity-100 translate-y-0 sm:scale-100"
+              leave="ease-in duration-200"
+              leave-from="opacity-100 translate-y-0 sm:scale-100"
+              leave-to="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95"
+            >
+              <DialogPanel class="relative transform overflow-hidden rounded-lg bg-white text-left shadow-xl transition-all sm:my-8 sm:w-full sm:max-w-6xl">
+                <!-- Header -->
+                <div class="bg-white px-4 pb-4 pt-5 sm:p-6 sm:pb-4">
+                  <div class="flex items-center justify-between mb-6">
+                    <div>
+                      <DialogTitle as="h3" class="text-lg font-semibold leading-6 text-gray-900">
+                        Plan de Cuotas
+                      </DialogTitle>
+                      <p class="text-sm text-gray-500 mt-1">{{ installmentsData?.debt?.name }}</p>
+                    </div>
+                    <button
+                      type="button"
+                      class="rounded-md bg-white text-gray-400 hover:text-gray-600 focus:outline-none focus:ring-2 focus:ring-primary-500"
+                      @click="installmentsData = null"
+                    >
+                      <span class="sr-only">Cerrar</span>
+                      <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+                      </svg>
+                    </button>
+                  </div>
+
+                  <!-- Resumen del Plan -->
+                  <div v-if="installmentsData?.totals" class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+                    <div class="bg-blue-50 rounded-lg p-4 border border-blue-200">
+                      <div class="flex items-center">
+                        <div class="w-8 h-8 bg-blue-500 rounded-lg flex items-center justify-center mr-3">
+                          <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1" />
+                          </svg>
+                        </div>
+                        <div>
+                          <p class="text-xs text-blue-600 font-medium">Pago Mensual</p>
+                          <p class="text-lg font-bold text-blue-900">{{ formatCurrency(installmentsData.payment) }}</p>
+                        </div>
+                      </div>
+                    </div>
+                    
+                    <div class="bg-orange-50 rounded-lg p-4 border border-orange-200">
+                      <div class="flex items-center">
+                        <div class="w-8 h-8 bg-orange-500 rounded-lg flex items-center justify-center mr-3">
+                          <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                          </svg>
+                        </div>
+                        <div>
+                          <p class="text-xs text-orange-600 font-medium">Total a Pagar</p>
+                          <p class="text-lg font-bold text-orange-900">{{ formatCurrency(installmentsData.totals.totalPaid) }}</p>
+                        </div>
+                      </div>
+                    </div>
+                    
+                    <div class="bg-red-50 rounded-lg p-4 border border-red-200">
+                      <div class="flex items-center">
+                        <div class="w-8 h-8 bg-red-500 rounded-lg flex items-center justify-center mr-3">
+                          <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1" />
+                          </svg>
+                        </div>
+                        <div>
+                          <p class="text-xs text-red-600 font-medium">Total Intereses</p>
+                          <p class="text-lg font-bold text-red-900">{{ formatCurrency(installmentsData.totals.totalInterest) }}</p>
+                        </div>
+                      </div>
+                    </div>
+                    
+                    <div class="bg-green-50 rounded-lg p-4 border border-green-200">
+                      <div class="flex items-center">
+                        <div class="w-8 h-8 bg-green-500 rounded-lg flex items-center justify-center mr-3">
+                          <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                          </svg>
+                        </div>
+                        <div>
+                          <p class="text-xs text-green-600 font-medium">Capital</p>
+                          <p class="text-lg font-bold text-green-900">{{ formatCurrency(installmentsData.totals.totalPrincipal) }}</p>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <!-- Controles -->
+                  <div class="flex items-center justify-between mb-4">
+                    <div class="flex items-center space-x-4">
+                      <div class="flex items-center space-x-2">
+                        <label class="text-sm font-medium text-gray-700">Duración:</label>
+                        <input 
+                          v-model.number="installmentMonths" 
+                          type="number" 
+                          min="1" 
+                          max="48" 
+                          class="input-field w-20 h-8 text-center" 
+                        />
+                        <span class="text-sm text-gray-500">meses</span>
+                      </div>
+                      <button class="btn-primary px-4 py-2 text-sm inline-flex items-center" @click="reloadInstallments">
+                        <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                        </svg>
+                        Generar Plan
+                      </button>
+                    </div>
+                    <div class="text-sm text-gray-500">
+                      Mostrando {{ installmentsData?.schedule?.length || 0 }} cuotas
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Tabla de Cuotas -->
+                <div class="bg-gray-50 px-4 py-3 sm:px-6">
+                  <div class="overflow-x-auto max-h-96">
+                    <table class="min-w-full divide-y divide-gray-200">
+                      <thead class="bg-gray-100 sticky top-0">
+                        <tr>
+                          <th class="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">#</th>
+                          <th class="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Fecha</th>
+                          <th class="px-3 py-2 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Pago</th>
+                          <th class="px-3 py-2 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Interés</th>
+                          <th class="px-3 py-2 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Capital</th>
+                          <th class="px-3 py-2 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Saldo</th>
+                        </tr>
+                      </thead>
+                      <tbody class="bg-white divide-y divide-gray-200">
+                        <tr v-for="(row, index) in installmentsData?.schedule" :key="row.period" 
+                            :class="index % 2 === 0 ? 'bg-white' : 'bg-gray-50'">
+                          <td class="px-3 py-2 whitespace-nowrap text-sm font-medium text-gray-900">
+                            {{ row.period }}
+                          </td>
+                          <td class="px-3 py-2 whitespace-nowrap text-sm text-gray-500">
+                            {{ row.date }}
+                          </td>
+                          <td class="px-3 py-2 whitespace-nowrap text-sm text-right font-medium text-gray-900">
+                            {{ formatCurrency(row.payment) }}
+                          </td>
+                          <td class="px-3 py-2 whitespace-nowrap text-sm text-right text-red-600">
+                            {{ formatCurrency(row.interest) }}
+                          </td>
+                          <td class="px-3 py-2 whitespace-nowrap text-sm text-right text-green-600">
+                            {{ formatCurrency(row.principal) }}
+                          </td>
+                          <td class="px-3 py-2 whitespace-nowrap text-sm text-right text-gray-500">
+                            {{ formatCurrency(row.remainingBalance) }}
+                          </td>
+                        </tr>
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+
+                <!-- Footer -->
+                <div class="bg-gray-50 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse">
+                  <button
+                    type="button"
+                    class="btn-secondary w-full sm:w-auto sm:ml-3"
+                    @click="installmentsData = null"
+                  >
+                    Cerrar
+                  </button>
+                </div>
+              </DialogPanel>
+            </TransitionChild>
+          </div>
+        </div>
+      </Dialog>
+    </TransitionRoot>
   </div>
 </template>
 
@@ -209,7 +367,7 @@ const editing = ref(false)
 const formModel = ref({})
 const summaryData = ref(null)
 const installmentsData = ref(null)
-const installmentMonths = ref(12)
+const installmentMonths = ref(6)
 
 // Computed para UI
 const activeCount = computed(() => activeDebts.value.length)
@@ -283,12 +441,18 @@ const openSummary = async (debt) => {
 }
 
 const openInstallments = async (debt) => {
-  installmentsData.value = await debtStore.fetchDebtInstallments(debt.id, { months: installmentMonths.value })
+  // Validar que no exceda 48 meses
+  const months = Math.min(Math.max(installmentMonths.value, 1), 48)
+  installmentMonths.value = months
+  installmentsData.value = await debtStore.fetchDebtInstallments(debt.id, { months })
 }
 
 const reloadInstallments = async () => {
   if (installmentsData.value?.debt?.id) {
-    installmentsData.value = await debtStore.fetchDebtInstallments(installmentsData.value.debt.id, { months: installmentMonths.value })
+    // Validar que no exceda 48 meses
+    const months = Math.min(Math.max(installmentMonths.value, 1), 48)
+    installmentMonths.value = months
+    installmentsData.value = await debtStore.fetchDebtInstallments(installmentsData.value.debt.id, { months })
   }
 }
 </script>

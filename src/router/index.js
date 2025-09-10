@@ -30,7 +30,7 @@ const routes = [
     name: 'DebtsView',
     component: () => import('../views/DebtsView.vue'),
     meta: {
-      title: 'Deudas - Cash Flow Tracker'
+      title: 'Créditos - Cash Flow Tracker'
     }
   }
 ]
