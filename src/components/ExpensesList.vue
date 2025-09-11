@@ -266,7 +266,6 @@ import { es } from 'date-fns/locale'
 import { useExpenseStore } from '../stores/expenseStore'
 import AppSelect from './ui/AppSelect.vue'
 import { useConfirm } from '../composables/useConfirm'
-import { push } from 'notivue'
 import { parseLocalDate } from '../utils/date'
 
 const expenseStore = useExpenseStore()
@@ -613,9 +612,9 @@ const onDelete = async (expense) => {
   if (!ok) return
   try {
     await expenseStore.deleteExpense(expense.id)
-    push.success('Gasto eliminado')
+    console.log('Gasto eliminado')
   } catch (e) {
-    push.error('No se pudo eliminar el gasto')
+    console.error('No se pudo eliminar el gasto')
   }
 }
 </script>

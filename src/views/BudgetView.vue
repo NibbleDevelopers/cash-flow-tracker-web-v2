@@ -145,7 +145,6 @@ import BudgetProgress from '../components/BudgetProgress.vue'
 import ExpenseModal from '../components/ExpenseModal.vue'
 import { useExpenseStore } from '../stores/expenseStore'
 import { format } from 'date-fns'
-import { push } from 'notivue'
 
 const showModal = ref(false)
 
@@ -249,10 +248,10 @@ const saveBudget = async () => {
       expenseStore.budgetsByMonth[editMonth.value] = prev
       throw e
     }
-    push.success('Presupuesto guardado')
+    console.log('Presupuesto guardado')
     closeMonthModal()
   } catch (e) {
-    push.error('No se pudo guardar el presupuesto')
+    console.error('No se pudo guardar el presupuesto')
   } finally {
     saving.value = false
   }
@@ -299,14 +298,14 @@ const applyToNextMonths = async () => {
         await useExpenseStore().updateBudget({ month: key, amount: baseAmount })
       }
       await expenseStore.loadBudgets()
-      push.success('Aplicado a los próximos meses')
+      console.log('Aplicado a los próximos meses')
     } catch (e) {
       // revertir
       for (const { key, prev } of ops) expenseStore.budgetsByMonth[key] = prev
       throw e
     }
   } catch (e) {
-    push.error('No se pudo aplicar a próximos meses')
+    console.error('No se pudo aplicar a próximos meses')
   } finally {
     saving.value = false
   }

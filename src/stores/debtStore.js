@@ -1,7 +1,6 @@
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
 import backend from '../services/googleSheetsBackend'
-import { useNotifications } from '../composables/useNotifications'
 
 // Constantes
 const DEBT_VALIDATION = {
@@ -19,7 +18,6 @@ export const useDebtStore = defineStore('debt', () => {
   const debts = ref([])
   const loading = ref(false)
   const error = ref(null)
-  const { showSuccess, showError } = useNotifications()
 
   // Getters computados
   const activeDebts = computed(() => debts.value.filter(debt => debt.active))
@@ -121,11 +119,11 @@ export const useDebtStore = defineStore('debt', () => {
         await loadDebts()
       }
       
-      showSuccess('Deuda creada exitosamente')
+      console.log('Deuda creada exitosamente')
       return created
     } catch (err) {
       error.value = err.message || 'Error al crear deuda'
-      showError(err.message || 'Error al crear deuda')
+      console.error(err.message || 'Error al crear deuda')
       console.error('createDebt error:', err)
       throw err
     } finally {
@@ -155,11 +153,11 @@ export const useDebtStore = defineStore('debt', () => {
       } else {
         await loadDebts()
       }
-      showSuccess('Deuda actualizada exitosamente')
+      console.log('Deuda actualizada exitosamente')
       return updated
     } catch (err) {
       error.value = 'Error al actualizar deuda'
-      showError('Error al actualizar deuda')
+      console.error('Error al actualizar deuda')
       console.error('updateDebt error:', err)
       throw err
     } finally {
@@ -173,11 +171,11 @@ export const useDebtStore = defineStore('debt', () => {
     try {
       await backend.deleteDebt(id)
       debts.value = debts.value.filter(d => String(d.id) !== String(id))
-      showSuccess('Deuda eliminada exitosamente')
+      console.log('Deuda eliminada exitosamente')
       return true
     } catch (err) {
       error.value = 'Error al eliminar deuda'
-      showError('Error al eliminar deuda')
+      console.error('Error al eliminar deuda')
       console.error('deleteDebt error:', err)
       throw err
     } finally {

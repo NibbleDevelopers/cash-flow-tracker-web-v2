@@ -411,7 +411,6 @@
 import { ref, onMounted, computed } from 'vue'
 import { useDebtStore } from '../stores/debtStore'
 import { useExpenseStore } from '../stores/expenseStore'
-import { useNotifications } from '../composables/useNotifications'
 import { useConfirm } from '../composables/useConfirm'
 import { storeToRefs } from 'pinia'
 import DebtForm from '../components/DebtForm.vue'
@@ -421,7 +420,6 @@ import LoadingSkeleton from '../components/ui/LoadingSkeleton.vue'
 
 const debtStore = useDebtStore()
 const expenseStore = useExpenseStore()
-const { showSuccess, showError, showWarning } = useNotifications()
 const confirm = useConfirm()
 const { debts, loading, totalBalance, totalCreditLimit, utilizationRate, activeDebts } = storeToRefs(debtStore)
 
@@ -511,7 +509,7 @@ const openInstallments = async (debt) => {
   try {
     // Validar parámetros de entrada
     if (!debt?.id) {
-      showError('Error: Datos de deuda inválidos')
+      console.error('Error: Datos de deuda inválidos')
       return
     }
 
@@ -523,7 +521,7 @@ const openInstallments = async (debt) => {
     installmentsData.value = await debtStore.fetchDebtInstallments(debt.id, { months })
     
     if (!installmentsData.value?.debt) {
-      showError('Error al cargar los datos de cuotas')
+      console.error('Error al cargar los datos de cuotas')
       return
     }
 
@@ -535,7 +533,7 @@ const openInstallments = async (debt) => {
     
   } catch (error) {
     console.error('Error abriendo cuotas:', error)
-    showError('Error al abrir el plan de cuotas')
+    console.error('Error al abrir el plan de cuotas')
   }
 }
 
@@ -602,7 +600,7 @@ const reloadInstallments = async () => {
     installmentsData.value = await debtStore.fetchDebtInstallments(installmentsData.value.debt.id, { months })
     
     if (!installmentsData.value?.debt) {
-      showError('Error al recargar los datos de cuotas')
+      console.error('Error al recargar los datos de cuotas')
       return
     }
 
@@ -614,7 +612,7 @@ const reloadInstallments = async () => {
     
   } catch (error) {
     console.error('Error recargando cuotas:', error)
-    showError('Error al recargar el plan de cuotas')
+    console.error('Error al recargar el plan de cuotas')
   }
 }
 
@@ -638,7 +636,7 @@ const createExpensesFromInstallments = async () => {
     const isCutOffDayValid = debt.cutOffDay !== null && debt.cutOffDay !== undefined && debt.cutOffDay > 0
     
     if (!isDueDayValid || !isCutOffDayValid) {
-      showWarning(
+      console.warn(
         `La tarjeta "${debt.name}" no tiene configurados los días de vencimiento y corte.\n\n` +
         `Por favor, edita la tarjeta y configura:\n` +
         `• Día de vencimiento (ej: 15)\n` +
@@ -734,12 +732,12 @@ const createExpensesFromInstallments = async () => {
     
     // Cerrar el modal y mostrar notificación de éxito
     installmentsData.value = null
-    showSuccess(successMessage, `Plan de Cuotas ${action.charAt(0).toUpperCase() + action.slice(1)}`)
+    console.log(successMessage, `Plan de Cuotas ${action.charAt(0).toUpperCase() + action.slice(1)}`)
           
   } catch (error) {
     console.error('Error creando gastos desde cuotas:', error)
     installmentsData.value = null
-    showError(`Error al crear los gastos automáticos: ${error.message}`, 'Error en Plan de Cuotas')
+    console.error(`Error al crear los gastos automáticos: ${error.message}`, 'Error en Plan de Cuotas')
   } finally {
     creatingExpenses.value = false
   }
@@ -783,7 +781,7 @@ const ensureCreditPaymentCategory = async () => {
   )
   
   if (!creditCategory) {
-    showWarning(
+    console.warn(
       'Por favor, crea primero una categoría llamada "Crédito" en la sección de gastos.\n\nUna vez creada, podrás usar esta funcionalidad para generar gastos automáticos.',
       'Categoría Requerida'
     )
