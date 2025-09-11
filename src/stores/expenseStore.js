@@ -274,6 +274,37 @@ export const useExpenseStore = defineStore('expense', () => {
     }
   }
 
+  // Agregar múltiples gastos en lote (mejor rendimiento)
+  const addExpensesBatch = async (expensesData) => {
+    loading.value = true
+    error.value = null
+    
+    try {
+      const expenses = expensesData.map(expenseData => ({
+        id: Date.now().toString() + Math.random().toString(36).substr(2, 9),
+        date: expenseData.date || format(new Date(), 'yyyy-MM-dd'),
+        description: expenseData.description,
+        amount: parseFloat(expenseData.amount),
+        categoryId: parseInt(expenseData.categoryId),
+        isFixed: expenseData.isFixed || false,
+        fixedExpenseId: expenseData.fixedExpenseId || null
+      }))
+
+      const result = await googleSheetsService.addExpensesBatch(expenses)
+      
+      // Recargar gastos para obtener la información completa de categorías
+      await loadExpenses()
+      
+      return result
+    } catch (err) {
+      error.value = 'Error al agregar los gastos'
+      console.error('Error adding expenses batch:', err)
+      throw err
+    } finally {
+      loading.value = false
+    }
+  }
+
   const updateExpense = async (expenseData) => {
     loading.value = true
     error.value = null
@@ -459,7 +490,18 @@ export const useExpenseStore = defineStore('expense', () => {
     error.value = null
     
     try {
-      const result = await googleSheetsService.generateFixedExpensesForMonth(month)
+      console.log('Store: Generando gastos fijos para el mes:', month)
+      
+      // Intentar usar el endpoint batch primero, si falla usar el original
+      let result
+      try {
+        result = await googleSheetsService.generateFixedExpensesForMonthBatch(month)
+        console.log('Store: Resultado de la generación batch:', result)
+      } catch (batchError) {
+        console.warn('Store: Endpoint batch falló, usando endpoint original:', batchError)
+        result = await googleSheetsService.generateFixedExpensesForMonth(month)
+        console.log('Store: Resultado de la generación original:', result)
+      }
       
       // Recargar gastos para reflejar lo generado por el backend
       await loadExpenses()
@@ -510,6 +552,7 @@ export const useExpenseStore = defineStore('expense', () => {
     loadBudgets,
     loadFixedExpenses,
     addExpense,
+    addExpensesBatch,
     updateExpense,
     deleteExpense,
     updateBudget,

@@ -28,7 +28,7 @@ class GoogleSheetsBackendService {
         
         try {
           const errorData = await response.json()
-          errorMessage = errorData.message || errorData.error || errorMessage
+          errorMessage = errorData?.message || errorData?.error || errorMessage
         } catch {
           // Si no se puede parsear como JSON, usar el texto plano
           const errorText = await response.text()
@@ -63,28 +63,57 @@ class GoogleSheetsBackendService {
   // ==========================
   // Deudas (Debts) API
   // ==========================
+  /**
+   * Obtiene todas las deudas desde el backend
+   * @returns {Array} - Array de objetos de deuda
+   */
   async getDebts() {
     try {
       const response = await this.makeRequest('/debts')
-      // Estructura esperada: { success, data: string[][], count }
       const rows = Array.isArray(response?.data) ? response.data : []
-      return rows.map(row => ({
-        id: row?.[0] || '',
-        name: row?.[1] || '',
-        issuer: row?.[2] || '',
-        creditLimit: parseFloat(row?.[3]) || 0,
-        balance: parseFloat(row?.[4]) || 0,
-        dueDay: parseInt(row?.[5]) || null,
-        cutOffDay: parseInt(row?.[6]) || null,
-        maskPan: row?.[7] || '',
-        interesEfectivo: parseFloat(row?.[8]) || 0,
-        brand: row?.[9] || '',
-        active: String(row?.[10]).toUpperCase() === 'TRUE' || row?.[10] === true
-      }))
+      
+      return rows.map(row => this.parseDebtRow(row))
     } catch (error) {
       console.error('Error fetching debts:', error)
       return []
     }
+  }
+
+  /**
+   * Parsea una fila de datos de deuda
+   * @param {Array} row - Fila de datos del backend
+   * @returns {Object} - Objeto de deuda parseado
+   */
+  parseDebtRow(row) {
+    const dueDay = this.parseDayValue(row?.[5])
+    const cutOffDay = this.parseDayValue(row?.[6])
+    
+    return {
+      id: row?.[0] || '',
+      name: row?.[1] || '',
+      issuer: row?.[2] || '',
+      creditLimit: parseFloat(row?.[3]) || 0,
+      balance: parseFloat(row?.[4]) || 0,
+      dueDay,
+      cutOffDay,
+      maskPan: row?.[7] || '',
+      interesEfectivo: parseFloat(row?.[8]) || 0,
+      brand: row?.[9] || '',
+      active: String(row?.[10]).toUpperCase() === 'TRUE' || row?.[10] === true
+    }
+  }
+
+  /**
+   * Parsea un valor de día, manejando casos especiales
+   * @param {any} value - Valor a parsear
+   * @returns {number|null} - Día parseado o null
+   */
+  parseDayValue(value) {
+    if (value === undefined || value === '' || value === null) {
+      return null
+    }
+    const parsed = parseInt(value)
+    return isNaN(parsed) ? null : parsed
   }
 
   async createDebt(payload) {
@@ -145,11 +174,20 @@ class GoogleSheetsBackendService {
     }
   }
 
+  /**
+   * Obtiene el plan de cuotas para una deuda específica
+   * @param {string} id - ID de la deuda
+   * @param {Object} options - Opciones de consulta
+   * @param {number} options.months - Número de meses
+   * @param {string} options.start - Fecha de inicio
+   * @returns {Object|null} - Datos del plan de cuotas
+   */
   async getDebtInstallments(id, { months, start } = {}) {
     try {
       const params = new URLSearchParams()
       if (months != null) params.set('months', String(months))
       if (start) params.set('start', start)
+      
       const response = await this.makeRequest(`/debts/${id}/installments?${params.toString()}`)
       return response?.data || response
     } catch (error) {
@@ -270,6 +308,21 @@ class GoogleSheetsBackendService {
       return response
     } catch (error) {
       console.error('Error adding expense:', error)
+      throw error
+    }
+  }
+
+  // Agregar múltiples gastos en lote (mejor rendimiento)
+  async addExpensesBatch(expenses) {
+    try {
+      const response = await this.makeRequest('/expenses/batch', {
+        method: 'POST',
+        body: JSON.stringify({ expenses })
+      })
+
+      return response
+    } catch (error) {
+      console.error('Error adding expenses batch:', error)
       throw error
     }
   }
@@ -478,6 +531,23 @@ class GoogleSheetsBackendService {
       return response
     } catch (error) {
       console.error('Error generating fixed expenses:', error)
+      throw error
+    }
+  }
+
+  // Generar gastos fijos usando endpoint batch (mejor rendimiento)
+  async generateFixedExpensesForMonthBatch(month) {
+    try {
+      console.log('Service: Enviando request para generar gastos fijos del mes:', month)
+      const response = await this.makeRequest('/generate-fixed-expenses/batch', {
+        method: 'POST',
+        body: JSON.stringify({ month })
+      })
+      console.log('Service: Respuesta del backend:', response)
+
+      return response
+    } catch (error) {
+      console.error('Error generating fixed expenses batch:', error)
       throw error
     }
   }

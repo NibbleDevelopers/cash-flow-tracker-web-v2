@@ -262,6 +262,48 @@
                     </div>
                   </div>
 
+                  <!-- Información de fechas recomendadas -->
+                  <div v-if="installmentsData?.debt" class="mb-4 p-3 rounded-lg border" 
+                       :class="(installmentsData.debt.dueDay && installmentsData.debt.cutOffDay && installmentsData.debt.dueDay > 0 && installmentsData.debt.cutOffDay > 0)
+                         ? 'bg-blue-50 border-blue-200' 
+                         : 'bg-yellow-50 border-yellow-200'"
+                       @click="console.log('Panel info - Valores:', { dueDay: installmentsData.debt.dueDay, cutOffDay: installmentsData.debt.cutOffDay, type: typeof installmentsData.debt.dueDay })">
+                    <div class="flex items-start space-x-2">
+                      <svg v-if="installmentsData.debt.dueDay && installmentsData.debt.cutOffDay && installmentsData.debt.dueDay > 0 && installmentsData.debt.cutOffDay > 0" 
+                           class="w-5 h-5 text-blue-600 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                      </svg>
+                      <svg v-else class="w-5 h-5 text-yellow-600 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.732-.833-2.5 0L4.268 19.5c-.77.833.192 2.5 1.732 2.5z" />
+                      </svg>
+                      <div>
+                        <h4 class="text-sm font-medium" 
+                            :class="(installmentsData.debt.dueDay && installmentsData.debt.cutOffDay && installmentsData.debt.dueDay > 0 && installmentsData.debt.cutOffDay > 0)
+                              ? 'text-blue-900' 
+                              : 'text-yellow-900'">
+                          {{ (installmentsData.debt.dueDay && installmentsData.debt.cutOffDay && installmentsData.debt.dueDay > 0 && installmentsData.debt.cutOffDay > 0)
+                             ? 'Fechas de Pago Recomendadas' 
+                             : 'Configuración Requerida' }}
+                        </h4>
+                        <p class="text-xs mt-1"
+                           :class="(installmentsData.debt.dueDay && installmentsData.debt.cutOffDay && installmentsData.debt.dueDay > 0 && installmentsData.debt.cutOffDay > 0)
+                             ? 'text-blue-700' 
+                             : 'text-yellow-700'">
+                          Día de vencimiento: {{ (installmentsData.debt.dueDay && installmentsData.debt.dueDay > 0) ? installmentsData.debt.dueDay : 'No configurado' }} | 
+                          Día de corte: {{ (installmentsData.debt.cutOffDay && installmentsData.debt.cutOffDay > 0) ? installmentsData.debt.cutOffDay : 'No configurado' }}
+                        </p>
+                        <p class="text-xs mt-1"
+                           :class="(installmentsData.debt.dueDay && installmentsData.debt.cutOffDay && installmentsData.debt.dueDay > 0 && installmentsData.debt.cutOffDay > 0)
+                             ? 'text-blue-600' 
+                             : 'text-yellow-600'">
+                          {{ (installmentsData.debt.dueDay && installmentsData.debt.cutOffDay && installmentsData.debt.dueDay > 0 && installmentsData.debt.cutOffDay > 0)
+                             ? 'Las fechas se calcularán automáticamente basándose en estos días para optimizar tus pagos.'
+                             : 'Debes configurar los días de vencimiento y corte para generar fechas de pago óptimas.' }}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+
                   <!-- Controles -->
                   <div class="flex items-center justify-between mb-4">
                     <div class="flex items-center space-x-4">
@@ -286,7 +328,8 @@
                         v-if="installmentsData?.schedule?.length > 0"
                         class="btn-secondary px-4 py-2 text-sm inline-flex items-center" 
                         @click="createExpensesFromInstallments"
-                        :disabled="creatingExpenses"
+                        :disabled="creatingExpenses || !installmentsData?.debt?.dueDay || !installmentsData?.debt?.cutOffDay || installmentsData?.debt?.dueDay === 0 || installmentsData?.debt?.cutOffDay === 0"
+                        :title="(!installmentsData?.debt?.dueDay || !installmentsData?.debt?.cutOffDay || installmentsData?.debt?.dueDay === 0 || installmentsData?.debt?.cutOffDay === 0) ? 'Configura primero los días de vencimiento y corte' : ''"
                       >
                         <svg v-if="creatingExpenses" class="animate-spin -ml-1 mr-2 h-4 w-4 text-gray-500" fill="none" viewBox="0 0 24 24">
                           <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
@@ -325,7 +368,7 @@
                             {{ row.period }}
                           </td>
                           <td class="px-3 py-2 whitespace-nowrap text-sm text-gray-500">
-                            {{ row.date }}
+                            {{ calculatedInstallmentDates?.[index]?.displayDate || row.date }}
                           </td>
                           <td class="px-3 py-2 whitespace-nowrap text-sm text-right font-medium text-gray-900">
                             {{ formatCurrency(row.payment) }}
@@ -388,6 +431,7 @@ const editing = ref(false)
 const formModel = ref({})
 const summaryData = ref(null)
 const installmentsData = ref(null)
+const calculatedInstallmentDates = ref(null)
 const installmentMonths = ref(6)
 const creatingExpenses = ref(false)
 
@@ -464,35 +508,153 @@ const openSummary = async (debt) => {
 }
 
 const openInstallments = async (debt) => {
-  // Validar que no exceda 48 meses
-  const months = Math.min(Math.max(installmentMonths.value, 1), 48)
-  installmentMonths.value = months
-  installmentsData.value = await debtStore.fetchDebtInstallments(debt.id, { months })
+  try {
+    // Validar parámetros de entrada
+    if (!debt?.id) {
+      showError('Error: Datos de deuda inválidos')
+      return
+    }
+
+    // Validar y ajustar número de meses
+    const months = Math.min(Math.max(installmentMonths.value, 1), 48)
+    installmentMonths.value = months
+
+    // Cargar datos de cuotas
+    installmentsData.value = await debtStore.fetchDebtInstallments(debt.id, { months })
+    
+    if (!installmentsData.value?.debt) {
+      showError('Error al cargar los datos de cuotas')
+      return
+    }
+
+    // Aplicar datos faltantes del backend (solución temporal)
+    applyMissingDebtData(installmentsData.value.debt, debt)
+    
+    // Calcular fechas recomendadas para el modal
+    await calculateInstallmentDatesForModal()
+    
+  } catch (error) {
+    console.error('Error abriendo cuotas:', error)
+    showError('Error al abrir el plan de cuotas')
+  }
+}
+
+/**
+ * Aplica datos faltantes de la deuda desde la lista principal
+ * @param {Object} installmentDebt - Datos de deuda del endpoint de cuotas
+ * @param {Object} originalDebt - Datos originales de la deuda
+ */
+const applyMissingDebtData = (installmentDebt, originalDebt) => {
+  if (!installmentDebt.dueDay && originalDebt.dueDay) {
+    installmentDebt.dueDay = originalDebt.dueDay
+  }
+  if (!installmentDebt.cutOffDay && originalDebt.cutOffDay) {
+    installmentDebt.cutOffDay = originalDebt.cutOffDay
+  }
+}
+
+/**
+ * Calcula las fechas de cuotas para mostrar en el modal
+ */
+const calculateInstallmentDatesForModal = async () => {
+  if (!installmentsData.value?.schedule?.length || !installmentsData.value?.debt) {
+    calculatedInstallmentDates.value = null
+    return
+  }
+
+  try {
+    const { calculateRecommendedPaymentDate, calculateInstallmentDates } = await import('../utils/installmentDates.js')
+    const { dueDay, cutOffDay } = installmentsData.value.debt
+    
+    if (!dueDay || !cutOffDay) {
+      console.warn('No se pueden calcular fechas: dueDay o cutOffDay no están configurados')
+      calculatedInstallmentDates.value = null
+      return
+    }
+
+    const recommendedDate = calculateRecommendedPaymentDate(dueDay, cutOffDay)
+    calculatedInstallmentDates.value = calculateInstallmentDates(
+      dueDay, 
+      cutOffDay, 
+      installmentsData.value.schedule.length, 
+      recommendedDate.date
+    )
+  } catch (error) {
+    console.error('Error calculando fechas de cuotas:', error)
+    calculatedInstallmentDates.value = null
+  }
 }
 
 const reloadInstallments = async () => {
-  if (installmentsData.value?.debt?.id) {
-    // Validar que no exceda 48 meses
+  if (!installmentsData.value?.debt?.id) {
+    return
+  }
+
+  try {
+    // Guardar datos originales antes de recargar
+    const originalDebt = installmentsData.value.debt
+    
+    // Validar y ajustar número de meses
     const months = Math.min(Math.max(installmentMonths.value, 1), 48)
     installmentMonths.value = months
+
+    // Recargar datos de cuotas
     installmentsData.value = await debtStore.fetchDebtInstallments(installmentsData.value.debt.id, { months })
+    
+    if (!installmentsData.value?.debt) {
+      showError('Error al recargar los datos de cuotas')
+      return
+    }
+
+    // Aplicar datos faltantes del backend (solución temporal)
+    applyMissingDebtData(installmentsData.value.debt, originalDebt)
+    
+    // Recalcular fechas recomendadas
+    await calculateInstallmentDatesForModal()
+    
+  } catch (error) {
+    console.error('Error recargando cuotas:', error)
+    showError('Error al recargar el plan de cuotas')
   }
 }
 
 const createExpensesFromInstallments = async () => {
   if (!installmentsData.value?.schedule?.length || !installmentsData.value?.debt) {
+    console.log('No hay datos de cuotas o deuda para procesar')
     return
   }
 
   creatingExpenses.value = true
   
   try {
-    // Primero, asegurarnos de que existe una categoría para pagos de créditos
-    let creditCategory = await ensureCreditPaymentCategory()
+    // Asegurar categoría de crédito
+    const creditCategory = await ensureCreditPaymentCategory()
     
     const debt = installmentsData.value.debt
     const paymentAmount = installmentsData.value.payment
-    const dueDay = debt.dueDay || 15 // Usar el día de pago de la deuda o 15 por defecto
+    
+    // Verificar si los días están configurados (son números del 1 al 31)
+    const isDueDayValid = debt.dueDay !== null && debt.dueDay !== undefined && debt.dueDay > 0
+    const isCutOffDayValid = debt.cutOffDay !== null && debt.cutOffDay !== undefined && debt.cutOffDay > 0
+    
+    if (!isDueDayValid || !isCutOffDayValid) {
+      showWarning(
+        `La tarjeta "${debt.name}" no tiene configurados los días de vencimiento y corte.\n\n` +
+        `Por favor, edita la tarjeta y configura:\n` +
+        `• Día de vencimiento (ej: 15)\n` +
+        `• Día de corte (ej: 25)\n\n` +
+        `Esto es necesario para calcular las fechas óptimas de pago.`,
+        'Configuración Requerida'
+      )
+      return
+    }
+    
+    const dueDay = debt.dueDay
+    const cutOffDay = debt.cutOffDay
+    
+    // Calcular la fecha recomendada para el primer pago
+    const { calculateRecommendedPaymentDate } = await import('../utils/installmentDates.js')
+    const recommendedDate = calculateRecommendedPaymentDate(dueDay, cutOffDay)
     
     // Verificar si ya existe un gasto fijo para esta deuda
     const existingFixedExpense = expenseStore.fixedExpenses.find(fe => 
@@ -523,98 +685,104 @@ const createExpensesFromInstallments = async () => {
       await expenseStore.deleteFixedExpense(existingFixedExpense.id)
     }
     
-    // Crear un gasto fijo para el pago mensual del crédito
+    // Crear un gasto fijo para el pago mensual del crédito usando la fecha recomendada
     const fixedExpenseData = {
       name: `Pago ${debt.name}`,
       amount: paymentAmount,
       categoryId: creditCategory.id,
-      dayOfMonth: dueDay,
+      dayOfMonth: recommendedDate.date.getDate(), // Usar el día de la fecha recomendada
       active: true
     }
     
     // Crear el gasto fijo primero
     const createdFixedExpense = await expenseStore.addFixedExpense(fixedExpenseData)
     
-    // Crear gastos individuales para cada cuota del plan actual
-    const expensesCreated = []
-    for (const installment of installmentsData.value.schedule) {
-      const expenseData = {
-        date: installment.date,
+    // Crear gastos individuales para cada cuota del plan actual usando fechas calculadas
+    const { calculateInstallmentDates } = await import('../utils/installmentDates.js')
+    const calculatedDates = calculateInstallmentDates(dueDay, cutOffDay, installmentsData.value.schedule.length, recommendedDate.date)
+    
+    // Preparar todos los gastos para enviar en batch
+    const expensesToCreate = installmentsData.value.schedule.map((installment, index) => {
+      const calculatedDate = calculatedDates[index]
+      
+      if (!calculatedDate) {
+        throw new Error(`No hay fecha calculada para cuota ${index + 1}`)
+      }
+      
+      return {
+        date: calculatedDate.date,
         description: `Cuota ${installment.period} - ${debt.name}`,
         amount: installment.payment,
         categoryId: creditCategory.id,
-        isFixed: true, // Marcar como gasto fijo
-        fixedExpenseId: createdFixedExpense.id // Asignar el ID del gasto fijo
+        isFixed: true,
+        fixedExpenseId: createdFixedExpense.id
       }
-      
-      try {
-        const createdExpense = await expenseStore.addExpense(expenseData)
-        expensesCreated.push(createdExpense)
-      } catch (error) {
-        // Error silencioso para gastos individuales, continuar con los demás
-      }
-    }
+    })
+    
+    // Crear todos los gastos de una vez usando el endpoint batch
+    const expensesCreated = await expenseStore.addExpensesBatch(expensesToCreate)
     
     const action = existingFixedExpense ? 'actualizado' : 'creado'
     const replacementMessage = existingFixedExpense 
       ? `Se eliminaron ${deletedExpensesCount} gastos anteriores y se crearon ${expensesCreated.length} nuevos.`
       : 'Se creó un gasto fijo para futuros pagos automáticos.'
     
-    const successMessage = `Plan de cuotas ${action} exitosamente para "${debt.name}"\n\n` +
-          `💰 Monto por cuota: ${formatCurrency(paymentAmount)}\n` +
-          `📅 Día de pago: ${dueDay} de cada mes\n` +
-          `🏷️ Categoría: ${creditCategory.name}\n` +
-          `📊 Total de cuotas: ${expensesCreated.length}\n\n` +
-          replacementMessage
-          
-    // Cerrar el modal antes de mostrar la notificación
-    installmentsData.value = null
+    const successMessage = `Plan de cuotas ${action} exitosamente para "${debt.name}".\n\n` +
+      `• ${expensesCreated.length} cuotas programadas\n` +
+      `• Fecha recomendada: ${recommendedDate.explanation}\n` +
+      `• ${replacementMessage}`
     
-    // Mostrar notificación de éxito
+    // Cerrar el modal y mostrar notificación de éxito
+    installmentsData.value = null
     showSuccess(successMessage, `Plan de Cuotas ${action.charAt(0).toUpperCase() + action.slice(1)}`)
           
   } catch (error) {
-    // Cerrar el modal antes de mostrar el error
+    console.error('Error creando gastos desde cuotas:', error)
     installmentsData.value = null
-    showError('Error al crear los gastos automáticos. Inténtalo de nuevo.', 'Error en Plan de Cuotas')
+    showError(`Error al crear los gastos automáticos: ${error.message}`, 'Error en Plan de Cuotas')
   } finally {
     creatingExpenses.value = false
   }
 }
 
+/**
+ * Elimina gastos existentes relacionados con un crédito
+ * @param {string} debtName - Nombre de la deuda
+ * @param {number} categoryId - ID de la categoría de crédito
+ * @param {number} fixedExpenseId - ID del gasto fijo
+ * @returns {number} - Número de gastos eliminados
+ */
 const removeExistingCreditExpenses = async (debtName, categoryId, fixedExpenseId) => {
-  // Buscar gastos existentes relacionados con este crédito
   const existingExpenses = expenseStore.expenses.filter(expense => {
-    // Buscar por descripción que contenga el nombre de la deuda y "Cuota"
     const isCreditExpense = expense.description?.toLowerCase().includes('cuota') && 
                            expense.description?.toLowerCase().includes(debtName.toLowerCase())
-    
-    // O buscar por fixedExpenseId
     const hasMatchingFixedExpenseId = expense.fixedExpenseId === fixedExpenseId
     
     return (isCreditExpense || hasMatchingFixedExpenseId) && expense.categoryId === categoryId
   })
   
-  // Eliminar cada gasto encontrado
-  for (const expense of existingExpenses) {
-    try {
-      await expenseStore.deleteExpense(expense.id)
-    } catch (error) {
-      // Error silencioso, continuar con los demás
-    }
-  }
+  // Eliminar gastos en paralelo para mejor rendimiento
+  const deletePromises = existingExpenses.map(expense => 
+    expenseStore.deleteExpense(expense.id).catch(error => {
+      console.warn(`Error eliminando gasto ${expense.id}:`, error)
+    })
+  )
   
+  await Promise.all(deletePromises)
   return existingExpenses.length
 }
 
+/**
+ * Asegura que existe una categoría de crédito para los pagos
+ * @returns {Object} - Categoría de crédito
+ * @throws {Error} - Si no se encuentra la categoría
+ */
 const ensureCreditPaymentCategory = async () => {
-  // Buscar la categoría "Crédito" específica
-  let creditCategory = expenseStore.categories.find(cat => 
+  const creditCategory = expenseStore.categories.find(cat => 
     cat.name.toLowerCase() === 'crédito' || cat.name.toLowerCase() === 'credito'
   )
   
   if (!creditCategory) {
-    // Si no existe, mostrar mensaje para que el usuario la cree
     showWarning(
       'Por favor, crea primero una categoría llamada "Crédito" en la sección de gastos.\n\nUna vez creada, podrás usar esta funcionalidad para generar gastos automáticos.',
       'Categoría Requerida'

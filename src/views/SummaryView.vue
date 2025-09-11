@@ -50,7 +50,7 @@
     <ExpensesCalendar 
       :daily-data="dailyExpensesData"
       :expenses="currentMonthExpenses"
-      :fixed-expenses="fixedExpenses"
+      :fixed-expenses="fixedExpensesThisMonth"
     />
 
     <!-- Categorías de gastos -->

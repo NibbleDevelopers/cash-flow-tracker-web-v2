@@ -1,9 +1,11 @@
 <template>
   <div class="card">
-    <div class="flex justify-between items-center mb-4">
-      <h2 class="text-lg font-semibold text-gray-900">Gastos Fijos</h2>
-      <button @click="openCreate" class="btn-primary">Agregar Gasto Fijo</button>
-    </div>
+      <div class="flex justify-between items-center mb-4">
+        <h2 class="text-lg font-semibold text-gray-900">Gastos Fijos</h2>
+        <div class="flex space-x-2">
+          <button @click="openCreate" class="btn-primary">Agregar Gasto Fijo</button>
+        </div>
+      </div>
 
     <!-- Formulario inline eliminado en favor del modal -->
 
@@ -69,20 +71,29 @@
       <div class="flex justify-between items-center">
         <div>
           <p class="text-sm text-gray-600">
-            Generar gastos fijos para {{ currentMonth }}
+            Generar gastos fijos para {{ formatMonthName(selectedMonth) }}
           </p>
           <p class="text-xs text-gray-500">
-            Esto creará automáticamente los gastos fijos para el mes actual
+            Esto creará automáticamente los gastos fijos para el mes seleccionado
           </p>
         </div>
-        <button
-          @click="generateFixedExpenses"
-          :disabled="loading"
-          class="btn-secondary"
-          :class="{ 'opacity-50 cursor-not-allowed': loading }"
-        >
-          {{ loading ? 'Generando...' : 'Generar Gastos' }}
-        </button>
+        <div class="flex items-center space-x-2">
+          <select
+            v-model="selectedMonth"
+            class="text-sm border border-gray-300 rounded-md px-2 py-1"
+          >
+            <option :value="currentMonth">{{ formatMonthName(currentMonth) }}</option>
+            <option :value="nextMonth">{{ formatMonthName(nextMonth) }}</option>
+          </select>
+          <button
+            @click="generateFixedExpenses"
+            :disabled="loading"
+            class="btn-secondary"
+            :class="{ 'opacity-50 cursor-not-allowed': loading }"
+          >
+            {{ loading ? 'Generando...' : 'Generar Gastos' }}
+          </button>
+        </div>
       </div>
     </div>
 
@@ -110,19 +121,28 @@
 </template>
 
 <script setup>
-import { ref, reactive, computed } from 'vue'
+import { ref, computed } from 'vue'
 import { format } from 'date-fns'
 import { useExpenseStore } from '../stores/expenseStore'
 import FixedExpenseModal from './FixedExpenseModal.vue'
 import { useConfirm } from '../composables/useConfirm'
-import { push } from 'notivue'
+import { useNotifications } from '../composables/useNotifications'
 
 const expenseStore = useExpenseStore()
 const confirm = useConfirm()
+const { showSuccess, showError } = useNotifications()
 
 const error = ref('')
 
 const currentMonth = computed(() => format(new Date(), 'yyyy-MM'))
+const nextMonth = computed(() => format(new Date(new Date().getFullYear(), new Date().getMonth() + 1, 1), 'yyyy-MM'))
+const selectedMonth = ref(format(new Date(), 'yyyy-MM'))
+
+const formatMonthName = (monthStr) => {
+  const [year, month] = monthStr.split('-')
+  const date = new Date(parseInt(year), parseInt(month) - 1, 1)
+  return format(date, 'MMMM yyyy')
+}
 
 const openCreate = () => { creating.value = true }
 
@@ -140,22 +160,25 @@ const onDeleteFixed = async (fixedExpense) => {
     variant: 'danger'
   })
   if (!ok) return
+  
   try {
     await expenseStore.deleteFixedExpense(fixedExpense.id)
-    push.success('Gasto fijo eliminado')
-  } catch (_) {
-    push.error('No se pudo eliminar el gasto fijo')
+    showSuccess('Gasto fijo eliminado')
+  } catch (error) {
+    console.error('Error eliminando gasto fijo:', error)
+    showError('No se pudo eliminar el gasto fijo')
   }
 }
 
 const generateFixedExpenses = async () => {
   try {
     error.value = ''
-    await expenseStore.generateFixedExpensesForMonth(currentMonth.value)
-    push.success('Gastos fijos generados correctamente')
+    await expenseStore.generateFixedExpensesForMonth(selectedMonth.value)
+    showSuccess(`Gastos fijos generados correctamente para ${formatMonthName(selectedMonth.value)}`)
   } catch (err) {
     error.value = 'Error al generar gastos fijos. Inténtalo de nuevo.'
-    push.error('No se pudieron generar los gastos fijos')
+    console.error('Error generando gastos fijos:', err)
+    showError('No se pudieron generar los gastos fijos')
   }
 }
 
@@ -170,7 +193,7 @@ const showEdit = ref(false)
 const editing = ref(null)
 const creating = ref(false)
 const onCloseEdit = () => { showEdit.value = false; editing.value = null }
-const onUpdated = () => { onCloseEdit(); push.success('Gasto fijo actualizado') }
+const onUpdated = () => { onCloseEdit(); showSuccess('Gasto fijo actualizado') }
 const onCloseCreate = () => { creating.value = false }
-const onCreated = () => { creating.value = false; push.success('Gasto fijo creado') }
+const onCreated = () => { creating.value = false; showSuccess('Gasto fijo creado') }
 </script>
