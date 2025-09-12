@@ -113,6 +113,7 @@
 
 <script setup>
 import { ref, reactive, onMounted, onBeforeUnmount, computed } from 'vue'
+import { notify } from '../services/notifications.js'
 import { format } from 'date-fns'
 import { useExpenseStore } from '../stores/expenseStore'
 
@@ -215,7 +216,7 @@ const handleSubmit = async () => {
     
     await expenseStore.updateBudget(form)
     success.value = true
-    console.log('Presupuesto actualizado correctamente')
+    notify.success('Presupuesto actualizado correctamente')
     // refrescar mapa anual
     await expenseStore.loadBudgets()
     
@@ -225,7 +226,7 @@ const handleSubmit = async () => {
     }, 3000)
   } catch (err) {
     error.value = 'Error al actualizar el presupuesto. Inténtalo de nuevo.'
-    console.error('No se pudo actualizar el presupuesto')
+    notify.error('No se pudo actualizar el presupuesto')
   }
 }
 </script>

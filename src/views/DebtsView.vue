@@ -267,7 +267,7 @@
                        :class="(installmentsData.debt.dueDay && installmentsData.debt.cutOffDay && installmentsData.debt.dueDay > 0 && installmentsData.debt.cutOffDay > 0)
                          ? 'bg-blue-50 border-blue-200' 
                          : 'bg-yellow-50 border-yellow-200'"
-                       @click="console.log('Panel info - Valores:', { dueDay: installmentsData.debt.dueDay, cutOffDay: installmentsData.debt.cutOffDay, type: typeof installmentsData.debt.dueDay })">
+                       @click="void 0">
                     <div class="flex items-start space-x-2">
                       <svg v-if="installmentsData.debt.dueDay && installmentsData.debt.cutOffDay && installmentsData.debt.dueDay > 0 && installmentsData.debt.cutOffDay > 0" 
                            class="w-5 h-5 text-blue-600 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -417,6 +417,7 @@ import DebtForm from '../components/DebtForm.vue'
 import { Dialog, DialogPanel, DialogTitle, TransitionChild, TransitionRoot } from '@headlessui/vue'
 import { PencilSquareIcon, ChartBarIcon, CalendarDaysIcon, TrashIcon } from '@heroicons/vue/24/outline'
 import LoadingSkeleton from '../components/ui/LoadingSkeleton.vue'
+import { notify } from '../services/notifications.js'
 
 const debtStore = useDebtStore()
 const expenseStore = useExpenseStore()
@@ -496,9 +497,15 @@ const handleSubmit = async (payload) => {
 }
 
 const confirmDelete = async (debt) => {
-  if (confirm(`¿Eliminar deuda "${debt.name}"?`)) {
-    await debtStore.deleteDebt(debt.id)
-  }
+  const ok = await confirm.show({
+    title: 'Eliminar deuda',
+    message: `¿Eliminar deuda "${debt.name}"?`,
+    confirmText: 'Eliminar',
+    cancelText: 'Cancelar',
+    variant: 'danger'
+  })
+  if (!ok) return
+  await debtStore.deleteDebt(debt.id)
 }
 
 const openSummary = async (debt) => {
@@ -509,7 +516,7 @@ const openInstallments = async (debt) => {
   try {
     // Validar parámetros de entrada
     if (!debt?.id) {
-      console.error('Error: Datos de deuda inválidos')
+      notify.error('Datos de deuda inválidos')
       return
     }
 
@@ -521,7 +528,7 @@ const openInstallments = async (debt) => {
     installmentsData.value = await debtStore.fetchDebtInstallments(debt.id, { months })
     
     if (!installmentsData.value?.debt) {
-      console.error('Error al cargar los datos de cuotas')
+      notify.error('Error al cargar los datos de cuotas')
       return
     }
 
@@ -533,7 +540,7 @@ const openInstallments = async (debt) => {
     
   } catch (error) {
     console.error('Error abriendo cuotas:', error)
-    console.error('Error al abrir el plan de cuotas')
+    notify.error('Error al abrir el plan de cuotas')
   }
 }
 
@@ -565,7 +572,7 @@ const calculateInstallmentDatesForModal = async () => {
     const { dueDay, cutOffDay } = installmentsData.value.debt
     
     if (!dueDay || !cutOffDay) {
-      console.warn('No se pueden calcular fechas: dueDay o cutOffDay no están configurados')
+      notify.warning('No se pueden calcular fechas: dueDay o cutOffDay no están configurados')
       calculatedInstallmentDates.value = null
       return
     }
@@ -600,7 +607,7 @@ const reloadInstallments = async () => {
     installmentsData.value = await debtStore.fetchDebtInstallments(installmentsData.value.debt.id, { months })
     
     if (!installmentsData.value?.debt) {
-      console.error('Error al recargar los datos de cuotas')
+      notify.error('Error al recargar los datos de cuotas')
       return
     }
 
@@ -612,13 +619,13 @@ const reloadInstallments = async () => {
     
   } catch (error) {
     console.error('Error recargando cuotas:', error)
-    console.error('Error al recargar el plan de cuotas')
+    notify.error('Error al recargar el plan de cuotas')
   }
 }
 
 const createExpensesFromInstallments = async () => {
   if (!installmentsData.value?.schedule?.length || !installmentsData.value?.debt) {
-    console.log('No hay datos de cuotas o deuda para procesar')
+    notify.info('No hay datos de cuotas o deuda para procesar')
     return
   }
 
@@ -636,7 +643,7 @@ const createExpensesFromInstallments = async () => {
     const isCutOffDayValid = debt.cutOffDay !== null && debt.cutOffDay !== undefined && debt.cutOffDay > 0
     
     if (!isDueDayValid || !isCutOffDayValid) {
-      console.warn(
+      notify.warning(
         `La tarjeta "${debt.name}" no tiene configurados los días de vencimiento y corte.\n\n` +
         `Por favor, edita la tarjeta y configura:\n` +
         `• Día de vencimiento (ej: 15)\n` +
@@ -677,7 +684,7 @@ const createExpensesFromInstallments = async () => {
       }
       
       // Eliminar gastos existentes relacionados con este crédito
-      deletedExpensesCount = await removeExistingCreditExpenses(debt.name, creditCategory.id, existingFixedExpense.id)
+      deletedExpensesCount = await removeExistingCreditExpenses(debt.name, creditCategory.id, existingFixedExpense.id) || 0
       
       // Eliminar el gasto fijo anterior
       await expenseStore.deleteFixedExpense(existingFixedExpense.id)
@@ -721,23 +728,33 @@ const createExpensesFromInstallments = async () => {
     const expensesCreated = await expenseStore.addExpensesBatch(expensesToCreate)
     
     const action = existingFixedExpense ? 'actualizado' : 'creado'
+    // Contabilizar cantidad creada de forma robusta
+    const createdCount = Array.isArray(expensesCreated)
+      ? expensesCreated.length
+      : (typeof expensesCreated?.count === 'number'
+          ? expensesCreated.count
+          : (installmentsData.value?.schedule?.length ?? expensesToCreate.length))
+
     const replacementMessage = existingFixedExpense 
-      ? `Se eliminaron ${deletedExpensesCount} gastos anteriores y se crearon ${expensesCreated.length} nuevos.`
+      ? `Se eliminaron ${deletedExpensesCount} gastos anteriores y se crearon ${createdCount} nuevos.`
       : 'Se creó un gasto fijo para futuros pagos automáticos.'
     
-    const successMessage = `Plan de cuotas ${action} exitosamente para "${debt.name}".\n\n` +
-      `• ${expensesCreated.length} cuotas programadas\n` +
-      `• Fecha recomendada: ${recommendedDate.explanation}\n` +
-      `• ${replacementMessage}`
-    
-    // Cerrar el modal y mostrar notificación de éxito
+    const title = `Plan de Cuotas ${action.charAt(0).toUpperCase() + action.slice(1)} para "${debt.name}"`
+    const details = [
+      `${createdCount} cuotas programadas`,
+      `Fecha recomendada: ${recommendedDate.explanation}`,
+      replacementMessage
+    ].join(' · ')
+
+    // Cerrar el modal y mostrar dos notificaciones: éxito breve + info con detalles
     installmentsData.value = null
-    console.log(successMessage, `Plan de Cuotas ${action.charAt(0).toUpperCase() + action.slice(1)}`)
+    notify.success('Operación completada correctamente', title)
+    notify.info(details, 'Detalles del Plan de Cuotas')
           
   } catch (error) {
     console.error('Error creando gastos desde cuotas:', error)
     installmentsData.value = null
-    console.error(`Error al crear los gastos automáticos: ${error.message}`, 'Error en Plan de Cuotas')
+    notify.error(`Error al crear los gastos automáticos: ${error.message}`)
   } finally {
     creatingExpenses.value = false
   }

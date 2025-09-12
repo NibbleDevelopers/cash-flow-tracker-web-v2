@@ -6,7 +6,8 @@ export const confirmState = reactive({
   message: '',
   confirmText: 'Aceptar',
   cancelText: 'Cancelar',
-  variant: 'danger',
+  variant: 'primary',
+  persistent: false,
   resolve: null
 })
 
@@ -18,7 +19,8 @@ export function useConfirm() {
       confirmState.message = options.message || ''
       confirmState.confirmText = options.confirmText || 'Aceptar'
       confirmState.cancelText = options.cancelText || 'Cancelar'
-      confirmState.variant = options.variant || 'danger'
+      confirmState.variant = options.variant || 'primary'
+      confirmState.persistent = !!options.persistent
       confirmState.resolve = resolve
       confirmState.isOpen = true
     })

@@ -1,6 +1,7 @@
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
 import backend from '../services/googleSheetsBackend'
+import { notify } from '../services/notifications.js'
 
 // Constantes
 const DEBT_VALIDATION = {
@@ -119,11 +120,11 @@ export const useDebtStore = defineStore('debt', () => {
         await loadDebts()
       }
       
-      console.log('Deuda creada exitosamente')
+      notify.success('Deuda creada exitosamente')
       return created
     } catch (err) {
       error.value = err.message || 'Error al crear deuda'
-      console.error(err.message || 'Error al crear deuda')
+      notify.error(err.message || 'Error al crear deuda')
       console.error('createDebt error:', err)
       throw err
     } finally {
@@ -153,11 +154,11 @@ export const useDebtStore = defineStore('debt', () => {
       } else {
         await loadDebts()
       }
-      console.log('Deuda actualizada exitosamente')
+      notify.success('Deuda actualizada exitosamente')
       return updated
     } catch (err) {
       error.value = 'Error al actualizar deuda'
-      console.error('Error al actualizar deuda')
+      notify.error('Error al actualizar deuda')
       console.error('updateDebt error:', err)
       throw err
     } finally {
@@ -171,11 +172,11 @@ export const useDebtStore = defineStore('debt', () => {
     try {
       await backend.deleteDebt(id)
       debts.value = debts.value.filter(d => String(d.id) !== String(id))
-      console.log('Deuda eliminada exitosamente')
+      notify.success('Deuda eliminada exitosamente')
       return true
     } catch (err) {
       error.value = 'Error al eliminar deuda'
-      console.error('Error al eliminar deuda')
+      notify.error('Error al eliminar deuda')
       console.error('deleteDebt error:', err)
       throw err
     } finally {

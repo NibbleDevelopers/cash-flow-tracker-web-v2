@@ -262,6 +262,7 @@
 <script setup>
 import { ref, computed, onMounted, onBeforeUnmount, watch } from 'vue'
 import { format } from 'date-fns'
+import { notify } from '../services/notifications.js'
 import { es } from 'date-fns/locale'
 import { useExpenseStore } from '../stores/expenseStore'
 import AppSelect from './ui/AppSelect.vue'
@@ -612,9 +613,9 @@ const onDelete = async (expense) => {
   if (!ok) return
   try {
     await expenseStore.deleteExpense(expense.id)
-    console.log('Gasto eliminado')
+    notify.success('Gasto eliminado')
   } catch (e) {
-    console.error('No se pudo eliminar el gasto')
+    notify.error('No se pudo eliminar el gasto')
   }
 }
 </script>

@@ -126,6 +126,7 @@ import { format } from 'date-fns'
 import { useExpenseStore } from '../stores/expenseStore'
 import FixedExpenseModal from './FixedExpenseModal.vue'
 import { useConfirm } from '../composables/useConfirm'
+import { notify } from '../services/notifications.js'
 
 const expenseStore = useExpenseStore()
 const confirm = useConfirm()
@@ -161,10 +162,10 @@ const onDeleteFixed = async (fixedExpense) => {
   
   try {
     await expenseStore.deleteFixedExpense(fixedExpense.id)
-    console.log('Gasto fijo eliminado')
+    notify.success('Gasto fijo eliminado')
   } catch (error) {
     console.error('Error eliminando gasto fijo:', error)
-    console.error('No se pudo eliminar el gasto fijo')
+    notify.error('No se pudo eliminar el gasto fijo')
   }
 }
 
@@ -172,11 +173,11 @@ const generateFixedExpenses = async () => {
   try {
     error.value = ''
     await expenseStore.generateFixedExpensesForMonth(selectedMonth.value)
-    console.log(`Gastos fijos generados correctamente para ${formatMonthName(selectedMonth.value)}`)
+    notify.success(`Gastos fijos generados correctamente para ${formatMonthName(selectedMonth.value)}`)
   } catch (err) {
     error.value = 'Error al generar gastos fijos. Inténtalo de nuevo.'
     console.error('Error generando gastos fijos:', err)
-    console.error('No se pudieron generar los gastos fijos')
+    notify.error('No se pudieron generar los gastos fijos')
   }
 }
 
@@ -191,7 +192,7 @@ const showEdit = ref(false)
 const editing = ref(null)
 const creating = ref(false)
 const onCloseEdit = () => { showEdit.value = false; editing.value = null }
-const onUpdated = () => { onCloseEdit(); console.log('Gasto fijo actualizado') }
+const onUpdated = () => { onCloseEdit(); notify.success('Gasto fijo actualizado') }
 const onCloseCreate = () => { creating.value = false }
-const onCreated = () => { creating.value = false; console.log('Gasto fijo creado') }
+const onCreated = () => { creating.value = false; notify.success('Gasto fijo creado') }
 </script>

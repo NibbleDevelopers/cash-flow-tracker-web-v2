@@ -50,6 +50,7 @@
 <script setup>
 import { ref } from 'vue'
 import ExpenseModal from '../components/ExpenseModal.vue'
+import { notify } from '../services/notifications.js'
 import ExpensesListComponent from '../components/ExpensesList.vue'
 import BudgetProgress from '../components/BudgetProgress.vue'
 import FixedExpensesManager from '../components/FixedExpensesManager.vue'
@@ -68,9 +69,9 @@ const confirmDelete = async (expense) => {
   // Delegado al componente hijo con dialog; este es fallback si se usa el evento
   try {
     await expenseStore.deleteExpense(expense.id)
-    console.log('Gasto eliminado')
+    notify.success('Gasto eliminado')
   } catch (e) {
-    console.error('No se pudo eliminar el gasto')
+    notify.error('No se pudo eliminar el gasto')
   }
 }
 
@@ -79,7 +80,7 @@ const closeModal = () => {
   editingExpense.value = null
 }
 
-const afterChange = () => { closeModal(); console.log('Cambios guardados') }
+const afterChange = () => { closeModal(); notify.success('Cambios guardados') }
 </script>
 
 <style scoped>

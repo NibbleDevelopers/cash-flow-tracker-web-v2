@@ -1,5 +1,8 @@
 <template>
   <div id="app" class="min-h-screen bg-gray-50">
+    <Notivue v-slot="item">
+      <Notification :item="item" />
+    </Notivue>
     <div id="confirm"></div>
     <nav class="bg-white shadow-sm border-b border-gray-200 sticky top-0 z-40" role="navigation" aria-label="Navegación principal">
       <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -78,6 +81,7 @@
 
 <script setup>
 import { onMounted } from 'vue'
+import { Notivue, Notification } from 'notivue'
 import ConfirmDialog from './components/ui/ConfirmDialog.vue'
 import { useExpenseStore } from './stores/expenseStore'
 import { useDebtStore } from './stores/debtStore'
@@ -86,7 +90,6 @@ import { ref } from 'vue'
 const expenseStore = useExpenseStore()
 const debtStore = useDebtStore()
 const appTitle = ref(import.meta.env.VITE_APP_TITLE)
-console.log(appTitle.value)
 onMounted(async () => {
 
   await expenseStore.loadExpenses()
