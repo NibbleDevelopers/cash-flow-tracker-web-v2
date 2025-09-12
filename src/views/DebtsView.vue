@@ -669,11 +669,11 @@ const createExpensesFromInstallments = async () => {
     // Variable para contar gastos eliminados
     let deletedExpensesCount = 0
     
-    // Si existe un gasto fijo anterior, eliminar gastos relacionados
+    // Si existe un gasto fijo anterior, confirmarlo y eliminar SOLO el fijo (API hace cascada)
     if (existingFixedExpense) {
       const confirmReplace = await confirm.show({
         title: 'Reemplazar Plan de Cuotas',
-        message: `Ya existe un plan de cuotas para "${debt.name}".\n\n¿Deseas reemplazarlo con el nuevo plan de ${installmentsData.value.schedule.length} cuotas?\n\nEsto eliminará los gastos anteriores y creará los nuevos.`,
+        message: `Ya existe un plan de cuotas para "${debt.name}".\n\n¿Deseas reemplazarlo con el nuevo plan de ${installmentsData.value.schedule?.length ?? installmentMonths.value} cuotas?\n\nSe eliminará el gasto fijo anterior y las cuotas serán removidas automáticamente.`,
         confirmText: 'Reemplazar',
         cancelText: 'Cancelar',
         variant: 'warning'
@@ -683,10 +683,7 @@ const createExpensesFromInstallments = async () => {
         return
       }
       
-      // Eliminar gastos existentes relacionados con este crédito
-      deletedExpensesCount = await removeExistingCreditExpenses(debt.name, creditCategory.id, existingFixedExpense.id) || 0
-      
-      // Eliminar el gasto fijo anterior
+      // Eliminar el gasto fijo anterior (API elimina cuotas en cascada)
       await expenseStore.deleteFixedExpense(existingFixedExpense.id)
     }
     
@@ -736,7 +733,7 @@ const createExpensesFromInstallments = async () => {
           : (installmentsData.value?.schedule?.length ?? expensesToCreate.length))
 
     const replacementMessage = existingFixedExpense 
-      ? `Se eliminaron ${deletedExpensesCount} gastos anteriores y se crearon ${createdCount} nuevos.`
+      ? `Se reemplazó el plan anterior y se crearon ${createdCount} nuevas cuotas.`
       : 'Se creó un gasto fijo para futuros pagos automáticos.'
     
     const title = `Plan de Cuotas ${action.charAt(0).toUpperCase() + action.slice(1)} para "${debt.name}"`
@@ -767,25 +764,7 @@ const createExpensesFromInstallments = async () => {
  * @param {number} fixedExpenseId - ID del gasto fijo
  * @returns {number} - Número de gastos eliminados
  */
-const removeExistingCreditExpenses = async (debtName, categoryId, fixedExpenseId) => {
-  const existingExpenses = expenseStore.expenses.filter(expense => {
-    const isCreditExpense = expense.description?.toLowerCase().includes('cuota') && 
-                           expense.description?.toLowerCase().includes(debtName.toLowerCase())
-    const hasMatchingFixedExpenseId = expense.fixedExpenseId === fixedExpenseId
-    
-    return (isCreditExpense || hasMatchingFixedExpenseId) && expense.categoryId === categoryId
-  })
-  
-  // Eliminar gastos en paralelo para mejor rendimiento
-  const deletePromises = existingExpenses.map(expense => 
-    expenseStore.deleteExpense(expense.id).catch(error => {
-      console.warn(`Error eliminando gasto ${expense.id}:`, error)
-    })
-  )
-  
-  await Promise.all(deletePromises)
-  return existingExpenses.length
-}
+// Ya no se usa: la API elimina en cascada al borrar el gasto fijo
 
 /**
  * Asegura que existe una categoría de crédito para los pagos
