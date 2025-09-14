@@ -1,4 +1,4 @@
-import { format, addMonths, endOfMonth, setDate, isAfter, isBefore } from 'date-fns'
+import { format, addMonths, endOfMonth, setDate, isAfter, isBefore, getDate } from 'date-fns'
 
 /**
  * Crea una fecha ajustada si el día excede el fin de mes
@@ -90,6 +90,43 @@ export function calculateInstallmentDates(dueDay, cutOffDay, numberOfInstallment
   }
   
   return dates
+}
+
+/**
+ * Devuelve dos fechas quincenales adaptadas a la fecha base del gasto.
+ * Regla:
+ * - Si el día (1-15): 15 y último día del mismo mes.
+ * - Si el día (16-fin): último día del mismo mes y 15 del mes siguiente.
+ * @param {Date|string} baseDate - Fecha base (Date o 'yyyy-MM-dd')
+ * @returns {{first:string, second:string, display:[string,string]}} - Fechas en 'yyyy-MM-dd' y display 'dd/MM/yyyy'
+ */
+export function getBiweeklyDates(baseDate) {
+  const refDate = typeof baseDate === 'string' ? new Date(baseDate + 'T00:00:00') : baseDate
+  const day = getDate(refDate)
+  const monthStart = new Date(refDate.getFullYear(), refDate.getMonth(), 1)
+
+  const fifteenth = createAdjustedDate(monthStart, 15)
+  const lastOfMonth = endOfMonth(monthStart)
+
+  let firstDate
+  let secondDate
+
+  if (day <= 15) {
+    firstDate = fifteenth
+    secondDate = lastOfMonth
+  } else {
+    firstDate = lastOfMonth
+    const nextMonthStart = addMonths(monthStart, 1)
+    secondDate = createAdjustedDate(nextMonthStart, 15)
+  }
+
+  const first = format(firstDate, 'yyyy-MM-dd')
+  const second = format(secondDate, 'yyyy-MM-dd')
+  return {
+    first,
+    second,
+    display: [format(firstDate, 'dd/MM/yyyy'), format(secondDate, 'dd/MM/yyyy')]
+  }
 }
 
 /**

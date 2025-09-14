@@ -318,6 +318,10 @@
                         />
                         <span class="text-sm text-gray-500">meses</span>
                       </div>
+                      <div class="flex items-center space-x-2">
+                        <input id="biweeklyToggle" v-model="biweeklyPayments" type="checkbox" class="h-4 w-4 text-primary-600 focus:ring-primary-500 border-gray-300 rounded" />
+                        <label for="biweeklyToggle" class="text-sm font-medium text-gray-700">Pagos quincenales</label>
+                      </div>
                       <button class="btn-primary px-4 py-2 text-sm inline-flex items-center" @click="reloadInstallments">
                         <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
@@ -338,7 +342,7 @@
                         <svg v-else class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
                         </svg>
-                        {{ creatingExpenses ? 'Creando...' : 'Crear Gastos Automáticos' }}
+                        {{ creatingExpenses ? 'Creando...' : (biweeklyPayments ? 'Crear Gastos Quincenales' : 'Crear Gastos Automáticos') }}
                       </button>
                     </div>
                     <div class="text-sm text-gray-500">
@@ -368,7 +372,19 @@
                             {{ row.period }}
                           </td>
                           <td class="px-3 py-2 whitespace-nowrap text-sm text-gray-500">
-                            {{ calculatedInstallmentDates?.[index]?.displayDate || row.date }}
+                            <div v-if="!biweeklyPayments">
+                              {{ calculatedInstallmentDates?.[index]?.displayDate || row.date }}
+                            </div>
+                            <div v-else class="space-y-1">
+                              <div>
+                                <span class="inline-block px-1.5 py-0.5 rounded bg-gray-100 mr-1 text-gray-700">1/2</span>
+                                <span>{{ getBiweeklyForRow(index)?.display[0] }}</span>
+                              </div>
+                              <div>
+                                <span class="inline-block px-1.5 py-0.5 rounded bg-gray-100 mr-1 text-gray-700">2/2</span>
+                                <span>{{ getBiweeklyForRow(index)?.display[1] }}</span>
+                              </div>
+                            </div>
                           </td>
                           <td class="px-3 py-2 whitespace-nowrap text-sm text-right font-medium text-gray-900">
                             {{ formatCurrency(row.payment) }}
@@ -418,6 +434,7 @@ import { Dialog, DialogPanel, DialogTitle, TransitionChild, TransitionRoot } fro
 import { PencilSquareIcon, ChartBarIcon, CalendarDaysIcon, TrashIcon } from '@heroicons/vue/24/outline'
 import LoadingSkeleton from '../components/ui/LoadingSkeleton.vue'
 import { notify } from '../services/notifications.js'
+import { format, endOfMonth } from 'date-fns'
 
 const debtStore = useDebtStore()
 const expenseStore = useExpenseStore()
@@ -433,6 +450,7 @@ const installmentsData = ref(null)
 const calculatedInstallmentDates = ref(null)
 const installmentMonths = ref(6)
 const creatingExpenses = ref(false)
+const biweeklyPayments = ref(false)
 
 // Computed para UI
 const activeCount = computed(() => activeDebts.value.length)
@@ -704,21 +722,48 @@ const createExpensesFromInstallments = async () => {
     const calculatedDates = calculateInstallmentDates(dueDay, cutOffDay, installmentsData.value.schedule.length, recommendedDate.date)
     
     // Preparar todos los gastos para enviar en batch
-    const expensesToCreate = installmentsData.value.schedule.map((installment, index) => {
+    const expensesToCreate = installmentsData.value.schedule.flatMap((installment, index) => {
       const calculatedDate = calculatedDates[index]
-      
       if (!calculatedDate) {
         throw new Error(`No hay fecha calculada para cuota ${index + 1}`)
       }
-      
-      return {
-        date: calculatedDate.date,
-        description: `Cuota ${installment.period} - ${debt.name}`,
-        amount: installment.payment,
-        categoryId: creditCategory.id,
-        isFixed: true,
-        fixedExpenseId: createdFixedExpense.id
+
+      if (!biweeklyPayments.value) {
+        return [{
+          date: calculatedDate.date,
+          description: `Cuota ${installment.period} - ${debt.name}`,
+          amount: installment.payment,
+          categoryId: creditCategory.id,
+          isFixed: true,
+          fixedExpenseId: createdFixedExpense.id
+        }]
       }
+
+      // Dividir en 2 pagos (15 y fin de mes de la cuota)
+      const { first, second } = getLocalBiweeklyDates(calculatedDate.date)
+
+      const total = Number(installment.payment) || 0
+      const firstAmount = Math.round((total / 2) * 100) / 100
+      const secondAmount = Math.round((total - firstAmount) * 100) / 100
+
+      return [
+        {
+          date: first,
+          description: `Cuota ${installment.period} (1/2) - ${debt.name}`,
+          amount: firstAmount,
+          categoryId: creditCategory.id,
+          isFixed: true,
+          fixedExpenseId: createdFixedExpense.id
+        },
+        {
+          date: second,
+          description: `Cuota ${installment.period} (2/2) - ${debt.name}`,
+          amount: secondAmount,
+          categoryId: creditCategory.id,
+          isFixed: true,
+          fixedExpenseId: createdFixedExpense.id
+        }
+      ]
     })
     
     // Crear todos los gastos de una vez usando el endpoint batch
@@ -754,6 +799,36 @@ const createExpensesFromInstallments = async () => {
     notify.error(`Error al crear los gastos automáticos: ${error.message}`)
   } finally {
     creatingExpenses.value = false
+  }
+}
+// Obtener fechas quincenales por fila para la vista previa
+const getBiweeklyForRow = (index) => {
+  const row = calculatedInstallmentDates.value?.[index]
+  if (!row) return { display: ['', ''] }
+  const quotaDate = row?.date
+  if (!quotaDate) return { display: ['', ''] }
+  const { display } = getLocalBiweeklyDates(quotaDate)
+  return { display }
+}
+
+// Helper local para fechas quincenales 15/fin o fin/15 siguiente
+function getLocalBiweeklyDates(baseDate) {
+  const refDate = new Date((typeof baseDate === 'string' ? baseDate : baseDate?.toISOString()?.slice(0,10)) + 'T00:00:00')
+  const year = refDate.getFullYear()
+  const month = refDate.getMonth()
+  const lastOfMonth = new Date(year, month + 1, 0)
+  const fifteenth = new Date(year, month, 15)
+  const firstDate = fifteenth
+  const secondDate = lastOfMonth
+
+  const pad = (n) => String(n).padStart(2, '0')
+  const toYmd = (d) => `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`
+  const toDisplay = (d) => `${pad(d.getDate())}/${pad(d.getMonth()+1)}/${d.getFullYear()}`
+
+  return {
+    first: toYmd(firstDate),
+    second: toYmd(secondDate),
+    display: [toDisplay(firstDate), toDisplay(secondDate)]
   }
 }
 
