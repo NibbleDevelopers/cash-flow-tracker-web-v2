@@ -51,6 +51,7 @@
       :daily-data="dailyExpensesData"
       :expenses="currentMonthExpenses"
       :fixed-expenses="fixedExpensesThisMonth"
+      :monthly-budget="budget.amount"
     />
 
     <!-- Categorías de gastos -->

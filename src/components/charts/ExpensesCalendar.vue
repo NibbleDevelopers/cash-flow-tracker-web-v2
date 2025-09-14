@@ -68,6 +68,15 @@
               <p class="text-xs text-blue-600">{{ firstFortnightCount }} gastos</p>
             </div>
           </div>
+          <div v-if="firstFortnightBudget > 0" class="mt-2">
+            <div class="flex justify-between text-[10px] text-blue-700 mb-1">
+              <span>Presupuesto: ${{ formatCurrency(firstFortnightBudget, true) }}</span>
+              <span>{{ firstFortnightProgress.toFixed(0) }}%</span>
+            </div>
+            <div class="w-full h-1.5 bg-blue-200 rounded-full overflow-hidden">
+              <div class="h-full bg-blue-600" :style="{ width: Math.min(100, firstFortnightProgress) + '%' }"></div>
+            </div>
+          </div>
         </div>
         
         <div class="bg-gradient-to-r from-green-50 to-green-100 p-3 rounded-lg border border-green-200">
@@ -81,6 +90,15 @@
                 ${{ formatCurrency(secondFortnightTotal) }}
               </p>
               <p class="text-xs text-green-600">{{ secondFortnightCount }} gastos</p>
+            </div>
+          </div>
+          <div v-if="secondFortnightBudget > 0" class="mt-2">
+            <div class="flex justify-between text-[10px] text-green-700 mb-1">
+              <span>Presupuesto: ${{ formatCurrency(secondFortnightBudget, true) }}</span>
+              <span>{{ secondFortnightProgress.toFixed(0) }}%</span>
+            </div>
+            <div class="w-full h-1.5 bg-green-200 rounded-full overflow-hidden">
+              <div class="h-full bg-green-600" :style="{ width: Math.min(100, secondFortnightProgress) + '%' }"></div>
             </div>
           </div>
         </div>
@@ -344,6 +362,10 @@ const props = defineProps({
   fixedExpenses: {
     type: Array,
     default: () => []
+  },
+  monthlyBudget: {
+    type: Number,
+    default: 0
   }
 })
 
@@ -398,6 +420,12 @@ const firstFortnightTotal = computed(() => firstFortnightData.value.total)
 const firstFortnightCount = computed(() => firstFortnightData.value.count)
 const secondFortnightTotal = computed(() => secondFortnightData.value.total)
 const secondFortnightCount = computed(() => secondFortnightData.value.count)
+
+// Presupuesto quincenal (50/50 del mensual)
+const firstFortnightBudget = computed(() => (props.monthlyBudget || 0) / 2)
+const secondFortnightBudget = computed(() => (props.monthlyBudget || 0) / 2)
+const firstFortnightProgress = computed(() => firstFortnightBudget.value > 0 ? (firstFortnightTotal.value / firstFortnightBudget.value) * 100 : 0)
+const secondFortnightProgress = computed(() => secondFortnightBudget.value > 0 ? (secondFortnightTotal.value / secondFortnightBudget.value) * 100 : 0)
 
 // Crear datos del calendario
 const calendarDays = computed(() => {
