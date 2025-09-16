@@ -70,9 +70,11 @@ class GoogleSheetsBackendService {
   async getDebts() {
     try {
       const response = await this.makeRequest('/debts')
-      const rows = Array.isArray(response?.data) ? response.data : []
-      
-      return rows.map(row => this.parseDebtRow(row))
+      const items = Array.isArray(response?.data)
+        ? response.data
+        : (Array.isArray(response) ? response : [])
+
+      return items.map(item => this.parseDebtRow(item))
     } catch (error) {
       console.error('Error fetching debts:', error)
       return []
@@ -84,22 +86,21 @@ class GoogleSheetsBackendService {
    * @param {Array} row - Fila de datos del backend
    * @returns {Object} - Objeto de deuda parseado
    */
-  parseDebtRow(row) {
-    const dueDay = this.parseDayValue(row?.[5])
-    const cutOffDay = this.parseDayValue(row?.[6])
-    
+  parseDebtRow(item) {
+    const toNumberOrNull = (v) => (v === null || v === undefined || v === '' ? null : Number(v))
+    const toIntOrNull = (v) => (v === null || v === undefined || v === '' ? null : parseInt(v))
     return {
-      id: row?.[0] || '',
-      name: row?.[1] || '',
-      issuer: row?.[2] || '',
-      creditLimit: parseFloat(row?.[3]) || 0,
-      balance: parseFloat(row?.[4]) || 0,
-      dueDay,
-      cutOffDay,
-      maskPan: row?.[7] || '',
-      interesEfectivo: parseFloat(row?.[8]) || 0,
-      brand: row?.[9] || '',
-      active: String(row?.[10]).toUpperCase() === 'TRUE' || row?.[10] === true
+      id: String(item?.id || ''),
+      name: item?.name || '',
+      issuer: item?.issuer || '',
+      creditLimit: toNumberOrNull(item?.creditLimit),
+      balance: toNumberOrNull(item?.balance),
+      dueDay: toIntOrNull(item?.dueDay),
+      cutOffDay: toIntOrNull(item?.cutOffDay),
+      maskPan: item?.maskPan ?? null,
+      interesEfectivo: toNumberOrNull(item?.interesEfectivo),
+      brand: item?.brand ?? null,
+      active: item?.active === false ? false : true
     }
   }
 
@@ -200,29 +201,20 @@ class GoogleSheetsBackendService {
   async getCategories() {
     try {
       const response = await this.makeRequest('/categories')
-      
-      // Verificar si la respuesta tiene la estructura esperada
-      let values = []
-      if (Array.isArray(response)) {
-        values = response
-      } else if (response && Array.isArray(response.values)) {
-        values = response.values
-      } else if (response && Array.isArray(response.data)) {
-        values = response.data
-      } else {
-        console.warn('Unexpected categories response structure:', response)
-        return []
-      }
-      
-      // Convertir a objetos
-      const categories = values.slice(1).map(row => ({
-        id: parseInt(row[0]) || 0,
-        name: row[1] || '',
-        color: row[2] || '#6B7280',
-        active: row[3] === 'TRUE'
-      })).filter(category => category.active)
-      
-      return categories
+      const items = Array.isArray(response?.data)
+        ? response.data
+        : (Array.isArray(response) ? response : [])
+
+      // Mapear a Category con valores por defecto para campos usados en UI
+      return items.map(it => ({
+        id: parseInt(it?.id) || 0,
+        name: it?.name || '',
+        type: it?.type ?? null,
+        parentId: it?.parentId ?? null,
+        // Campos legacy usados por UI
+        color: it?.color || '#6B7280',
+        active: true
+      }))
     } catch (error) {
       console.error('Error fetching categories:', error)
       return []
@@ -233,32 +225,19 @@ class GoogleSheetsBackendService {
   async getExpenses() {
     try {
       const response = await this.makeRequest('/expenses')
-      
-      // Verificar si la respuesta tiene la estructura esperada
-      let values = []
-      if (Array.isArray(response)) {
-        values = response
-      } else if (response && Array.isArray(response.values)) {
-        values = response.values
-      } else if (response && Array.isArray(response.data)) {
-        values = response.data
-      } else {
-        console.warn('Unexpected response structure:', response)
-        return []
-      }
-      
-      // Convertir a objetos
-      const expenses = values.slice(1).map(row => ({
-        id: row[0] || Date.now().toString(),
-        date: row[1] || new Date().toISOString().split('T')[0],
-        description: row[2] || '',
-        amount: parseFloat(row[3]) || 0,
-        categoryId: parseInt(row[4]) || 0,
-        isFixed: row[5] === 'TRUE',
-        fixedExpenseId: row[6] || null
+      const items = Array.isArray(response?.data)
+        ? response.data
+        : (Array.isArray(response) ? response : [])
+
+      return items.map(it => ({
+        id: String(it?.id || ''),
+        date: it?.date || new Date().toISOString().slice(0,10),
+        description: it?.description || '',
+        amount: Number(it?.amount) || 0,
+        categoryId: parseInt(it?.categoryId) || 0,
+        isFixed: !!it?.isFixed,
+        fixedExpenseId: it?.fixedExpenseId ?? null
       }))
-      
-      return expenses
     } catch (error) {
       console.error('Error fetching expenses:', error)
       return []
@@ -361,10 +340,11 @@ class GoogleSheetsBackendService {
     try {
       const response = await this.makeRequest('/budget')
       const currentMonth = new Date().toISOString().slice(0, 7)
+      const items = Array.isArray(response?.data)
+        ? response.data
+        : (Array.isArray(response) ? response : [])
 
-      // La API devuelve: { success: true, data: [["yyyy-MM","amount"], ...], count: N }
-      const rows = Array.isArray(response?.data) ? response.data : []
-      const budgets = rows.map(r => ({ month: String(r?.[0] || ''), amount: parseFloat(r?.[1]) || 0 }))
+      const budgets = items.map(it => ({ month: String(it?.month || ''), amount: Number(it?.amount) || 0 }))
       const match = budgets.find(b => b.month === currentMonth)
       if (match) return match
       return { month: currentMonth, amount: 0 }
@@ -378,11 +358,13 @@ class GoogleSheetsBackendService {
   async getBudgets() {
     try {
       const response = await this.makeRequest('/budget')
-      const rows = Array.isArray(response?.data) ? response.data : []
+      const items = Array.isArray(response?.data)
+        ? response.data
+        : (Array.isArray(response) ? response : [])
       const map = {}
-      for (const r of rows) {
-        const month = String(r?.[0] || '')
-        const amount = parseFloat(r?.[1]) || 0
+      for (const it of items) {
+        const month = String(it?.month || '')
+        const amount = Number(it?.amount) || 0
         if (month) map[month] = amount
       }
       return map
@@ -410,8 +392,6 @@ class GoogleSheetsBackendService {
   // Agregar nueva categoría
   async addCategory(category) {
     try {
-      // Por ahora, solo agregamos la categoría localmente
-      // En el futuro, podemos agregar un endpoint en el backend
       return category
     } catch (error) {
       console.error('Error adding category:', error)
@@ -422,8 +402,6 @@ class GoogleSheetsBackendService {
   // Actualizar categoría
   async updateCategory(category) {
     try {
-      // Por ahora, solo actualizamos la categoría localmente
-      // En el futuro, podemos agregar un endpoint en el backend
       return category
     } catch (error) {
       console.error('Error updating category:', error)
@@ -446,30 +424,17 @@ class GoogleSheetsBackendService {
   async getFixedExpenses() {
     try {
       const response = await this.makeRequest('/fixed-expenses')
-      
-      // Verificar si la respuesta tiene la estructura esperada
-      let values = []
-      if (Array.isArray(response)) {
-        values = response
-      } else if (response && Array.isArray(response.values)) {
-        values = response.values
-      } else if (response && Array.isArray(response.data)) {
-        values = response.data
-      } else {
-        console.warn('Unexpected fixed expenses response structure:', response)
-        return []
-      }
-      
-      // Convertir a objetos
-      const fixedExpenses = values.slice(1).map(row => ({
-        id: row[0] || '',  // Mantener como string para consistencia
-        name: row[1] || '',
-        amount: parseFloat(row[2]) || 0,
-        categoryId: parseInt(row[3]) || 0,
-        dayOfMonth: parseInt(row[4]) || 1,
-        active: row[5] === 'TRUE'
+      const items = Array.isArray(response?.data)
+        ? response.data
+        : (Array.isArray(response) ? response : [])
+      const fixedExpenses = items.map(it => ({
+        id: String(it?.id || ''),
+        name: it?.name || '',
+        amount: Number(it?.amount) || 0,
+        categoryId: parseInt(it?.categoryId) || 0,
+        dayOfMonth: parseInt(it?.dayOfMonth) || 1,
+        active: it?.active !== false
       })).filter(expense => expense.active)
-      
       return fixedExpenses
     } catch (error) {
       console.error('Error fetching fixed expenses:', error)
