@@ -372,7 +372,9 @@ const months = [
 ]
 
 onMounted(async () => {
-  await expenseStore.loadCategories()
+  if (!expenseStore.categories?.length) {
+    await expenseStore.loadCategories()
+  }
   // Inicializar fecha actual
   form.date = format(new Date(), 'yyyy-MM-dd')
   selectedDate.value = new Date()

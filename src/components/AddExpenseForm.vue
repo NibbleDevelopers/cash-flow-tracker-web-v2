@@ -145,7 +145,9 @@ const error = ref('')
 
 onMounted(async () => {
   form.date = format(new Date(), 'yyyy-MM-dd')
-  await expenseStore.loadCategories()
+  if (!expenseStore.categories?.length) {
+    await expenseStore.loadCategories()
+  }
 })
 
 const resetForm = () => {
