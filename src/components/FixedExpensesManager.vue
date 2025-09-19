@@ -66,29 +66,22 @@
       </div>
     </div>
 
-    <!-- Botón para generar gastos fijos del mes -->
+    <!-- Botón para generar gastos fijos del mes actual -->
     <div v-if="expenseStore.activeFixedExpenses.length > 0" class="mt-6 pt-4 border-t border-gray-200">
-      <div class="flex justify-between items-center">
-        <div>
+      <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
+        <div class="flex-1">
           <p class="text-sm text-gray-600">
-            Generar gastos fijos para {{ formatMonthName(selectedMonth) }}
+            Generar gastos fijos del mes actual ({{ formatMonthName(currentMonth) }})
           </p>
           <p class="text-xs text-gray-500">
-            Esto creará automáticamente los gastos fijos para el mes seleccionado
+            Esto creará automáticamente los gastos fijos para el mes actual
           </p>
         </div>
-        <div class="flex items-center space-x-2">
-          <select
-            v-model="selectedMonth"
-            class="text-sm border border-gray-300 rounded-md px-2 py-1"
-          >
-            <option :value="currentMonth">{{ formatMonthName(currentMonth) }}</option>
-            <option :value="nextMonth">{{ formatMonthName(nextMonth) }}</option>
-          </select>
+        <div class="flex items-center md:justify-end md:flex-none mt-1 md:mt-0">
           <button
             @click="generateFixedExpenses"
             :disabled="loading"
-            class="btn-secondary"
+            class="btn-primary"
             :class="{ 'opacity-50 cursor-not-allowed': loading }"
           >
             {{ loading ? 'Generando...' : 'Generar Gastos' }}
@@ -134,8 +127,6 @@ const confirm = useConfirm()
 const error = ref('')
 
 const currentMonth = computed(() => format(new Date(), 'yyyy-MM'))
-const nextMonth = computed(() => format(new Date(new Date().getFullYear(), new Date().getMonth() + 1, 1), 'yyyy-MM'))
-const selectedMonth = ref(format(new Date(), 'yyyy-MM'))
 
 const formatMonthName = (monthStr) => {
   const [year, month] = monthStr.split('-')
@@ -172,8 +163,20 @@ const onDeleteFixed = async (fixedExpense) => {
 const generateFixedExpenses = async () => {
   try {
     error.value = ''
-    await expenseStore.generateFixedExpensesForMonth(selectedMonth.value)
-    notify.success(`Gastos fijos generados correctamente para ${formatMonthName(selectedMonth.value)}`)
+    const month = currentMonth.value
+    const result = await expenseStore.generateFixedExpensesForMonthLocal(month)
+
+    const createdCount = Array.isArray(result)
+      ? result.length
+      : (typeof result?.count === 'number'
+          ? result.count
+          : (typeof result?.created === 'number' ? result.created : 0))
+
+    if (createdCount === 0) {
+      notify.info('Los gastos fijos ya estaban generados para el mes actual.')
+    } else {
+      notify.success(`Se generaron ${createdCount} gastos fijos para el mes actual.`)
+    }
   } catch (err) {
     error.value = 'Error al generar gastos fijos. Inténtalo de nuevo.'
     console.error('Error generando gastos fijos:', err)

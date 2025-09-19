@@ -516,6 +516,71 @@ export const useExpenseStore = defineStore('expense', () => {
     }
   }
 
+  // Generar gastos fijos localmente excluyendo categoría 7 (Créditos)
+  const generateFixedExpensesForMonthLocal = async (month) => {
+    loading.value = true
+    error.value = null
+    try {
+      if (typeof month !== 'string' || month.length !== 7) {
+        throw new Error('Mes inválido. Formato esperado: yyyy-MM')
+      }
+
+      const [yearStr, monthStr] = month.split('-')
+      const year = parseInt(yearStr)
+      const monthIndex = parseInt(monthStr) - 1
+      if (isNaN(year) || isNaN(monthIndex)) {
+        throw new Error('Mes inválido. Formato esperado: yyyy-MM')
+      }
+
+      // Preparar gastos a crear, excluyendo categoría 7
+      const toCreate = []
+      const lastDay = new Date(year, monthIndex + 1, 0).getDate()
+
+      const activeFixed = (fixedExpenses.value || []).filter(f => f && f.active !== false)
+
+      for (const f of activeFixed) {
+        const categoryId = parseInt(f.categoryId)
+        if (categoryId === 7) {
+          // Excluir créditos
+          continue
+        }
+
+        const day = Math.min(Math.max(parseInt(f.dayOfMonth) || 1, 1), lastDay)
+        const date = `${year}-${String(monthIndex + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`
+
+        // Evitar duplicados: si ya existe un gasto con este fixedExpenseId en el mes
+        const exists = (expenses.value || []).some(e => {
+          return e && e.isFixed === true && String(e.fixedExpenseId) === String(f.id) && typeof e.date === 'string' && e.date.slice(0, 7) === month
+        })
+        if (exists) continue
+
+        toCreate.push({
+          id: Date.now().toString() + Math.random().toString(36).slice(2),
+          date,
+          description: f.name,
+          amount: Number(f.amount) || 0,
+          categoryId: categoryId,
+          isFixed: true,
+          fixedExpenseId: String(f.id)
+        })
+      }
+
+      if (toCreate.length === 0) {
+        return { success: true, created: 0 }
+      }
+
+      const result = await googleSheetsService.addExpensesBatch(toCreate)
+      await loadExpenses()
+      return result
+    } catch (err) {
+      error.value = 'Error al generar gastos fijos'
+      console.error('Error generating fixed expenses locally:', err)
+      throw err
+    } finally {
+      loading.value = false
+    }
+  }
+
   const clearError = () => {
     error.value = null
   }
@@ -562,6 +627,7 @@ export const useExpenseStore = defineStore('expense', () => {
     updateFixedExpense,
     deleteFixedExpense,
     generateFixedExpensesForMonth,
+    generateFixedExpensesForMonthLocal,
     clearError
   }
 })
