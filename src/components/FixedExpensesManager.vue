@@ -7,7 +7,7 @@
         </div>
       </div>
 
-    <!-- Formulario inline eliminado en favor del modal -->
+    
 
     <!-- Lista de gastos fijos -->
     <div v-if="expenseStore.activeFixedExpenses.length === 0" class="text-center py-8">

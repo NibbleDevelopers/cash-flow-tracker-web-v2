@@ -1,64 +1,11 @@
-// Google Sheets API service usando backend
-// Este servicio se comunica con el servidor backend que maneja la autenticación
-
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL
+// Fachada para mantener compatibilidad mientras migramos a módulos por dominio
+import * as DebtsAPI from './api/debts'
+import * as ExpensesAPI from './api/expenses'
+import * as CategoriesAPI from './api/categories'
+import * as BudgetAPI from './api/budget'
+import * as FixedAPI from './api/fixedExpenses'
 
 class GoogleSheetsBackendService {
-  constructor() {
-    this.baseUrl = API_BASE_URL
-  }
-
-
-  // Hacer request al backend
-  async makeRequest(endpoint, options = {}) {
-    const url = `${this.baseUrl}${endpoint}`
-    
-    try {
-      const response = await fetch(url, {
-        ...options,
-        headers: {
-          'Content-Type': 'application/json',
-          'Accept': 'application/json',
-          ...options.headers
-        }
-      })
-
-      if (!response.ok) {
-        let errorMessage = `Error ${response.status}: ${response.statusText}`
-        
-        try {
-          const errorData = await response.json()
-          errorMessage = errorData?.message || errorData?.error || errorMessage
-        } catch {
-          // Si no se puede parsear como JSON, usar el texto plano
-          const errorText = await response.text()
-          if (errorText) {
-            errorMessage = errorText
-          }
-        }
-        
-        throw new Error(errorMessage)
-      }
-
-      // Respuesta exitosa
-      if (response.status === 204) return {}
-      
-      try {
-        return await response.json()
-      } catch (parseError) {
-        console.warn('Failed to parse response as JSON:', parseError)
-        return {}
-      }
-    } catch (error) {
-      // Mejorar mensajes de error para el usuario
-      if (error.name === 'TypeError' && error.message.includes('fetch')) {
-        throw new Error('No se pudo conectar con el servidor. Verifica tu conexión a internet.')
-      }
-      
-      console.error('Error making request to backend:', error)
-      throw error
-    }
-  }
 
   // ==========================
   // Deudas (Debts) API
@@ -67,42 +14,14 @@ class GoogleSheetsBackendService {
    * Obtiene todas las deudas desde el backend
    * @returns {Array} - Array de objetos de deuda
    */
-  async getDebts() {
-    try {
-      const response = await this.makeRequest('/debts')
-      const items = Array.isArray(response?.data)
-        ? response.data
-        : (Array.isArray(response) ? response : [])
-
-      return items.map(item => this.parseDebtRow(item))
-    } catch (error) {
-      console.error('Error fetching debts:', error)
-      return []
-    }
-  }
+  async getDebts() { return DebtsAPI.getDebts() }
 
   /**
    * Parsea una fila de datos de deuda
    * @param {Array} row - Fila de datos del backend
    * @returns {Object} - Objeto de deuda parseado
    */
-  parseDebtRow(item) {
-    const toNumberOrNull = (v) => (v === null || v === undefined || v === '' ? null : Number(v))
-    const toIntOrNull = (v) => (v === null || v === undefined || v === '' ? null : parseInt(v))
-    return {
-      id: String(item?.id || ''),
-      name: item?.name || '',
-      issuer: item?.issuer || '',
-      creditLimit: toNumberOrNull(item?.creditLimit),
-      balance: toNumberOrNull(item?.balance),
-      dueDay: toIntOrNull(item?.dueDay),
-      cutOffDay: toIntOrNull(item?.cutOffDay),
-      maskPan: item?.maskPan ?? null,
-      interesEfectivo: toNumberOrNull(item?.interesEfectivo),
-      brand: item?.brand ?? null,
-      active: item?.active === false ? false : true
-    }
-  }
+  parseDebtRow(item) { return item }
 
   /**
    * Parsea un valor de día, manejando casos especiales
@@ -117,63 +36,15 @@ class GoogleSheetsBackendService {
     return isNaN(parsed) ? null : parsed
   }
 
-  async createDebt(payload) {
-    try {
-      const response = await this.makeRequest('/debts', {
-        method: 'POST',
-        body: JSON.stringify(payload)
-      })
-      return response?.data || response
-    } catch (error) {
-      console.error('Error creating debt:', error)
-      throw error
-    }
-  }
+  async createDebt(payload) { return DebtsAPI.createDebt(payload) }
 
-  async updateDebt(id, payload) {
-    try {
-      const response = await this.makeRequest(`/debts/${id}`, {
-        method: 'PUT',
-        body: JSON.stringify(payload)
-      })
-      return response?.data || response
-    } catch (error) {
-      console.error('Error updating debt:', error)
-      throw error
-    }
-  }
+  async updateDebt(id, payload) { return DebtsAPI.updateDebt(id, payload) }
 
-  async deleteDebt(id) {
-    try {
-      const response = await this.makeRequest(`/debts/${id}`, {
-        method: 'DELETE'
-      })
-      return response
-    } catch (error) {
-      console.error('Error deleting debt:', error)
-      throw error
-    }
-  }
+  async deleteDebt(id) { return DebtsAPI.deleteDebt(id) }
 
-  async getDebtSummary(id) {
-    try {
-      const response = await this.makeRequest(`/debts/${id}/summary`)
-      return response?.data || response
-    } catch (error) {
-      console.error('Error fetching debt summary:', error)
-      return null
-    }
-  }
+  async getDebtSummary(id) { return DebtsAPI.getDebtSummary(id) }
 
-  async getAllDebtsSummary() {
-    try {
-      const response = await this.makeRequest('/debts/summary')
-      return Array.isArray(response?.data) ? response.data : []
-    } catch (error) {
-      console.error('Error fetching debts summary:', error)
-      return []
-    }
-  }
+  async getAllDebtsSummary() { return [] }
 
   /**
    * Obtiene el plan de cuotas para una deuda específica
@@ -183,66 +54,13 @@ class GoogleSheetsBackendService {
    * @param {string} options.start - Fecha de inicio
    * @returns {Object|null} - Datos del plan de cuotas
    */
-  async getDebtInstallments(id, { months, start } = {}) {
-    try {
-      const params = new URLSearchParams()
-      if (months != null) params.set('months', String(months))
-      if (start) params.set('start', start)
-      
-      const response = await this.makeRequest(`/debts/${id}/installments?${params.toString()}`)
-      return response?.data || response
-    } catch (error) {
-      console.error('Error fetching debt installments:', error)
-      return null
-    }
-  }
+  async getDebtInstallments(id, opts) { return DebtsAPI.getDebtInstallments(id, opts) }
 
   // Obtener categorías
-  async getCategories() {
-    try {
-      const response = await this.makeRequest('/categories')
-      const items = Array.isArray(response?.data)
-        ? response.data
-        : (Array.isArray(response) ? response : [])
-
-      // Mapear a Category con valores por defecto para campos usados en UI
-      return items.map(it => ({
-        id: parseInt(it?.id) || 0,
-        name: it?.name || '',
-        type: it?.type ?? null,
-        parentId: it?.parentId ?? null,
-        // Campos legacy usados por UI
-        color: it?.color || '#6B7280',
-        active: true
-      }))
-    } catch (error) {
-      console.error('Error fetching categories:', error)
-      return []
-    }
-  }
+  async getCategories() { return CategoriesAPI.getCategories() }
 
   // Obtener gastos
-  async getExpenses() {
-    try {
-      const response = await this.makeRequest('/expenses')
-      const items = Array.isArray(response?.data)
-        ? response.data
-        : (Array.isArray(response) ? response : [])
-
-      return items.map(it => ({
-        id: String(it?.id || ''),
-        date: it?.date || new Date().toISOString().slice(0,10),
-        description: it?.description || '',
-        amount: Number(it?.amount) || 0,
-        categoryId: parseInt(it?.categoryId) || 0,
-        isFixed: !!it?.isFixed,
-        fixedExpenseId: it?.fixedExpenseId ?? null
-      }))
-    } catch (error) {
-      console.error('Error fetching expenses:', error)
-      return []
-    }
-  }
+  async getExpenses() { return ExpensesAPI.getExpenses() }
 
   // Obtener gastos con información de categorías
   async getExpensesWithCategories() {
@@ -277,260 +95,55 @@ class GoogleSheetsBackendService {
   }
 
   // Agregar nuevo gasto
-  async addExpense(expense) {
-    try {
-      const response = await this.makeRequest('/expenses', {
-        method: 'POST',
-        body: JSON.stringify(expense)
-      })
-
-      return response
-    } catch (error) {
-      console.error('Error adding expense:', error)
-      throw error
-    }
-  }
+  async addExpense(expense) { return ExpensesAPI.addExpense(expense) }
 
   // Agregar múltiples gastos en lote (mejor rendimiento)
-  async addExpensesBatch(expenses) {
-    try {
-      const response = await this.makeRequest('/expenses/batch', {
-        method: 'POST',
-        body: JSON.stringify({ expenses })
-      })
-
-      return response
-    } catch (error) {
-      console.error('Error adding expenses batch:', error)
-      throw error
-    }
-  }
+  async addExpensesBatch(expenses) { return ExpensesAPI.addExpensesBatch(expenses) }
 
   // Actualizar gasto existente
-  async updateExpense(id, data) {
-    try {
-      const idForBody = isNaN(Number(id)) ? id : Number(id)
-      const response = await this.makeRequest(`/expenses/${id}`, {
-        method: 'PUT',
-        body: JSON.stringify({...data })
-      })
-
-      return response
-    } catch (error) {
-      console.error('Error updating expense:', error)
-      throw error
-    }
-  }
+  async updateExpense(id, data) { return ExpensesAPI.updateExpense(id, data) }
 
   // Eliminar gasto
-  async deleteExpense(id) {
-    try {
-      const response = await this.makeRequest(`/expenses/${id}`, {
-        method: 'DELETE'
-      })
-      return response
-    } catch (error) {
-      console.error('Error deleting expense:', error)
-      throw error
-    }
-  }
+  async deleteExpense(id) { return ExpensesAPI.deleteExpense(id) }
 
   // Obtener presupuesto mensual
-  async getBudget() {
-    try {
-      const response = await this.makeRequest('/budget')
-      const currentMonth = new Date().toISOString().slice(0, 7)
-      const items = Array.isArray(response?.data)
-        ? response.data
-        : (Array.isArray(response) ? response : [])
-
-      const budgets = items.map(it => ({ month: String(it?.month || ''), amount: Number(it?.amount) || 0 }))
-      const match = budgets.find(b => b.month === currentMonth)
-      if (match) return match
-      return { month: currentMonth, amount: 0 }
-    } catch (error) {
-      console.error('Error fetching budget:', error)
-      return { amount: 0, month: new Date().toISOString().slice(0, 7) }
-    }
-  }
+  async getBudget() { return BudgetAPI.getBudget() }
 
   // Obtener todos los presupuestos en mapa { 'yyyy-MM': amount }
-  async getBudgets() {
-    try {
-      const response = await this.makeRequest('/budget')
-      const items = Array.isArray(response?.data)
-        ? response.data
-        : (Array.isArray(response) ? response : [])
-      const map = {}
-      for (const it of items) {
-        const month = String(it?.month || '')
-        const amount = Number(it?.amount) || 0
-        if (month) map[month] = amount
-      }
-      return map
-    } catch (error) {
-      console.error('Error fetching budgets:', error)
-      return {}
-    }
-  }
+  async getBudgets() { return BudgetAPI.getBudgets() }
 
   // Actualizar presupuesto mensual
-  async updateBudget(budget) {
-    try {
-      const response = await this.makeRequest('/budget', {
-        method: 'PUT',
-        body: JSON.stringify(budget)
-      })
-
-      return response
-    } catch (error) {
-      console.error('Error updating budget:', error)
-      throw error
-    }
-  }
+  async updateBudget(budget) { return BudgetAPI.updateBudget(budget) }
 
   // Agregar nueva categoría
-  async addCategory(category) {
-    try {
-      return category
-    } catch (error) {
-      console.error('Error adding category:', error)
-      throw error
-    }
-  }
+  async addCategory(category) { return CategoriesAPI.addCategory(category) }
 
   // Actualizar categoría
-  async updateCategory(category) {
-    try {
-      return category
-    } catch (error) {
-      console.error('Error updating category:', error)
-      throw error
-    }
-  }
+  async updateCategory(category) { return CategoriesAPI.updateCategory(category) }
 
   // Probar conexión con el backend
-  async testConnection() {
-    try {
-      const response = await this.makeRequest('/test')
-      return response
-    } catch (error) {
-      console.error('Error testing backend connection:', error)
-      throw error
-    }
-  }
+  async testConnection() { return makeRequest('/test') }
 
   // Obtener gastos fijos
-  async getFixedExpenses() {
-    try {
-      const response = await this.makeRequest('/fixed-expenses')
-      const items = Array.isArray(response?.data)
-        ? response.data
-        : (Array.isArray(response) ? response : [])
-      const fixedExpenses = items.map(it => ({
-        id: String(it?.id || ''),
-        name: it?.name || '',
-        amount: Number(it?.amount) || 0,
-        categoryId: parseInt(it?.categoryId) || 0,
-        dayOfMonth: parseInt(it?.dayOfMonth) || 1,
-        active: it?.active !== false
-      })).filter(expense => expense.active)
-      return fixedExpenses
-    } catch (error) {
-      console.error('Error fetching fixed expenses:', error)
-      return []
-    }
-  }
+  async getFixedExpenses() { return FixedAPI.getFixedExpenses() }
 
   // Agregar gasto fijo
-  async addFixedExpense(fixedExpense) {
-    try {
-      const response = await this.makeRequest('/fixed-expenses', {
-        method: 'POST',
-        body: JSON.stringify(fixedExpense)
-      })
-
-      return response
-    } catch (error) {
-      console.error('Error adding fixed expense:', error)
-      throw error
-    }
-  }
+  async addFixedExpense(fixedExpense) { return FixedAPI.addFixedExpense(fixedExpense) }
 
   // Actualizar gasto fijo
-  async updateFixedExpense(id, data) {
-    try {
-      const response = await this.makeRequest(`/fixed-expenses/${id}`, {
-        method: 'PUT',
-        body: JSON.stringify(data)
-      })
-
-      return response
-    } catch (error) {
-      console.error('Error updating fixed expense:', error)
-      throw error
-    }
-  }
+  async updateFixedExpense(id, data) { return FixedAPI.updateFixedExpense(id, data) }
 
   // Eliminar gasto fijo
-  async deleteFixedExpense(id) {
-    try {
-      const response = await this.makeRequest(`/fixed-expenses/${id}`, {
-        method: 'DELETE'
-      })
-      return response
-    } catch (error) {
-      console.error('Error deleting fixed expense:', error)
-      throw error
-    }
-  }
+  async deleteFixedExpense(id) { return FixedAPI.deleteFixedExpense(id) }
 
   // Generar gastos fijos para el mes actual
-  async generateFixedExpensesForMonth(month) {
-    try {
-      const response = await this.makeRequest('/generate-fixed-expenses', {
-        method: 'POST',
-        body: JSON.stringify({ month })
-      })
-
-      return response
-    } catch (error) {
-      console.error('Error generating fixed expenses:', error)
-      throw error
-    }
-  }
+  async generateFixedExpensesForMonth(month) { return FixedAPI.generateFixedExpensesForMonth(month) }
 
   // Generar gastos fijos usando endpoint batch (mejor rendimiento)
-  async generateFixedExpensesForMonthBatch(month) {
-    try {
-      console.log('Service: Enviando request para generar gastos fijos del mes:', month)
-      const response = await this.makeRequest('/generate-fixed-expenses/batch', {
-        method: 'POST',
-        body: JSON.stringify({ month })
-      })
-      console.log('Service: Respuesta del backend:', response)
-
-      return response
-    } catch (error) {
-      console.error('Error generating fixed expenses batch:', error)
-      throw error
-    }
-  }
+  async generateFixedExpensesForMonthBatch(month) { return FixedAPI.generateFixedExpensesForMonthBatch(month) }
 
   // Verificar si ya existe un gasto fijo
-  async checkFixedExpenseExists(description, categoryId) {
-    try {
-      const response = await this.makeRequest('/check-fixed-expense', {
-        method: 'POST',
-        body: JSON.stringify({ description, categoryId })
-      })
-
-      return response.exists
-    } catch (error) {
-      console.error('Error checking fixed expense existence:', error)
-      return false
-    }
-  }
+  async checkFixedExpenseExists(description, categoryId) { return FixedAPI.checkFixedExpenseExists(description, categoryId) }
 }
 
 export default new GoogleSheetsBackendService()
