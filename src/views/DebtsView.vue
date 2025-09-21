@@ -94,20 +94,34 @@
                   <span :class="d.active ? 'badge badge-success' : 'badge badge-gray'">{{ d.active ? 'Activa' : 'Inactiva' }}</span>
                 </td>
                 <td class="px-3 py-2 text-right space-x-2">
-                  <button class="btn-secondary inline-flex items-center justify-center" @click="openEdit(d)" title="Editar" aria-label="Editar">
-                    <PencilSquareIcon class="h-5 w-5" />
-                  </button>
-                  <button class="btn-secondary inline-flex items-center justify-center" @click="openSummary(d)" title="Resumen" aria-label="Resumen">
-                    <ChartBarIcon class="h-5 w-5" />
-                  </button>
-                  <button class="btn-secondary inline-flex items-center justify-center" @click="openInstallments(d)" title="Cuotas" aria-label="Cuotas">
-                    <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
-                    </svg>
-                  </button>
-                  <button class="btn-secondary inline-flex items-center justify-center" @click="confirmDelete(d)" title="Eliminar" aria-label="Eliminar">
-                    <TrashIcon class="h-5 w-5" />
-                  </button>
+                  <span class="relative group inline-block">
+                    <button class="btn-secondary inline-flex items-center justify-center" @click="openEdit(d)" aria-label="Editar">
+                      <PencilSquareIcon class="h-5 w-5" />
+                    </button>
+                    <span class="pointer-events-none absolute -top-7 left-1/2 -translate-x-1/2 whitespace-nowrap px-2 py-0.5 rounded bg-gray-800 text-white text-[10px] opacity-0 group-hover:opacity-100 transition-opacity z-10">Editar</span>
+                  </span>
+                  <span class="relative group inline-block">
+                    <button class="btn-secondary inline-flex items-center justify-center" @click="openSummary(d)" aria-label="Resumen">
+                      <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                      </svg>
+                    </button>
+                    <span class="pointer-events-none absolute -top-7 left-1/2 -translate-x-1/2 whitespace-nowrap px-2 py-0.5 rounded bg-gray-800 text-white text-[10px] opacity-0 group-hover:opacity-100 transition-opacity z-10">Resumen</span>
+                  </span>
+                  <span class="relative group inline-block">
+                    <button class="btn-secondary inline-flex items-center justify-center" @click="openInstallments(d)" aria-label="Cuotas">
+                      <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                      </svg>
+                    </button>
+                    <span class="pointer-events-none absolute -top-7 left-1/2 -translate-x-1/2 whitespace-nowrap px-2 py-0.5 rounded bg-gray-800 text-white text-[10px] opacity-0 group-hover:opacity-100 transition-opacity z-10">Cuotas</span>
+                  </span>
+                  <span class="relative group inline-block">
+                    <button class="inline-flex items-center justify-center p-2 rounded-md border border-gray-200 bg-white text-red-600 hover:bg-red-50" @click="confirmDelete(d)" aria-label="Eliminar">
+                      <TrashIcon class="h-5 w-5" />
+                    </button>
+                    <span class="pointer-events-none absolute -top-7 left-1/2 -translate-x-1/2 whitespace-nowrap px-2 py-0.5 rounded bg-gray-800 text-white text-[10px] opacity-0 group-hover:opacity-100 transition-opacity z-10">Eliminar</span>
+                  </span>
                 </td>
               </tr>
             </tbody>
@@ -443,7 +457,7 @@ import { useConfirm } from '../composables/useConfirm'
 import { storeToRefs } from 'pinia'
 import DebtForm from '../components/DebtForm.vue'
 import { Dialog, DialogPanel, DialogTitle, TransitionChild, TransitionRoot } from '@headlessui/vue'
-import { PencilSquareIcon, ChartBarIcon, CalendarDaysIcon, TrashIcon } from '@heroicons/vue/24/outline'
+import { PencilSquareIcon, InformationCircleIcon, CalendarDaysIcon, TrashIcon } from '@heroicons/vue/24/outline'
 import LoadingSkeleton from '../components/ui/LoadingSkeleton.vue'
 import { notify } from '../services/notifications.js'
 import { format, endOfMonth } from 'date-fns'
