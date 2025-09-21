@@ -387,7 +387,19 @@
                             </div>
                           </td>
                           <td class="px-3 py-2 whitespace-nowrap text-sm text-right font-medium text-gray-900">
-                            {{ formatCurrency(row.payment) }}
+                            <div v-if="!biweeklyPayments">
+                              {{ formatCurrency(row.payment) }}
+                            </div>
+                            <div v-else class="space-y-1 text-right">
+                              <div>
+                                <span class="inline-block px-1.5 py-0.5 rounded bg-gray-100 mr-1 text-gray-700">1/2</span>
+                                <span>{{ formatCurrency(getBiweeklyAmountsForRow(index).first) }}</span>
+                              </div>
+                              <div>
+                                <span class="inline-block px-1.5 py-0.5 rounded bg-gray-100 mr-1 text-gray-700">2/2</span>
+                                <span>{{ formatCurrency(getBiweeklyAmountsForRow(index).second) }}</span>
+                              </div>
+                            </div>
                           </td>
                           <td class="px-3 py-2 whitespace-nowrap text-sm text-right text-red-600">
                             {{ formatCurrency(row.interest) }}
@@ -830,6 +842,15 @@ function getLocalBiweeklyDates(baseDate) {
     second: toYmd(secondDate),
     display: [toDisplay(firstDate), toDisplay(secondDate)]
   }
+}
+
+// Montos quincenales (50/50 con ajuste de centavos en el segundo)
+function getBiweeklyAmountsForRow(index) {
+  const installment = installmentsData.value?.schedule?.[index]
+  const total = Number(installment?.payment) || 0
+  const first = Math.round((total / 2) * 100) / 100
+  const second = Math.round((total - first) * 100) / 100
+  return { first, second }
 }
 
 /**
