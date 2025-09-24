@@ -229,8 +229,7 @@ export const useExpenseStore = defineStore('expense', () => {
         }
       }
 
-      const newExpense = {
-        id: Date.now().toString(),
+      const newExpensePayload = {
         date: expenseData.date || format(new Date(), 'yyyy-MM-dd'),
         description: expenseData.description,
         amount: parseFloat(expenseData.amount),
@@ -242,7 +241,8 @@ export const useExpenseStore = defineStore('expense', () => {
         debtId: expenseData.debtId ?? null
       }
 
-      await googleSheetsService.addExpense(newExpense)
+      const created = await googleSheetsService.addExpense(newExpensePayload)
+      const createdId = created?.data?.id || created?.id
       
       // Si es un gasto fijo y no tiene fixedExpenseId, crear el gasto fijo directamente (sin check)
       if (expenseData.isFixed && expenseData.dayOfMonth && !expenseData.fixedExpenseId) {
@@ -258,16 +258,17 @@ export const useExpenseStore = defineStore('expense', () => {
         await googleSheetsService.addFixedExpense(newFixedExpense)
         fixedExpenses.value.push(newFixedExpense)
 
-        // Actualizar el gasto con el ID del gasto fijo
-        newExpense.fixedExpenseId = newFixedExpense.id
-        await googleSheetsService.updateExpense(newExpense.id, { fixedExpenseId: newFixedExpense.id })
+        // Actualizar el gasto con el ID del gasto fijo (usar id devuelto por la API)
+        if (createdId) {
+          await googleSheetsService.updateExpense(createdId, { fixedExpenseId: newFixedExpense.id })
+        }
       }
       
       // Recargar gastos para obtener la información completa de categorías
       await loadExpenses()
       // Si afecta a créditos (debtId), refrescar deudas para reflejar side-effects de balance
       try {
-        if (newExpense.debtId) {
+        if (newExpensePayload.debtId) {
           const debtStore = useDebtStore()
           await debtStore.loadDebts()
         }
@@ -275,7 +276,10 @@ export const useExpenseStore = defineStore('expense', () => {
         console.warn('No se pudo refrescar deudas tras agregar gasto:', e)
       }
       
-      return newExpense
+      return {
+        id: createdId || expenseData.id || Date.now().toString(),
+        ...newExpensePayload
+      }
     } catch (err) {
       error.value = 'Error al agregar el gasto'
       console.error('Error adding expense:', err)
@@ -292,7 +296,6 @@ export const useExpenseStore = defineStore('expense', () => {
     
     try {
       const expenses = expensesData.map(expenseData => ({
-        id: Date.now().toString() + Math.random().toString(36).substr(2, 9),
         date: expenseData.date || format(new Date(), 'yyyy-MM-dd'),
         description: expenseData.description,
         amount: parseFloat(expenseData.amount),
