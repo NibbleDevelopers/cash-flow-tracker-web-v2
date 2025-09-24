@@ -244,34 +244,24 @@ export const useExpenseStore = defineStore('expense', () => {
 
       await googleSheetsService.addExpense(newExpense)
       
-             // Si es un gasto fijo y no tiene fixedExpenseId, crear el gasto fijo
-       if (expenseData.isFixed && expenseData.dayOfMonth && !expenseData.fixedExpenseId) {
-         // Verificar si ya existe un gasto fijo similar
-         const exists = await googleSheetsService.checkFixedExpenseExists(
-           expenseData.description, 
-           parseInt(expenseData.categoryId)
-         )
-         
-         if (!exists) {
-           const newFixedExpense = {
-             id: Date.now().toString(),  // Generar ID como string
-             name: expenseData.description,
-             amount: parseFloat(expenseData.amount),
-             categoryId: parseInt(expenseData.categoryId),
-             dayOfMonth: parseInt(expenseData.dayOfMonth),
-             active: true
-           }
+      // Si es un gasto fijo y no tiene fixedExpenseId, crear el gasto fijo directamente (sin check)
+      if (expenseData.isFixed && expenseData.dayOfMonth && !expenseData.fixedExpenseId) {
+        const newFixedExpense = {
+          id: Date.now().toString(),
+          name: expenseData.description,
+          amount: parseFloat(expenseData.amount),
+          categoryId: parseInt(expenseData.categoryId),
+          dayOfMonth: parseInt(expenseData.dayOfMonth),
+          active: true
+        }
 
-           await googleSheetsService.addFixedExpense(newFixedExpense)
-           fixedExpenses.value.push(newFixedExpense)
-           
-           // Actualizar el gasto con el ID del gasto fijo
-           newExpense.fixedExpenseId = newFixedExpense.id
-           
-           // Actualizar el gasto en Google Sheets con el fixedExpenseId
-           await googleSheetsService.updateExpense(newExpense)
-         }
-       }
+        await googleSheetsService.addFixedExpense(newFixedExpense)
+        fixedExpenses.value.push(newFixedExpense)
+
+        // Actualizar el gasto con el ID del gasto fijo
+        newExpense.fixedExpenseId = newFixedExpense.id
+        await googleSheetsService.updateExpense(newExpense.id, { fixedExpenseId: newFixedExpense.id })
+      }
       
       // Recargar gastos para obtener la información completa de categorías
       await loadExpenses()
@@ -350,10 +340,14 @@ export const useExpenseStore = defineStore('expense', () => {
         amount: parseFloat(expenseData.amount),
         categoryId: parseInt(expenseData.categoryId),
         isFixed: !!expenseData.isFixed,
-        fixedExpenseId: expenseData.fixedExpenseId ?? null,
         entryType: expenseData.debtId ? (expenseData.entryType ? String(expenseData.entryType).toLowerCase() : undefined) : undefined,
         status: expenseData.status ? String(expenseData.status).toLowerCase() : undefined,
         debtId: expenseData.debtId ?? null
+      }
+
+      // Preservar fixedExpenseId si no viene en la edición para evitar perder el enlace
+      if ('fixedExpenseId' in expenseData) {
+        payload.fixedExpenseId = expenseData.fixedExpenseId ?? null
       }
 
       await googleSheetsService.updateExpense(id, payload)

@@ -61,21 +61,12 @@
 
       <div v-if="form.isCredit" class="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div>
-          <label for="entryType" class="block text-sm font-medium text-gray-700 mb-1">Tipo de movimiento</label>
-          <select id="entryType" v-model="form.entryType" class="input-field" required>
-            <option value="">Selecciona...</option>
-            <option value="charge">Cargo</option>
-            <option value="payment">Pago</option>
-          </select>
+          <label class="block text-sm font-medium text-gray-700 mb-1">Tipo de movimiento</label>
+          <AppSelect v-model="form.entryType" :options="entryTypeOptions" placeholder="Selecciona..." />
         </div>
         <div>
-          <label for="debtId" class="block text-sm font-medium text-gray-700 mb-1">Crédito</label>
-          <select id="debtId" v-model="form.debtId" class="input-field" required>
-            <option value="">Selecciona un crédito</option>
-            <option v-for="d in debtStore.debts" :key="d.id" :value="d.id">
-              {{ d.name }} {{ d.maskPan ? `•${d.maskPan}` : '' }}
-            </option>
-          </select>
+          <label class="block text-sm font-medium text-gray-700 mb-1">Crédito</label>
+          <AppSelect v-model="form.debtId" :options="debtOptions" placeholder="Selecciona un crédito" />
         </div>
       </div>
 
@@ -155,6 +146,7 @@ import { ref, reactive, onMounted, computed, watch } from 'vue'
 import { format } from 'date-fns'
 import { useExpenseStore } from '../stores/expenseStore'
 import { useDebtStore } from '../stores/debtStore'
+import AppSelect from './ui/AppSelect.vue'
 
 const expenseStore = useExpenseStore()
 const debtStore = useDebtStore()
@@ -248,4 +240,14 @@ watch(() => form.isCredit, (isCredit) => {
     form.debtId = ''
   }
 })
+
+// Opciones selects
+const entryTypeOptions = [
+  { label: 'Cargo', value: 'charge' },
+  { label: 'Pago', value: 'payment' }
+]
+const debtOptions = computed(() => (debtStore.debts || []).map(d => ({
+  label: `${d.name}${d.maskPan ? ' •' + d.maskPan : ''}`,
+  value: d.id
+})))
 </script>
