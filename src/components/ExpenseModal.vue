@@ -262,23 +262,19 @@
                   </div>
                 </Transition>
 
-                <div v-if="parseInt(form.categoryId) === 7" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div class="flex items-center space-x-3 p-3 bg-gray-50 rounded-lg">
+                  <input id="isCredit" v-model="form.isCredit" type="checkbox" class="h-4 w-4 text-primary-600 focus:ring-primary-500 border-gray-300 rounded" />
+                  <label for="isCredit" class="text-sm font-medium text-gray-700">Es gasto de crédito</label>
+                </div>
+
+                <div v-if="form.isCredit" class="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
-                    <label for="entryType" class="block text-sm font-medium text-gray-700 mb-1">Tipo de movimiento</label>
-                    <select id="entryType" v-model="form.entryType" class="input-field" required>
-                      <option value="">Selecciona...</option>
-                      <option value="charge">Cargo</option>
-                      <option value="payment">Pago</option>
-                    </select>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Tipo de movimiento</label>
+                    <AppSelect v-model="form.entryType" :options="entryTypeOptions" placeholder="Selecciona..." />
                   </div>
                   <div>
-                    <label for="debtId" class="block text-sm font-medium text-gray-700 mb-1">Crédito</label>
-                    <select id="debtId" v-model="form.debtId" class="input-field" required>
-                      <option value="">Selecciona un crédito</option>
-                      <option v-for="d in debtStore.debts" :key="d.id" :value="d.id">
-                        {{ d.name }} {{ d.maskPan ? `•${d.maskPan}` : '' }}
-                      </option>
-                    </select>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Crédito</label>
+                    <AppSelect v-model="form.debtId" :options="debtOptions" placeholder="Selecciona un crédito" />
                   </div>
                 </div>
 
@@ -351,7 +347,8 @@ const form = reactive({
   isFixed: false,
   dayOfMonth: '',
   entryType: '',
-  debtId: ''
+  debtId: '',
+  isCredit: false
 })
 const isEditMode = computed(() => !!props.expense)
 
@@ -366,7 +363,31 @@ watch(
         form.categoryId = String(props.expense.categoryId ?? '')
         form.date = props.expense.date || format(new Date(), 'yyyy-MM-dd')
         form.isFixed = !!props.expense.isFixed
-        form.dayOfMonth = ''
+        // Día del mes: intentar del propio expense o del fixedExpense asociado
+        const expDay = props.expense.dayOfMonth
+        if (expDay != null && expDay !== '') {
+          form.dayOfMonth = String(expDay)
+        } else if (props.expense.fixedExpenseId) {
+          try {
+            const fe = expenseStore.fixedExpenses.find(f => String(f.id) === String(props.expense.fixedExpenseId))
+            form.dayOfMonth = fe?.dayOfMonth != null ? String(fe.dayOfMonth) : ''
+          } catch {
+            form.dayOfMonth = ''
+          }
+        } else {
+          form.dayOfMonth = ''
+        }
+
+        // Crédito: setear checkbox y valores si existen
+        form.isCredit = !!props.expense.debtId
+        form.debtId = props.expense.debtId || ''
+        form.entryType = props.expense.entryType ? String(props.expense.entryType).toLowerCase() : ''
+        // Asegurar que las deudas estén cargadas al abrir en modo edición
+        try {
+          if (!debtStore.debts?.length) {
+            debtStore.loadDebts()
+          }
+        } catch {}
         selectedDate.value = new Date(form.date)
         currentDate.value = new Date(form.date)
       } else {
@@ -411,6 +432,16 @@ onMounted(async () => {
 const categoryOptions = computed(() =>
   (expenseStore.activeCategories || []).map(c => ({ label: c.name, value: c.id }))
 )
+
+const entryTypeOptions = [
+  { label: 'Cargo', value: 'charge' },
+  { label: 'Pago', value: 'payment' }
+]
+
+const debtOptions = computed(() => (debtStore.debts || []).map(d => ({
+  label: `${d.name}${d.maskPan ? ' •' + d.maskPan : ''}`,
+  value: d.id
+})))
 
 // Computed properties para el datepicker
 const currentYear = computed(() => currentDate.value.getFullYear())
@@ -551,8 +582,8 @@ const handleSubmit = async () => {
       error.value = 'Si marcas como gasto fijo, debes especificar el día del mes'
       return
     }
-    // Validación para Crédito (categoría 7)
-    if (parseInt(form.categoryId) === 7) {
+    // Validación para Crédito (por checkbox)
+    if (form.isCredit) {
       if (!form.entryType) {
         error.value = 'Debes seleccionar el tipo de movimiento (cargo o pago)'
         return
@@ -564,10 +595,20 @@ const handleSubmit = async () => {
     }
     
     if (isEditMode.value && props.expense?.id) {
-      await expenseStore.updateExpense({ id: props.expense.id, ...form })
+      const payload = { id: props.expense.id, ...form }
+      if (!form.isCredit) {
+        payload.debtId = null
+        delete payload.entryType
+      }
+      await expenseStore.updateExpense(payload)
       emit('expense-updated')
     } else {
-      await expenseStore.addExpense(form)
+      const payload = { ...form }
+      if (!form.isCredit) {
+        payload.debtId = null
+        delete payload.entryType
+      }
+      await expenseStore.addExpense(payload)
       emit('expense-added')
     }
     closeModal()
@@ -582,6 +623,16 @@ const loading = computed(() => expenseStore.loading)
 watch(() => form.isFixed, (newValue) => {
   if (!newValue) {
     form.dayOfMonth = ''
+  }
+})
+
+// Default de crédito: al activar, preseleccionar 'charge'; al desactivar, limpiar
+watch(() => form.isCredit, (isCredit) => {
+  if (isCredit) {
+    if (!form.entryType) form.entryType = 'charge'
+  } else {
+    form.entryType = ''
+    form.debtId = ''
   }
 })
 

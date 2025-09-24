@@ -39,14 +39,14 @@ export async function deleteExpense(id) {
 }
 
 function normalizeExpensePayload(expense) {
-  const entryType = expense?.entryType != null ? String(expense.entryType).toLowerCase() : undefined
+  const debtId = expense?.debtId ?? null
+  const rawEntryType = expense?.entryType
+  const entryType = debtId ? (rawEntryType != null ? String(rawEntryType).toLowerCase() : undefined) : undefined
   const status = expense?.status != null ? String(expense.status).toLowerCase() : undefined
-  return {
-    ...expense,
-    entryType,
-    status,
-    debtId: expense?.debtId ?? null
-  }
+  const payload = { ...expense, status, debtId }
+  if (entryType !== undefined) payload.entryType = entryType
+  else delete payload.entryType
+  return payload
 }
 
 

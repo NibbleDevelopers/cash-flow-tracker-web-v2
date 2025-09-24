@@ -221,14 +221,11 @@ export const useExpenseStore = defineStore('expense', () => {
     error.value = null
     
     try {
-      // Validación mínima para créditos (categoría 7)
-      if (parseInt(expenseData.categoryId) === 7) {
+      // Validación mínima basada en debtId (ya no usamos categoría 7 para marcar crédito)
+      if (expenseData.debtId) {
         const entryType = expenseData.entryType && String(expenseData.entryType).toLowerCase()
         if (!entryType || (entryType !== 'charge' && entryType !== 'payment')) {
-          throw new Error('Para categoría Crédito, debes indicar el tipo: cargo o pago')
-        }
-        if (!expenseData.debtId) {
-          throw new Error('Para categoría Crédito, debes seleccionar el crédito (debtId)')
+          throw new Error('Para gastos de crédito debes indicar el tipo: cargo o pago')
         }
       }
 
@@ -240,7 +237,7 @@ export const useExpenseStore = defineStore('expense', () => {
         categoryId: parseInt(expenseData.categoryId),
         isFixed: expenseData.isFixed || false,
         fixedExpenseId: expenseData.fixedExpenseId || null,
-        entryType: expenseData.entryType ? String(expenseData.entryType).toLowerCase() : undefined,
+        entryType: expenseData.debtId ? (expenseData.entryType ? String(expenseData.entryType).toLowerCase() : undefined) : undefined,
         status: expenseData.status ? String(expenseData.status).toLowerCase() : undefined,
         debtId: expenseData.debtId ?? null
       }
@@ -278,9 +275,9 @@ export const useExpenseStore = defineStore('expense', () => {
       
       // Recargar gastos para obtener la información completa de categorías
       await loadExpenses()
-      // Si afecta a créditos, refrescar deudas para reflejar side-effects de balance
+      // Si afecta a créditos (debtId), refrescar deudas para reflejar side-effects de balance
       try {
-        if (newExpense.categoryId === 7) {
+        if (newExpense.debtId) {
           const debtStore = useDebtStore()
           await debtStore.loadDebts()
         }
@@ -312,7 +309,7 @@ export const useExpenseStore = defineStore('expense', () => {
         categoryId: parseInt(expenseData.categoryId),
         isFixed: expenseData.isFixed || false,
         fixedExpenseId: expenseData.fixedExpenseId || null,
-        entryType: expenseData.entryType ? String(expenseData.entryType).toLowerCase() : undefined,
+        entryType: expenseData.debtId ? (expenseData.entryType ? String(expenseData.entryType).toLowerCase() : undefined) : undefined,
         status: expenseData.status ? String(expenseData.status).toLowerCase() : undefined,
         debtId: expenseData.debtId ?? null
       }))
@@ -321,9 +318,9 @@ export const useExpenseStore = defineStore('expense', () => {
       
       // Recargar gastos para obtener la información completa de categorías
       await loadExpenses()
-      // Refrescar deudas si hay algún gasto de crédito
+      // Refrescar deudas si hay algún gasto de crédito (con debtId)
       try {
-        if (expenses.some(e => e.categoryId === 7)) {
+        if (expenses.some(e => !!e.debtId)) {
           const debtStore = useDebtStore()
           await debtStore.loadDebts()
         }
@@ -354,7 +351,7 @@ export const useExpenseStore = defineStore('expense', () => {
         categoryId: parseInt(expenseData.categoryId),
         isFixed: !!expenseData.isFixed,
         fixedExpenseId: expenseData.fixedExpenseId ?? null,
-        entryType: expenseData.entryType ? String(expenseData.entryType).toLowerCase() : undefined,
+        entryType: expenseData.debtId ? (expenseData.entryType ? String(expenseData.entryType).toLowerCase() : undefined) : undefined,
         status: expenseData.status ? String(expenseData.status).toLowerCase() : undefined,
         debtId: expenseData.debtId ?? null
       }
@@ -363,9 +360,9 @@ export const useExpenseStore = defineStore('expense', () => {
 
       // Refrescar lista para mantener categorías embebidas correctas
       await loadExpenses()
-      // Refrescar deudas si este gasto pertenece a créditos
+      // Refrescar deudas si este gasto pertenece a créditos (tiene debtId)
       try {
-        if (payload.categoryId === 7) {
+        if (payload.debtId) {
           const debtStore = useDebtStore()
           await debtStore.loadDebts()
         }
@@ -386,9 +383,23 @@ export const useExpenseStore = defineStore('expense', () => {
     loading.value = true
     error.value = null
     try {
+      // Capturar si el gasto pertenece a un crédito antes de eliminar
+      const toDelete = expenses.value.find(e => String(e.id) === String(id))
+      const hadDebtId = !!toDelete?.debtId
+
       await googleSheetsService.deleteExpense(id)
       // Optimista: remover localmente
       expenses.value = expenses.value.filter(e => String(e.id) !== String(id))
+
+      // Refrescar deudas si el gasto eliminado afectaba un crédito
+      try {
+        if (hadDebtId) {
+          const debtStore = useDebtStore()
+          await debtStore.loadDebts()
+        }
+      } catch (e) {
+        console.warn('No se pudo refrescar deudas tras eliminar gasto:', e)
+      }
       return true
     } catch (err) {
       error.value = 'Error al eliminar el gasto'

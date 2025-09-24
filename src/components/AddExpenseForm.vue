@@ -54,7 +54,12 @@
         </select>
       </div>
 
-      <div v-if="parseInt(form.categoryId) === 7" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <div class="flex items-center space-x-3">
+        <input id="isCredit" v-model="form.isCredit" type="checkbox" class="h-4 w-4 text-primary-600 focus:ring-primary-500 border-gray-300 rounded" />
+        <label for="isCredit" class="text-sm font-medium text-gray-700">Es gasto de crédito</label>
+      </div>
+
+      <div v-if="form.isCredit" class="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div>
           <label for="entryType" class="block text-sm font-medium text-gray-700 mb-1">Tipo de movimiento</label>
           <select id="entryType" v-model="form.entryType" class="input-field" required>
@@ -162,7 +167,8 @@ const form = reactive({
   isFixed: false,
   dayOfMonth: '',
   entryType: '',
-  debtId: ''
+  debtId: '',
+  isCredit: false
 })
 
 const error = ref('')
@@ -186,6 +192,7 @@ const resetForm = () => {
   form.dayOfMonth = ''
   form.entryType = ''
   form.debtId = ''
+  form.isCredit = false
   error.value = ''
 }
 
@@ -199,8 +206,8 @@ const handleSubmit = async () => {
       return
     }
 
-    // Validación para Crédito (categoría 7)
-    if (parseInt(form.categoryId) === 7) {
+    // Validación para Crédito (por debtId)
+    if (form.isCredit) {
       if (!form.entryType) {
         error.value = 'Debes seleccionar el tipo de movimiento (cargo o pago)'
         return
@@ -211,7 +218,12 @@ const handleSubmit = async () => {
       }
     }
     
-    await expenseStore.addExpense(form)
+    const payload = { ...form }
+    if (!form.isCredit) {
+      payload.debtId = null
+      delete payload.entryType
+    }
+    await expenseStore.addExpense(payload)
     resetForm()
   } catch (err) {
     error.value = 'Error al agregar el gasto. Inténtalo de nuevo.'
@@ -224,6 +236,16 @@ const loading = computed(() => expenseStore.loading)
 watch(() => form.isFixed, (newValue) => {
   if (!newValue) {
     form.dayOfMonth = ''
+  }
+})
+
+// Default de crédito: al activar, preseleccionar 'charge'; al desactivar, limpiar
+watch(() => form.isCredit, (isCredit) => {
+  if (isCredit) {
+    if (!form.entryType) form.entryType = 'charge'
+  } else {
+    form.entryType = ''
+    form.debtId = ''
   }
 })
 </script>

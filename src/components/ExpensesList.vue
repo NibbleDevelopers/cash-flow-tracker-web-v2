@@ -311,20 +311,14 @@ const getDayOfMonth = (fixedExpenseId) => {
   return format(paymentDate, 'EEEE d \'de\' MMMM', { locale: es })
 }
 
-// Función para identificar si un gasto es un pago de crédito
+// Identificar gasto de crédito (nuevo criterio: por debtId)
 const isCreditPayment = (expense) => {
-  // Verificar por categoría específica "Crédito"
+  if (expense?.debtId) return true
+  // Backward compatibility por si hay datos antiguos en memoria
   const categoryName = expense.category?.name?.toLowerCase() || ''
-  if (categoryName === 'crédito' || categoryName === 'credito') {
-    return true
-  }
-  
-  // También verificar por descripción que contenga "cuota" (para gastos generados automáticamente)
+  if (categoryName === 'crédito' || categoryName === 'credito') return true
   const description = expense.description?.toLowerCase() || ''
-  if (description.includes('cuota') && (description.includes('crédito') || description.includes('credito'))) {
-    return true
-  }
-  
+  if (description.includes('cuota') && (description.includes('crédito') || description.includes('credito'))) return true
   return false
 }
 
