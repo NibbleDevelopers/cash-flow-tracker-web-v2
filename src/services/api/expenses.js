@@ -12,24 +12,41 @@ export async function getExpenses() {
     amount: Number(it?.amount) || 0,
     categoryId: parseInt(it?.categoryId) || 0,
     isFixed: !!it?.isFixed,
-    fixedExpenseId: it?.fixedExpenseId ?? null
+    fixedExpenseId: it?.fixedExpenseId ?? null,
+    entryType: (it?.entryType || '').toString().toLowerCase() || undefined,
+    status: (it?.status || '').toString().toLowerCase() || undefined,
+    debtId: it?.debtId ?? null
   }))
 }
 
 export async function addExpense(expense) {
-  return makeRequest(base, { method: 'POST', body: JSON.stringify(expense) })
+  const payload = normalizeExpensePayload(expense)
+  return makeRequest(base, { method: 'POST', body: JSON.stringify(payload) })
 }
 
 export async function addExpensesBatch(expenses) {
-  return makeRequest(`${base}/batch`, { method: 'POST', body: JSON.stringify({ expenses }) })
+  const normalized = (expenses || []).map(normalizeExpensePayload)
+  return makeRequest(`${base}/batch`, { method: 'POST', body: JSON.stringify({ expenses: normalized }) })
 }
 
 export async function updateExpense(id, data) {
-  return makeRequest(`${base}/${id}`, { method: 'PUT', body: JSON.stringify({ ...data }) })
+  const payload = normalizeExpensePayload(data)
+  return makeRequest(`${base}/${id}`, { method: 'PUT', body: JSON.stringify({ ...payload }) })
 }
 
 export async function deleteExpense(id) {
   return makeRequest(`${base}/${id}`, { method: 'DELETE' })
+}
+
+function normalizeExpensePayload(expense) {
+  const entryType = expense?.entryType != null ? String(expense.entryType).toLowerCase() : undefined
+  const status = expense?.status != null ? String(expense.status).toLowerCase() : undefined
+  return {
+    ...expense,
+    entryType,
+    status,
+    debtId: expense?.debtId ?? null
+  }
 }
 
 

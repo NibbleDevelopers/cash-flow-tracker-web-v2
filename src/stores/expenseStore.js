@@ -3,6 +3,7 @@ import { ref, computed } from 'vue'
 import { format, startOfMonth, endOfMonth, isWithinInterval } from 'date-fns'
 import { parseLocalDate } from '../utils/date.js'
 import googleSheetsService from '../services/googleSheetsBackend.js'
+import { useDebtStore } from './debtStore.js'
 
 export const useExpenseStore = defineStore('expense', () => {
   // State
@@ -220,6 +221,17 @@ export const useExpenseStore = defineStore('expense', () => {
     error.value = null
     
     try {
+      // Validación mínima para créditos (categoría 7)
+      if (parseInt(expenseData.categoryId) === 7) {
+        const entryType = expenseData.entryType && String(expenseData.entryType).toLowerCase()
+        if (!entryType || (entryType !== 'charge' && entryType !== 'payment')) {
+          throw new Error('Para categoría Crédito, debes indicar el tipo: cargo o pago')
+        }
+        if (!expenseData.debtId) {
+          throw new Error('Para categoría Crédito, debes seleccionar el crédito (debtId)')
+        }
+      }
+
       const newExpense = {
         id: Date.now().toString(),
         date: expenseData.date || format(new Date(), 'yyyy-MM-dd'),
@@ -227,7 +239,10 @@ export const useExpenseStore = defineStore('expense', () => {
         amount: parseFloat(expenseData.amount),
         categoryId: parseInt(expenseData.categoryId),
         isFixed: expenseData.isFixed || false,
-        fixedExpenseId: expenseData.fixedExpenseId || null // Usar el ID proporcionado o null
+        fixedExpenseId: expenseData.fixedExpenseId || null,
+        entryType: expenseData.entryType ? String(expenseData.entryType).toLowerCase() : undefined,
+        status: expenseData.status ? String(expenseData.status).toLowerCase() : undefined,
+        debtId: expenseData.debtId ?? null
       }
 
       await googleSheetsService.addExpense(newExpense)
@@ -263,6 +278,15 @@ export const useExpenseStore = defineStore('expense', () => {
       
       // Recargar gastos para obtener la información completa de categorías
       await loadExpenses()
+      // Si afecta a créditos, refrescar deudas para reflejar side-effects de balance
+      try {
+        if (newExpense.categoryId === 7) {
+          const debtStore = useDebtStore()
+          await debtStore.loadDebts()
+        }
+      } catch (e) {
+        console.warn('No se pudo refrescar deudas tras agregar gasto:', e)
+      }
       
       return newExpense
     } catch (err) {
@@ -287,13 +311,25 @@ export const useExpenseStore = defineStore('expense', () => {
         amount: parseFloat(expenseData.amount),
         categoryId: parseInt(expenseData.categoryId),
         isFixed: expenseData.isFixed || false,
-        fixedExpenseId: expenseData.fixedExpenseId || null
+        fixedExpenseId: expenseData.fixedExpenseId || null,
+        entryType: expenseData.entryType ? String(expenseData.entryType).toLowerCase() : undefined,
+        status: expenseData.status ? String(expenseData.status).toLowerCase() : undefined,
+        debtId: expenseData.debtId ?? null
       }))
 
       const result = await googleSheetsService.addExpensesBatch(expenses)
       
       // Recargar gastos para obtener la información completa de categorías
       await loadExpenses()
+      // Refrescar deudas si hay algún gasto de crédito
+      try {
+        if (expenses.some(e => e.categoryId === 7)) {
+          const debtStore = useDebtStore()
+          await debtStore.loadDebts()
+        }
+      } catch (e) {
+        console.warn('No se pudo refrescar deudas tras agregar gastos en lote:', e)
+      }
       
       return result
     } catch (err) {
@@ -317,13 +353,25 @@ export const useExpenseStore = defineStore('expense', () => {
         amount: parseFloat(expenseData.amount),
         categoryId: parseInt(expenseData.categoryId),
         isFixed: !!expenseData.isFixed,
-        fixedExpenseId: expenseData.fixedExpenseId ?? null
+        fixedExpenseId: expenseData.fixedExpenseId ?? null,
+        entryType: expenseData.entryType ? String(expenseData.entryType).toLowerCase() : undefined,
+        status: expenseData.status ? String(expenseData.status).toLowerCase() : undefined,
+        debtId: expenseData.debtId ?? null
       }
 
       await googleSheetsService.updateExpense(id, payload)
 
       // Refrescar lista para mantener categorías embebidas correctas
       await loadExpenses()
+      // Refrescar deudas si este gasto pertenece a créditos
+      try {
+        if (payload.categoryId === 7) {
+          const debtStore = useDebtStore()
+          await debtStore.loadDebts()
+        }
+      } catch (e) {
+        console.warn('No se pudo refrescar deudas tras actualizar gasto:', e)
+      }
       return { id, ...payload }
     } catch (err) {
       error.value = 'Error al actualizar el gasto'

@@ -743,7 +743,7 @@ const createExpensesFromInstallments = async () => {
     // Crear el gasto fijo primero
     const createdFixedExpense = await expenseStore.addFixedExpense(fixedExpenseData)
     
-    // Crear gastos individuales para cada cuota del plan actual usando fechas calculadas
+      // Crear gastos individuales para cada cuota del plan actual usando fechas calculadas
     const { calculateInstallmentDates } = await import('../utils/installmentDates.js')
     const calculatedDates = calculateInstallmentDates(dueDay, cutOffDay, installmentsData.value.schedule.length, recommendedDate.date)
     
@@ -761,6 +761,9 @@ const createExpensesFromInstallments = async () => {
           amount: installment.payment,
           categoryId: creditCategory.id,
           isFixed: true,
+          entryType: 'payment',
+          status: 'pending',
+          debtId: debt.id,
           fixedExpenseId: createdFixedExpense.id
         }]
       }
@@ -779,6 +782,9 @@ const createExpensesFromInstallments = async () => {
           amount: firstAmount,
           categoryId: creditCategory.id,
           isFixed: true,
+          entryType: 'payment',
+          status: 'pending',
+          debtId: debt.id,
           fixedExpenseId: createdFixedExpense.id
         },
         {
@@ -787,6 +793,9 @@ const createExpensesFromInstallments = async () => {
           amount: secondAmount,
           categoryId: creditCategory.id,
           isFixed: true,
+          entryType: 'payment',
+          status: 'pending',
+          debtId: debt.id,
           fixedExpenseId: createdFixedExpense.id
         }
       ]

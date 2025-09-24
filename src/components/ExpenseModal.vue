@@ -262,6 +262,26 @@
                   </div>
                 </Transition>
 
+                <div v-if="parseInt(form.categoryId) === 7" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label for="entryType" class="block text-sm font-medium text-gray-700 mb-1">Tipo de movimiento</label>
+                    <select id="entryType" v-model="form.entryType" class="input-field" required>
+                      <option value="">Selecciona...</option>
+                      <option value="charge">Cargo</option>
+                      <option value="payment">Pago</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label for="debtId" class="block text-sm font-medium text-gray-700 mb-1">Crédito</label>
+                    <select id="debtId" v-model="form.debtId" class="input-field" required>
+                      <option value="">Selecciona un crédito</option>
+                      <option v-for="d in debtStore.debts" :key="d.id" :value="d.id">
+                        {{ d.name }} {{ d.maskPan ? `•${d.maskPan}` : '' }}
+                      </option>
+                    </select>
+                  </div>
+                </div>
+
                 <!-- Error message -->
                 <div v-if="error" class="p-3 bg-red-50 border border-red-200 rounded-lg">
                   <p class="text-sm text-red-600">{{ error }}</p>
@@ -303,6 +323,7 @@ import { ref, reactive, onMounted, onUnmounted, computed, watch, nextTick } from
 import { format } from 'date-fns'
 import { useExpenseStore } from '../stores/expenseStore'
 import AppSelect from './ui/AppSelect.vue'
+import { useDebtStore } from '../stores/debtStore'
 
 const props = defineProps({
   isOpen: {
@@ -320,6 +341,7 @@ const props = defineProps({
 const emit = defineEmits(['close', 'expense-added', 'expense-updated'])
 
 const expenseStore = useExpenseStore()
+const debtStore = useDebtStore()
 
 const form = reactive({
   description: '',
@@ -327,7 +349,9 @@ const form = reactive({
   categoryId: '',
   date: '',
   isFixed: false,
-  dayOfMonth: ''
+  dayOfMonth: '',
+  entryType: '',
+  debtId: ''
 })
 const isEditMode = computed(() => !!props.expense)
 
@@ -374,6 +398,9 @@ const months = [
 onMounted(async () => {
   if (!expenseStore.categories?.length) {
     await expenseStore.loadCategories()
+  }
+  if (!debtStore.debts?.length) {
+    await debtStore.loadDebts()
   }
   // Inicializar fecha actual
   form.date = format(new Date(), 'yyyy-MM-dd')
@@ -523,6 +550,17 @@ const handleSubmit = async () => {
     if (form.isFixed && !form.dayOfMonth) {
       error.value = 'Si marcas como gasto fijo, debes especificar el día del mes'
       return
+    }
+    // Validación para Crédito (categoría 7)
+    if (parseInt(form.categoryId) === 7) {
+      if (!form.entryType) {
+        error.value = 'Debes seleccionar el tipo de movimiento (cargo o pago)'
+        return
+      }
+      if (!form.debtId) {
+        error.value = 'Debes seleccionar el crédito al que se aplica'
+        return
+      }
     }
     
     if (isEditMode.value && props.expense?.id) {
