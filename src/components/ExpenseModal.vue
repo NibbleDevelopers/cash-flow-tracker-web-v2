@@ -267,14 +267,22 @@
                   <label for="isCredit" class="text-sm font-medium text-gray-700">Es gasto de crédito</label>
                 </div>
 
-                <div v-if="form.isCredit" class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1">Tipo de movimiento</label>
-                    <AppSelect v-model="form.entryType" :options="entryTypeOptions" placeholder="Selecciona..." />
+                <div v-if="form.isCredit" class="grid grid-cols-1 gap-4">
+                  <!-- Fila 1: Tipo y Estado -->
+                  <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div :class="form.entryType === 'payment' ? '' : 'md:col-span-2'">
+                      <label class="block text-sm font-medium text-gray-700 mb-1">Tipo de movimiento</label>
+                      <AppSelect v-model="form.entryType" :options="entryTypeOptions" placeholder="Selecciona..." size="sm" />
+                    </div>
+                    <div v-if="form.entryType === 'payment'">
+                      <label class="block text-sm font-medium text-gray-700 mb-1">Estado</label>
+                    <AppSelect v-model="form.status" :options="statusOptions" placeholder="Selecciona estado" size="sm" />
+                    </div>
                   </div>
+                  <!-- Fila 2: Crédito (full width) -->
                   <div>
                     <label class="block text-sm font-medium text-gray-700 mb-1">Crédito</label>
-                    <AppSelect v-model="form.debtId" :options="debtOptions" placeholder="Selecciona un crédito" />
+                    <AppSelect v-model="form.debtId" :options="debtOptions" placeholder="Selecciona un crédito" size="sm" />
                   </div>
                 </div>
 
@@ -320,6 +328,7 @@ import { format } from 'date-fns'
 import { useExpenseStore } from '../stores/expenseStore'
 import AppSelect from './ui/AppSelect.vue'
 import { useDebtStore } from '../stores/debtStore'
+import { useConfirm } from '../composables/useConfirm'
 
 const props = defineProps({
   isOpen: {
@@ -338,6 +347,7 @@ const emit = defineEmits(['close', 'expense-added', 'expense-updated'])
 
 const expenseStore = useExpenseStore()
 const debtStore = useDebtStore()
+const { show: confirm } = useConfirm()
 
 const form = reactive({
   description: '',
@@ -393,6 +403,9 @@ watch(
       } else {
         resetForm()
       }
+    } else {
+      // Al cerrar el modal, limpiar el formulario para el próximo uso
+      resetForm()
     }
   }
 )
@@ -435,13 +448,18 @@ const categoryOptions = computed(() =>
 
 const entryTypeOptions = [
   { label: 'Cargo', value: 'charge' },
-  { label: 'Pago', value: 'payment' }
+  { label: 'Abono', value: 'payment' }
 ]
 
 const debtOptions = computed(() => (debtStore.debts || []).map(d => ({
   label: `${d.name}${d.maskPan ? ' •' + d.maskPan : ''}`,
   value: d.id
 })))
+
+const statusOptions = [
+  { label: 'Pendiente', value: 'pending' },
+  { label: 'Pagado', value: 'paid' }
+]
 
 // Computed properties para el datepicker
 const currentYear = computed(() => currentDate.value.getFullYear())
@@ -534,6 +552,10 @@ const resetForm = () => {
   form.date = format(new Date(), 'yyyy-MM-dd')
   form.isFixed = false
   form.dayOfMonth = ''
+  form.isCredit = false
+  form.debtId = ''
+  form.entryType = ''
+  form.status = ''
   error.value = ''
   showDatePicker.value = false
   selectedDate.value = new Date()
@@ -599,6 +621,10 @@ const handleSubmit = async () => {
       if (!form.isCredit) {
         payload.debtId = null
         delete payload.entryType
+        delete payload.status
+      } else {
+        // Default manual payment status to 'paid' si el usuario no selecciona
+        if (payload.entryType === 'payment' && !payload.status) payload.status = 'paid'
       }
       await expenseStore.updateExpense(payload)
       emit('expense-updated')
@@ -607,6 +633,9 @@ const handleSubmit = async () => {
       if (!form.isCredit) {
         payload.debtId = null
         delete payload.entryType
+        delete payload.status
+      } else {
+        if (payload.entryType === 'payment' && !payload.status) payload.status = 'paid'
       }
       await expenseStore.addExpense(payload)
       emit('expense-added')
@@ -630,9 +659,12 @@ watch(() => form.isFixed, (newValue) => {
 watch(() => form.isCredit, (isCredit) => {
   if (isCredit) {
     if (!form.entryType) form.entryType = 'charge'
+    // Si el usuario cambia a payment y no hay status, por defecto 'paid'
+    if (form.entryType === 'payment' && !form.status) form.status = 'paid'
   } else {
     form.entryType = ''
     form.debtId = ''
+    form.status = ''
   }
 })
 
