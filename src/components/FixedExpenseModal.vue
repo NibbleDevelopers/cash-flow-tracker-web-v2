@@ -41,7 +41,7 @@
                 </div>
                 <div>
                   <label class="block text-sm font-medium text-gray-700 mb-1">Categoría</label>
-                  <AppSelect v-model="localForm.categoryId" :options="categoryOptions" placeholder="Selecciona una categoría" />
+                  <AppSelect v-model="localForm.categoryId" :options="categoryOptions" placeholder="Selecciona una categoría" :max-items="5" />
                 </div>
                 <div>
                   <label class="block text-sm font-medium text-gray-700 mb-1">Día del mes</label>

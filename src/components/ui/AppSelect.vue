@@ -25,7 +25,7 @@
           <Teleport to="body">
             <ListboxOptions
               v-if="open"
-              class="z-[60] max-h-60 overflow-auto rounded-lg bg-white py-1 text-sm shadow-xl ring-1 ring-black/10 focus:outline-none"
+              class="z-[60] overflow-auto rounded-lg bg-white py-0 text-sm shadow-xl ring-1 ring-black/10 focus:outline-none"
               :style="dropdownStyle"
             >
               <ListboxOption
@@ -36,7 +36,7 @@
               >
                 <li
                   :class="[
-                    'relative cursor-pointer select-none py-2 pl-3 pr-9',
+                    'relative cursor-pointer select-none h-10 pl-3 pr-9 flex items-center',
                     active ? 'bg-primary-50 text-primary-900' : 'text-gray-700'
                   ]"
                 >
@@ -83,6 +83,10 @@ const props = defineProps({
   size: {
     type: String,
     default: 'md' // 'sm' | 'md' | 'lg'
+  },
+  maxItems: {
+    type: Number,
+    default: 5
   }
 })
 
@@ -91,6 +95,8 @@ const emit = defineEmits(['update:modelValue'])
 const internalValue = ref(props.modelValue)
 const buttonRef = ref(null)
 const dropdownStyle = ref({})
+const itemHeightPx = 40 // altura aproximada por opción
+const dropdownMaxHeightPx = computed(() => Math.max(40, Math.min(props.maxItems, normalizedOptions.value.length || 1) * itemHeightPx))
 
 function updateDropdownPosition() {
   let btn = buttonRef.value
@@ -99,11 +105,29 @@ function updateDropdownPosition() {
   const el = btn.$el ? btn.$el : btn
   if (!el || typeof el.getBoundingClientRect !== 'function') return
   const rect = el.getBoundingClientRect()
+  const viewportHeight = window.innerHeight
+  const dropdownMaxHeight = dropdownMaxHeightPx.value
+  const spaceBelow = viewportHeight - rect.bottom
+  const openUpwards = spaceBelow < dropdownMaxHeight + 16 // margen de seguridad
+
+  const top = openUpwards
+    ? Math.max(16, rect.top - dropdownMaxHeight - 4)
+    : Math.min(viewportHeight - 16, rect.bottom + 4)
+
+  let left = rect.left
+  const dropdownWidth = rect.width
+  const rightOverflow = left + dropdownWidth - window.innerWidth
+  if (rightOverflow > 0) {
+    left = Math.max(16, left - rightOverflow)
+  }
+
   dropdownStyle.value = {
     position: 'fixed',
-    top: `${rect.bottom + 4}px`,
-    left: `${rect.left}px`,
-    width: `${rect.width}px`
+    top: `${top}px`,
+    left: `${left}px`,
+    width: `${dropdownWidth}px`,
+    maxHeight: `${dropdownMaxHeight}px`,
+    overflow: 'hidden'
   }
 }
 
