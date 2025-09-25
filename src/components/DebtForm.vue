@@ -16,15 +16,17 @@
     </div>
 
     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <!-- Identidad -->
       <div>
         <label for="debt-name" class="block text-sm font-medium text-gray-700">
           Nombre <span class="text-red-500">*</span>
         </label>
         <input 
           id="debt-name"
+          ref="nameInput"
           v-model="form.name" 
           required 
-          class="input-field" 
+          class="input-field h-10" 
           :class="{ 'border-red-300 focus:ring-red-500 focus:border-red-500': errors.some(e => e.includes('nombre')) }"
           placeholder="Tarjeta Visa BBVA" 
           aria-describedby="debt-name-error"
@@ -33,17 +35,74 @@
           El nombre es requerido
         </p>
       </div>
-      
+
       <div>
         <label for="debt-issuer" class="block text-sm font-medium text-gray-700">Emisor</label>
         <input 
           id="debt-issuer"
           v-model="form.issuer" 
-          class="input-field" 
+          class="input-field h-10" 
           placeholder="BBVA" 
         />
       </div>
-      
+
+      <div>
+        <label for="debt-brand" class="block text-sm font-medium text-gray-700">Tipo de tarjeta</label>
+        <AppSelect
+          v-model="form.brand"
+          :options="cardTypeOptions"
+          placeholder="Selecciona el tipo"
+          size="sm"
+        />
+      </div>
+
+      <div>
+        <label for="debt-mask-pan" class="block text-sm font-medium text-gray-700">Últimos 4 dígitos</label>
+        <input 
+          id="debt-mask-pan"
+          v-model="form.maskPan" 
+          maxlength="4" 
+          pattern="[0-9]{4}"
+          class="input-field h-10" 
+          :class="{ 'border-red-300 focus:ring-red-500 focus:border-red-500': errors.some(e => e.includes('máscara')) }"
+          placeholder="1234"
+          @input="validateLastFourDigits"
+        />
+        <p class="mt-1 text-xs text-gray-500">Solo los últimos 4 dígitos de la tarjeta</p>
+      </div>
+
+      <!-- Fechas: Corte primero, luego Pago -->
+      <div>
+        <label for="debt-cutoff-day" class="block text-sm font-medium text-gray-700">Día de corte</label>
+        <input 
+          id="debt-cutoff-day"
+          v-model.number="form.cutOffDay" 
+          type="number" 
+          min="1" 
+          max="31" 
+          class="input-field h-10" 
+          :class="{ 'border-red-300 focus:ring-red-500 focus:border-red-500': errors.some(e => e.includes('corte')) }"
+          placeholder="25"
+        />
+        <p class="mt-1 text-xs text-gray-500">Día del mes (1-31)</p>
+      </div>
+
+      <div>
+        <label for="debt-due-day" class="block text-sm font-medium text-gray-700">Día de pago</label>
+        <input 
+          id="debt-due-day"
+          v-model.number="form.dueDay" 
+          type="number" 
+          min="1" 
+          max="31" 
+          class="input-field h-10" 
+          :class="{ 'border-red-300 focus:ring-red-500 focus:border-red-500': errors.some(e => e.includes('pago')) }"
+          placeholder="10"
+        />
+        <p class="mt-1 text-xs text-gray-500">Día del mes (1-31)</p>
+      </div>
+
+      <!-- Montos: Límite, Saldo, Interés -->
       <div>
         <label for="debt-credit-limit" class="block text-sm font-medium text-gray-700">Límite de crédito</label>
         <div class="relative">
@@ -56,13 +115,13 @@
             type="number" 
             min="0" 
             step="0.01" 
-            class="input-field pl-7" 
+            class="input-field h-10 pl-7" 
             :class="{ 'border-red-300 focus:ring-red-500 focus:border-red-500': errors.some(e => e.includes('límite')) }"
             placeholder="0.00"
           />
         </div>
       </div>
-      
+
       <div>
         <label for="debt-balance" class="block text-sm font-medium text-gray-700">Saldo actual</label>
         <div class="relative">
@@ -75,67 +134,13 @@
             type="number" 
             min="0" 
             step="0.01" 
-            class="input-field pl-7" 
+            class="input-field h-10 pl-7" 
             :class="{ 'border-red-300 focus:ring-red-500 focus:border-red-500': errors.some(e => e.includes('saldo')) }"
             placeholder="0.00"
           />
         </div>
       </div>
-      
-      <div>
-        <label for="debt-due-day" class="block text-sm font-medium text-gray-700">Día de pago</label>
-        <input 
-          id="debt-due-day"
-          v-model.number="form.dueDay" 
-          type="number" 
-          min="1" 
-          max="31" 
-          class="input-field" 
-          :class="{ 'border-red-300 focus:ring-red-500 focus:border-red-500': errors.some(e => e.includes('pago')) }"
-          placeholder="10"
-        />
-        <p class="mt-1 text-xs text-gray-500">Día del mes (1-31)</p>
-      </div>
-      
-      <div>
-        <label for="debt-cutoff-day" class="block text-sm font-medium text-gray-700">Día de corte</label>
-        <input 
-          id="debt-cutoff-day"
-          v-model.number="form.cutOffDay" 
-          type="number" 
-          min="1" 
-          max="31" 
-          class="input-field" 
-          :class="{ 'border-red-300 focus:ring-red-500 focus:border-red-500': errors.some(e => e.includes('corte')) }"
-          placeholder="25"
-        />
-        <p class="mt-1 text-xs text-gray-500">Día del mes (1-31)</p>
-      </div>
-      
-      <div>
-        <label for="debt-brand" class="block text-sm font-medium text-gray-700">Tipo de tarjeta</label>
-        <AppSelect
-          v-model="form.brand"
-          :options="cardTypeOptions"
-          placeholder="Selecciona el tipo"
-        />
-      </div>
-      
-      <div>
-        <label for="debt-mask-pan" class="block text-sm font-medium text-gray-700">Últimos 4 dígitos</label>
-        <input 
-          id="debt-mask-pan"
-          v-model="form.maskPan" 
-          maxlength="4" 
-          pattern="[0-9]{4}"
-          class="input-field" 
-          :class="{ 'border-red-300 focus:ring-red-500 focus:border-red-500': errors.some(e => e.includes('máscara')) }"
-          placeholder="1234"
-          @input="validateLastFourDigits"
-        />
-        <p class="mt-1 text-xs text-gray-500">Solo los últimos 4 dígitos de la tarjeta</p>
-      </div>
-      
+
       <div>
         <label for="debt-interest" class="block text-sm font-medium text-gray-700">Interés efectivo anual (%)</label>
         <div class="relative">
@@ -146,7 +151,7 @@
             min="0" 
             max="100" 
             step="0.01" 
-            class="input-field pr-8" 
+            class="input-field h-10 pr-8" 
             :class="{ 'border-red-300 focus:ring-red-500 focus:border-red-500': errors.some(e => e.includes('interés')) }"
             placeholder="35.5"
           />
@@ -155,8 +160,8 @@
           </div>
         </div>
       </div>
-      
-      
+
+      <!-- Estado -->
       <div class="flex items-center space-x-3">
         <Switch
           v-model="form.active"
@@ -182,7 +187,7 @@
 </template>
 
 <script setup>
-import { reactive, watch, ref, computed } from 'vue'
+import { reactive, watch, ref, computed, onMounted, nextTick } from 'vue'
 import { Switch } from '@headlessui/vue'
 import AppSelect from './ui/AppSelect.vue'
 
@@ -309,6 +314,13 @@ const onSubmit = () => {
     emit('submit', { ...form })
   }
 }
+
+// Foco inicial en Nombre
+const nameInput = ref(null)
+onMounted(async () => {
+  await nextTick()
+  nameInput.value?.focus()
+})
 </script>
 
 

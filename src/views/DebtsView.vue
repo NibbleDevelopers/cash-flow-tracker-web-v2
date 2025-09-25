@@ -2,7 +2,12 @@
   <div class="space-y-6">
     <div class="flex items-center justify-between">
       <h2 class="text-xl font-semibold">Créditos</h2>
-      <button class="btn-primary" @click="openCreate">Nuevo crédito</button>
+      <button class="btn-primary inline-flex items-center space-x-2 px-4 py-2 rounded-md text-sm" @click="openCreate">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+        </svg>
+        <span>Nuevo crédito</span>
+      </button>
     </div>
 
     <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
@@ -138,15 +143,31 @@
         <div class="fixed inset-0 overflow-y-auto">
           <div class="flex min-h-full items-center justify-center p-4">
             <TransitionChild as="template" enter="ease-out duration-200" enter-from="opacity-0 translate-y-2" enter-to="opacity-100 translate-y-0" leave="ease-in duration-150" leave-from="opacity-100 translate-y-0" leave-to="opacity-0 translate-y-2">
-              <DialogPanel class="w-full max-w-2xl transform overflow-hidden rounded-lg bg-white p-6 shadow-xl">
-                <DialogTitle class="text-lg font-semibold mb-4">{{ editing ? 'Editar deuda' : 'Nueva deuda' }}</DialogTitle>
-                <DebtForm 
-                  v-model="formModel" 
-                  :submit-text="editing ? 'Actualizar' : 'Crear'" 
-                  :loading="loading"
-                  @submit="handleSubmit" 
-                  @cancel="closeForm" 
-                />
+              <DialogPanel class="w-full max-w-2xl transform overflow-hidden rounded-lg bg-white shadow-xl">
+                <div class="bg-gradient-to-r from-primary-600 to-primary-700 px-6 py-4">
+                  <div class="flex items-center justify-between">
+                    <DialogTitle class="text-lg font-semibold text-white">{{ editing ? 'Editar crédito' : 'Nuevo crédito' }}</DialogTitle>
+                    <button
+                      type="button"
+                      class="rounded-md text-white hover:text-gray-200 focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-primary-600"
+                      @click="closeForm"
+                    >
+                      <span class="sr-only">Cerrar</span>
+                      <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                      </svg>
+                    </button>
+                  </div>
+                </div>
+                <div class="px-6 py-6">
+                  <DebtForm 
+                    v-model="formModel" 
+                    :submit-text="editing ? 'Actualizar' : 'Crear'" 
+                    :loading="loading"
+                    @submit="handleSubmit" 
+                    @cancel="closeForm" 
+                  />
+                </div>
               </DialogPanel>
             </TransitionChild>
           </div>
@@ -906,5 +927,3 @@ const ensureCreditPaymentCategory = async () => {
   return creditCategory
 }
 </script>
-
-
