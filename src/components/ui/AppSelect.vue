@@ -146,13 +146,14 @@ const selectedLabel = computed(() => {
 })
 
 const sizeClass = computed(() => {
-  if (props.size === 'sm') return 'py-1.5 text-sm'
-  if (props.size === 'lg') return 'py-3 text-base'
-  return 'py-2 text-sm'
+  // Mantener tipografía por tamaño, altura fija h-10 para consistencia
+  if (props.size === 'sm') return 'text-sm'
+  if (props.size === 'lg') return 'text-base'
+  return 'text-sm'
 })
 
 const buttonClass = computed(() => [
-  'w-full cursor-default rounded-lg border border-gray-300 bg-white pl-3 pr-10 text-left text-gray-900 shadow-sm focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent',
+  'w-full h-10 flex items-center cursor-default rounded-lg border border-gray-300 bg-white pl-3 pr-10 text-left text-gray-900 shadow-sm focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent',
   sizeClass.value
 ])
 </script>

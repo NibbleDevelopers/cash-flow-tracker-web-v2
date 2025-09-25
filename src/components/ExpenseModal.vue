@@ -117,7 +117,7 @@
                       v-model="form.date"
                       type="date"
                       required
-                      class="input-field cursor-pointer"
+                      class="input-field h-10 cursor-pointer"
                       @click="showDatePicker = !showDatePicker"
                       readonly
                     />
@@ -126,6 +126,10 @@
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
                       </svg>
                     </div>
+                  </div>
+                  <div class="mt-2 flex items-center gap-2">
+                    <button type="button" class="px-2 py-1 text-xs rounded-md bg-gray-100 hover:bg-gray-200" @click="selectToday">Hoy</button>
+                    <button type="button" class="px-2 py-1 text-xs rounded-md bg-gray-100 hover:bg-gray-200" @click="selectTomorrow">Mañana</button>
                   </div>
                   
                   <!-- Date Picker Personalizado -->
@@ -220,16 +224,15 @@
                   </Teleport>
                 </div>
 
-                <!-- Checkbox para marcar como gasto fijo -->
-                <div class="flex items-center space-x-3 p-3 bg-gray-50 rounded-lg">
-                  <input
-                    id="isFixed"
-                    v-model="form.isFixed"
-                    type="checkbox"
-                    class="h-4 w-4 text-primary-600 focus:ring-primary-500 border-gray-300 rounded"
-                  />
-                  <label for="isFixed" class="text-sm font-medium text-gray-700">
-                    Es un gasto fijo (se repite cada mes)
+                <!-- Toggle gasto fijo (checkbox estilizado) -->
+                <div class="p-3 bg-gray-50 rounded-lg">
+                  <label class="inline-flex items-center gap-2 select-none">
+                    <input v-model="form.isFixed" type="checkbox" class="peer sr-only" />
+                    <span class="w-10 h-6 rounded-full bg-gray-200 peer-checked:bg-primary-600 relative transition-colors">
+                      <span class="absolute top-1 left-1 w-4 h-4 rounded-full bg-white shadow transition-transform peer-checked:translate-x-4"></span>
+                    </span>
+                    <span class="text-sm font-medium text-gray-700">Es un gasto fijo</span>
+                    <span class="text-xs text-gray-500">Se repite cada mes</span>
                   </label>
                 </div>
 
@@ -253,7 +256,7 @@
                       min="1"
                       max="31"
                       required
-                      class="input-field"
+                      class="input-field h-10"
                       placeholder="15"
                     />
                     <p class="text-xs text-gray-500">
@@ -262,9 +265,14 @@
                   </div>
                 </Transition>
 
-                <div class="flex items-center space-x-3 p-3 bg-gray-50 rounded-lg">
-                  <input id="isCredit" v-model="form.isCredit" type="checkbox" class="h-4 w-4 text-primary-600 focus:ring-primary-500 border-gray-300 rounded" />
-                  <label for="isCredit" class="text-sm font-medium text-gray-700">Es gasto de crédito</label>
+                <div class="p-3 bg-gray-50 rounded-lg">
+                  <label class="inline-flex items-center gap-2 select-none">
+                    <input v-model="form.isCredit" type="checkbox" class="peer sr-only" />
+                    <span class="w-10 h-6 rounded-full bg-gray-200 peer-checked:bg-primary-600 relative transition-colors">
+                      <span class="absolute top-1 left-1 w-4 h-4 rounded-full bg-white shadow transition-transform peer-checked:translate-x-4"></span>
+                    </span>
+                    <span class="text-sm font-medium text-gray-700">Es gasto de crédito</span>
+                  </label>
                 </div>
 
                 <div v-if="form.isCredit" class="grid grid-cols-1 gap-4">
@@ -291,29 +299,20 @@
                   <p class="text-sm text-red-600">{{ error }}</p>
                 </div>
 
-                <!-- Buttons -->
-                <div class="flex space-x-3 pt-4">
-                  <button
-                    type="button"
-                    @click="closeModal"
-                    class="btn-secondary flex-1"
-                  >
-                    Cancelar
-                  </button>
-                  <button
-                    type="submit"
-                    :disabled="loading"
-                    class="btn-primary flex-1"
-                    :class="{ 'opacity-50 cursor-not-allowed': loading }"
-                  >
-                    <svg v-if="loading" class="animate-spin -ml-1 mr-2 h-4 w-4 text-white" fill="none" viewBox="0 0 24 24">
-                      <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                      <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                    </svg>
-                    {{ loading ? (isEditMode ? 'Guardando...' : 'Agregando...') : (isEditMode ? 'Guardar Cambios' : 'Agregar Gasto') }}
-                  </button>
-                </div>
+                <!-- Sticky footer actions -->
               </form>
+            </div>
+            <div class="px-6 py-4 border-t bg-white sticky bottom-0">
+              <div class="flex space-x-3">
+                <button type="button" @click="closeModal" class="btn-secondary flex-1">Cancelar</button>
+                <button type="button" @click="onSave(false)" :disabled="loading" class="btn-primary flex-1" :class="{ 'opacity-50 cursor-not-allowed': loading }" title="Tip: Ctrl+Enter guarda y crea otro">
+                  <svg v-if="loading" class="animate-spin -ml-1 mr-2 h-4 w-4 text-white" fill="none" viewBox="0 0 24 24">
+                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                  </svg>
+                  {{ loading ? (isEditMode ? 'Guardando...' : 'Agregando...') : (isEditMode ? 'Guardar Cambios' : 'Guardar') }}
+                </button>
+              </div>
             </div>
           </div>
         </div>
@@ -327,6 +326,7 @@ import { ref, reactive, onMounted, onUnmounted, computed, watch, nextTick } from
 import { format } from 'date-fns'
 import { useExpenseStore } from '../stores/expenseStore'
 import AppSelect from './ui/AppSelect.vue'
+import AppSwitch from './ui/AppSwitch.vue'
 import { useDebtStore } from '../stores/debtStore'
 import { useConfirm } from '../composables/useConfirm'
 
@@ -590,6 +590,15 @@ const selectToday = () => {
   showDatePicker.value = false
 }
 
+const selectTomorrow = () => {
+  const t = new Date()
+  t.setDate(t.getDate() + 1)
+  selectedDate.value = t
+  form.date = format(t, 'yyyy-MM-dd')
+  currentDate.value = t
+  showDatePicker.value = false
+}
+
 const closeModal = () => {
   resetForm()
   emit('close')
@@ -646,6 +655,27 @@ const handleSubmit = async () => {
   }
 }
 
+// Acciones footer
+const onSave = async (andNew) => {
+  await handleSubmit()
+  if (andNew && !error.value) {
+    // Reabrir limpio si fue creación (no edición)
+    if (!isEditMode.value) {
+      resetForm()
+    }
+  }
+}
+
+// Ctrl+Enter: Guardar y nuevo
+const handleShortcutSave = async (e) => {
+  if (!props.isOpen) return
+  const isCtrlEnter = (e.ctrlKey || e.metaKey) && e.key === 'Enter'
+  if (isCtrlEnter && !loading.value) {
+    e.preventDefault()
+    await onSave(true)
+  }
+}
+
 const loading = computed(() => expenseStore.loading)
 
 // Watcher para limpiar el día del mes cuando se desmarca como fijo
@@ -691,11 +721,13 @@ const handleClickOutside = (event) => {
 onMounted(() => {
   document.addEventListener('keydown', handleKeydown)
   document.addEventListener('click', handleClickOutside)
+  document.addEventListener('keydown', handleShortcutSave)
 })
 
 onUnmounted(() => {
   document.removeEventListener('keydown', handleKeydown)
   document.removeEventListener('click', handleClickOutside)
+  document.removeEventListener('keydown', handleShortcutSave)
 })
 </script>
 
