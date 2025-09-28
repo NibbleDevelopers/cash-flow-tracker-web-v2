@@ -189,6 +189,18 @@
                       </svg>
                       Crédito
                     </span>
+                    <span
+                      v-if="expense.entryType === 'payment'"
+                      class="inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-bold bg-emerald-100 text-emerald-800 uppercase tracking-wide"
+                    >
+                      Abono
+                    </span>
+                    <span
+                      v-else-if="expense.entryType === 'charge'"
+                      class="inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-bold bg-amber-100 text-amber-800 uppercase tracking-wide"
+                    >
+                      Cargo
+                    </span>
               </div>
               <div class="flex items-center space-x-4 mt-1">
                     <p class="text-xs text-gray-500">{{ format(parseLocalDate(expense.date), 'dd/MM/yyyy') }}</p>
