@@ -11,23 +11,56 @@
 
     <!-- Filtros -->
     <div class="space-y-4 mb-6">
-      <!-- Fila 1: Búsqueda y Categoría -->
-      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <!-- Fila 1: Búsqueda (full width) -->
+      <div class="grid grid-cols-1 gap-4">
         <div class="flex flex-col">
           <label class="block text-sm font-medium text-gray-700 mb-2">Buscar gastos</label>
-          <input
-            v-model="searchQuery"
-            type="text"
-            class="input-field h-10"
-            placeholder="Buscar por descripción..."
-          />
+          <div class="relative">
+            <span class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+              <svg class="h-4 w-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-4.35-4.35M10 18a8 8 0 100-16 8 8 0 000 16z" />
+              </svg>
+            </span>
+            <input
+              ref="searchInputRef"
+              v-model="searchInput"
+              type="text"
+              class="input-field h-10 pl-9 pr-8"
+              placeholder="Buscar por descripción, categoría o palabra clave"
+              @keydown.enter.prevent="applySearchNow"
+            />
+            <button
+              v-if="searchQuery"
+              type="button"
+              class="absolute inset-y-0 right-0 pr-2 flex items-center text-gray-400 hover:text-gray-600"
+              @click="clearSearch"
+              title="Limpiar búsqueda"
+            >
+              <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+          </div>
         </div>
+      </div>
+
+      <!-- Fila 2: Categoría y Tipo -->
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div class="flex flex-col">
           <label class="block text-sm font-medium text-gray-700 mb-2">Categoría</label>
           <AppSelect
             v-model="selectedCategoryId"
             :options="categoryFilterOptions"
             placeholder="Todas las categorías"
+            class="h-10"
+          />
+        </div>
+        <div class="flex flex-col">
+          <label class="block text-sm font-medium text-gray-700 mb-2">Tipo</label>
+          <AppSelect
+            v-model="selectedEntryType"
+            :options="typeOptions"
+            placeholder="Todos"
             class="h-10"
           />
         </div>
@@ -337,12 +370,14 @@ const isCreditPayment = (expense) => {
 // Estado de filtros y paginación
 const searchQuery = ref('')
 const selectedCategoryId = ref('')
+const selectedEntryType = ref('') // '' | 'charge' | 'payment'
 const period = ref('month') // month | 7 | 30 | all
 const sortOrder = ref('desc') // desc | asc
 const pageSize = ref(10)
 const shownCount = ref(pageSize.value)
 
-watch([searchQuery, selectedCategoryId, period, sortOrder], () => {
+// reiniciar paginación cuando cambian filtros o query (señal de verdad)
+watch([searchQuery, selectedCategoryId, selectedEntryType, period, sortOrder], () => {
   shownCount.value = pageSize.value
 })
 
@@ -351,6 +386,13 @@ const categoryFilterOptions = computed(() => [
   { label: 'Todas las categorías', value: '' },
   ...((expenseStore.activeCategories || []).map(c => ({ label: c.name, value: String(c.id) })))
 ])
+
+const typeOptions = [
+  { label: 'Todos', value: '' },
+  { label: 'Cargos', value: 'charge' },
+  { label: 'Abonos', value: 'payment' },
+  { label: 'Créditos', value: 'credit' }
+]
 
 const periodOptions = [
   { label: 'Mes actual', value: 'month' },
@@ -403,6 +445,32 @@ const onLoadMore = async () => {
   loadingMore.value = false
 }
 
+// Search helpers
+const searchInputRef = ref(null)
+const searchInput = ref('')
+const searchDebounceMs = 400
+let searchTimer = null
+
+// Mantener searchQuery como fuente de verdad usada por filtros; searchInput es el campo UI
+watch(() => searchInput.value, () => {
+  clearTimeout(searchTimer)
+  searchTimer = setTimeout(() => {
+    searchQuery.value = searchInput.value
+  }, searchDebounceMs)
+})
+
+const applySearchNow = () => {
+  clearTimeout(searchTimer)
+  searchQuery.value = searchInput.value
+}
+
+const clearSearch = () => {
+  searchInput.value = ''
+  applySearchNow()
+  // refocus for quick typing
+  try { searchInputRef.value?.focus() } catch {}
+}
+
 // Chips activos
 const activeChips = computed(() => {
   const chips = []
@@ -410,6 +478,10 @@ const activeChips = computed(() => {
   if (selectedCategoryId.value) {
     const cat = expenseStore.activeCategories.find(c => String(c.id) === String(selectedCategoryId.value))
     chips.push({ key: 'cat', label: `Categoría: ${cat ? cat.name : selectedCategoryId.value}`, onClear: () => (selectedCategoryId.value = '') })
+  }
+  if (selectedEntryType.value) {
+    const map = { charge: 'Cargos', payment: 'Abonos', credit: 'Créditos' }
+    chips.push({ key: 'type', label: `Tipo: ${map[selectedEntryType.value] || selectedEntryType.value}`, onClear: () => (selectedEntryType.value = '') })
   }
   if (period.value !== 'month') {
     const map = { '7': 'Últimos 7 días', '30': 'Últimos 30 días', all: 'Todos' }
@@ -422,7 +494,8 @@ const activeChips = computed(() => {
 // Estado de filtrado para mostrar skeletons breves
 const isFiltering = ref(false)
 let filterTimer = null
-watch([searchQuery, selectedCategoryId, period, sortOrder], () => {
+// micro skeleton al cambiar filtros
+watch([searchQuery, selectedCategoryId, selectedEntryType, period, sortOrder], () => {
   isFiltering.value = true
   clearTimeout(filterTimer)
   filterTimer = setTimeout(() => {
@@ -584,7 +657,9 @@ const filteredExpenses = computed(() => {
   return baseByPeriodWithRange.value.filter(e => {
     const matchesCat = !cat || String(e.categoryId) === String(cat)
     const matchesSearch = !query || (e.description || '').toLowerCase().includes(query)
-    return matchesCat && matchesSearch
+    const matchesType = !selectedEntryType.value
+      || (selectedEntryType.value === 'credit' ? isCreditPayment(e) : (String(e.entryType || '').toLowerCase() === selectedEntryType.value))
+    return matchesCat && matchesSearch && matchesType
   })
 })
 
