@@ -122,6 +122,7 @@
         >
           <!-- Presets -->
           <div class="flex flex-wrap gap-2 mb-3">
+            <button class="px-2 py-1 text-xs rounded-md bg-gray-100 hover:bg-gray-200" @click="applyPreset('today')">Hoy</button>
             <button class="px-2 py-1 text-xs rounded-md bg-gray-100 hover:bg-gray-200" @click="applyPreset('7')">Últimos 7 días</button>
             <button class="px-2 py-1 text-xs rounded-md bg-gray-100 hover:bg-gray-200" @click="applyPreset('30')">Últimos 30 días</button>
             <button class="px-2 py-1 text-xs rounded-md bg-gray-100 hover:bg-gray-200" @click="applyPreset('thisMonth')">Este mes</button>
@@ -145,7 +146,7 @@
             <button
               v-for="day in rangeCalendarDays"
               :key="day.date"
-              @click="onPick(day.date)"
+              @click="onPickWithAuto(day.date)"
               :class="[
                 'h-8 w-8 rounded-md text-xs font-medium transition-colors',
                 !day.isCurrentMonth ? 'text-gray-300' : 'text-gray-700 hover:bg-primary-50',
@@ -517,9 +518,29 @@ const rangeYear = computed(() => rangeCursor.value.getFullYear())
 const rangeMonth = computed(() => rangeCursor.value.getMonth())
 const rangeMonthName = computed(() => format(new Date(rangeYear.value, rangeMonth.value, 1), 'MMMM', { locale: es }))
 
+const autoSingleDay = ref(false)
+
 const toggleRange = async () => {
-  tempStart.value = rangeStart.value
-  tempEnd.value = rangeEnd.value
+  // Si vamos a abrir el popover, preseleccionar hoy si no hay rango previo
+  if (!showRange.value) {
+    if (!rangeStart.value && !rangeEnd.value) {
+      const today = new Date()
+      // Normalizar a medianoche
+      const normalized = new Date(today.getFullYear(), today.getMonth(), today.getDate())
+      tempStart.value = normalized
+      tempEnd.value = null
+      rangeCursor.value = normalized
+      autoSingleDay.value = true
+    } else {
+      tempStart.value = rangeStart.value
+      tempEnd.value = rangeEnd.value
+      // Centrar el cursor en el mes del inicio seleccionado
+      if (tempStart.value) {
+        rangeCursor.value = new Date(tempStart.value)
+      }
+      autoSingleDay.value = true
+    }
+  }
   showRange.value = !showRange.value
 }
 
@@ -568,6 +589,40 @@ const rangeCalendarDays = computed(() => {
   return days
 })
 
+// Presets de rango
+const applyPreset = (preset) => {
+  const today = new Date()
+  const startOf = (date) => new Date(date.getFullYear(), date.getMonth(), 1)
+  const endOf = (date) => new Date(date.getFullYear(), date.getMonth() + 1, 0)
+
+  let start = null
+  let end = null
+
+  if (preset === '7') {
+    end = new Date(today.getFullYear(), today.getMonth(), today.getDate())
+    start = new Date(end)
+    start.setDate(end.getDate() - 6)
+  } else if (preset === '30') {
+    end = new Date(today.getFullYear(), today.getMonth(), today.getDate())
+    start = new Date(end)
+    start.setDate(end.getDate() - 29)
+  } else if (preset === 'thisMonth') {
+    start = startOf(today)
+    end = endOf(today)
+  } else if (preset === 'lastMonth') {
+    const last = new Date(today.getFullYear(), today.getMonth() - 1, 1)
+    start = startOf(last)
+    end = endOf(last)
+  } else if (preset === 'today') {
+    start = new Date(today.getFullYear(), today.getMonth(), today.getDate())
+    end = start
+  }
+
+  tempStart.value = start
+  tempEnd.value = end
+  applyRange()
+}
+
 const onPick = (date) => {
   if (!tempStart.value || (tempStart.value && tempEnd.value)) {
     tempStart.value = new Date(date)
@@ -583,14 +638,35 @@ const onPick = (date) => {
   }
 }
 
+const onPickWithAuto = (date) => {
+  const picked = new Date(date)
+  // Auto-aplicar solo si había un inicio ya seleccionado y coincide con el clic,
+  // y el modo autoSingleDay está activo (primer clic tras abrir)
+  if (autoSingleDay.value && tempStart.value && !tempEnd.value && picked.toDateString() === tempStart.value.toDateString()) {
+    applyRange()
+    autoSingleDay.value = false
+    return
+  }
+  // Comportamiento normal de selección (inicio/fin)
+  onPick(date)
+  // Tras cualquier selección manual, desactivar auto-aplicación
+  autoSingleDay.value = false
+}
+
 const clearRange = () => {
   tempStart.value = null
   tempEnd.value = null
 }
 
 const applyRange = () => {
-  rangeStart.value = tempStart.value
-  rangeEnd.value = tempEnd.value
+  // Permitir selección de un solo día: si no hay fin, usar el inicio como fin
+  if (tempStart.value && !tempEnd.value) {
+    rangeStart.value = tempStart.value
+    rangeEnd.value = tempStart.value
+  } else {
+    rangeStart.value = tempStart.value
+    rangeEnd.value = tempEnd.value
+  }
   showRange.value = false
 }
 
@@ -621,14 +697,19 @@ onBeforeUnmount(() => {
 
 const rangeLabel = computed(() => {
   if (rangeStart.value && rangeEnd.value) {
+    const sameDay = rangeStart.value.toDateString() === rangeEnd.value.toDateString()
+    if (sameDay) return `${format(rangeStart.value, 'dd/MM/yyyy')}`
     return `${format(rangeStart.value, 'dd/MM/yyyy')} - ${format(rangeEnd.value, 'dd/MM/yyyy')}`
+  }
+  if (rangeStart.value && !rangeEnd.value) {
+    return `${format(rangeStart.value, 'dd/MM/yyyy')}`
   }
   return 'Rango personalizado'
 })
 
-// Aplicar rango al filtrar
+// Aplicar rango al filtrar (admite un solo día)
 watch([rangeStart, rangeEnd], () => {
-  if (rangeStart.value && rangeEnd.value) {
+  if (rangeStart.value) {
     period.value = 'custom'
   } else if (!rangeStart.value && !rangeEnd.value && period.value === 'custom') {
     period.value = 'month'
@@ -639,12 +720,14 @@ watch([rangeStart, rangeEnd], () => {
 // Integrar rango en baseByPeriod
 const _baseByPeriodOrig = baseByPeriod
 const baseByPeriodWithRange = computed(() => {
-  // si hay rango, priorizarlo
-  if (period.value === 'custom' && rangeStart.value && rangeEnd.value) {
+  // si hay rango, priorizarlo; si solo hay inicio, usarlo como fin también
+  if (period.value === 'custom' && rangeStart.value) {
     const all = expenseStore.expenses || []
+    const start = rangeStart.value
+    const end = rangeEnd.value || rangeStart.value
     return all.filter(e => {
       const d = parseLocalDate(e.date)
-      return d >= rangeStart.value && d <= rangeEnd.value
+      return d >= start && d <= end
     })
   }
   return _baseByPeriodOrig.value
