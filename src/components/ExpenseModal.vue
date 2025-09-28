@@ -392,6 +392,8 @@ watch(
         form.isCredit = !!props.expense.debtId
         form.debtId = props.expense.debtId || ''
         form.entryType = props.expense.entryType ? String(props.expense.entryType).toLowerCase() : ''
+        // Prefill status si viene del gasto, respetando edición de pagos
+        form.status = props.expense.status ? String(props.expense.status).toLowerCase() : ''
         // Asegurar que las deudas estén cargadas al abrir en modo edición
         try {
           if (!debtStore.debts?.length) {
@@ -632,7 +634,7 @@ const handleSubmit = async () => {
         delete payload.entryType
         delete payload.status
       } else {
-        // Default manual payment status to 'paid' si el usuario no selecciona
+        // Si el usuario no selecciona status para payment manual, usar 'paid'; pero no sobreescribir si ya eligió 'pending'
         if (payload.entryType === 'payment' && !payload.status) payload.status = 'paid'
       }
       await expenseStore.updateExpense(payload)
@@ -644,6 +646,7 @@ const handleSubmit = async () => {
         delete payload.entryType
         delete payload.status
       } else {
+        // Para creación manual: por defecto 'paid' solo si no se seleccionó estado
         if (payload.entryType === 'payment' && !payload.status) payload.status = 'paid'
       }
       await expenseStore.addExpense(payload)
@@ -689,8 +692,10 @@ watch(() => form.isFixed, (newValue) => {
 watch(() => form.isCredit, (isCredit) => {
   if (isCredit) {
     if (!form.entryType) form.entryType = 'charge'
-    // Si el usuario cambia a payment y no hay status, por defecto 'paid'
-    if (form.entryType === 'payment' && !form.status) form.status = 'paid'
+    // Mantener el status sólo si el usuario lo selecciona; no forzar 'paid' en edición si viene 'pending'
+    if (form.entryType === 'payment' && !form.status) {
+      // no-op: el usuario podrá elegir; si no elige, se aplicará default al guardar
+    }
   } else {
     form.entryType = ''
     form.debtId = ''
