@@ -65,6 +65,19 @@
           />
         </div>
       </div>
+
+      <!-- Fila condicional: Estado (solo si Tipo = Abonos) -->
+      <div v-if="selectedEntryType === 'payment'" class="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div class="flex flex-col">
+          <label class="block text-sm font-medium text-gray-700 mb-2">Estado</label>
+          <AppSelect
+            v-model="selectedStatus"
+            :options="statusFilterOptions"
+            placeholder="Todos los estados"
+            class="h-10"
+          />
+        </div>
+      </div>
       
       <!-- Fila 2: Periodo, Orden y Rango de fechas -->
       <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -294,12 +307,66 @@
       </div>
     </div>
 
-    <div v-if="currentMonthExpenses.length > 0" class="mt-6 pt-4 border-t border-gray-200">
+    <div v-if="filteredExpenses.length > 0 && !isFiltering" class="mt-6 pt-4 border-t border-gray-200">
       <div class="flex justify-between items-center">
-        <span class="text-sm font-medium text-gray-700">Total del mes:</span>
+        <span class="text-sm font-medium text-gray-700">Total:</span>
         <span class="text-lg font-bold text-gray-900">
-          ${{ totalSpent.toLocaleString('es-ES', { minimumFractionDigits: 2 }) }}
+          ${{ filteredTotalsSimple.totalAll.toLocaleString('es-ES', { minimumFractionDigits: 2 }) }}
         </span>
+      </div>
+
+      <div class="mt-4">
+        <div class="flex items-center justify-between">
+          <div class="flex items-center gap-2">
+            <span class="text-xs uppercase tracking-wide text-gray-500">Desglose</span>
+          </div>
+        </div>
+
+        <div class="mt-3 grid grid-cols-1 md:grid-cols-2 gap-3">
+          <!-- Cargos crédito -->
+          <div class="p-3 rounded-lg border border-purple-200 bg-purple-50 flex items-center justify-between">
+            <div class="flex items-center gap-2">
+              <span class="h-2.5 w-2.5 rounded-full bg-purple-500"></span>
+              <span class="text-xs text-purple-800">Cargos de crédito</span>
+            </div>
+            <div class="text-right">
+              <div class="text-sm font-semibold text-purple-900">${{ filteredTotalsSimple.charges.toLocaleString('es-ES', { minimumFractionDigits: 2 }) }}</div>
+            </div>
+          </div>
+
+          <!-- Abonos pagados -->
+          <div class="p-3 rounded-lg border border-emerald-200 bg-emerald-50 flex items-center justify-between">
+            <div class="flex items-center gap-2">
+              <span class="h-2.5 w-2.5 rounded-full bg-emerald-500"></span>
+              <span class="text-xs text-emerald-800">Abonos pagados</span>
+            </div>
+            <div class="text-right">
+              <div class="text-sm font-semibold text-emerald-900">${{ filteredTotalsSimple.paymentsPaid.toLocaleString('es-ES', { minimumFractionDigits: 2 }) }}</div>
+            </div>
+          </div>
+
+          <!-- Abonos pendientes -->
+          <div class="p-3 rounded-lg border border-amber-200 bg-amber-50 flex items-center justify-between">
+            <div class="flex items-center gap-2">
+              <span class="h-2.5 w-2.5 rounded-full bg-amber-500"></span>
+              <span class="text-xs text-amber-800">Abonos pendientes</span>
+            </div>
+            <div class="text-right">
+              <div class="text-sm font-semibold text-amber-900">${{ filteredTotalsSimple.paymentsPending.toLocaleString('es-ES', { minimumFractionDigits: 2 }) }}</div>
+            </div>
+          </div>
+
+          <!-- Total sin abonos pendientes -->
+          <div class="p-3 rounded-lg border border-slate-200 bg-slate-50 flex items-center justify-between">
+            <div class="flex items-center gap-2">
+              <span class="h-2.5 w-2.5 rounded-full bg-slate-500"></span>
+              <span class="text-xs text-slate-800">Total sin abonos pendientes</span>
+            </div>
+            <div class="text-right">
+              <div class="text-sm font-semibold text-slate-900">${{ filteredTotalsSimple.totalNet.toLocaleString('es-ES', { minimumFractionDigits: 2 }) }}</div>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   </div>
@@ -321,6 +388,99 @@ const emit = defineEmits(['edit-expense', 'delete-expense'])
 
 const currentMonthExpenses = computed(() => expenseStore.currentMonthExpenses)
 const totalSpent = computed(() => expenseStore.totalSpent)
+const filteredTotalAmount = computed(() => {
+  return filteredExpenses.value
+    .filter(e => {
+      const credit = isCreditPayment(e)
+      if (!credit) return true
+      const type = String(e?.entryType || '').toLowerCase()
+      const status = String(e?.status || '').toLowerCase()
+      if (type === 'payment') {
+        return status !== 'pending'
+      }
+      // Si es crédito sin entryType o es 'charge', no impacta presupuesto
+      return false
+    })
+    .reduce((sum, e) => sum + (Number(e.amount) || 0), 0)
+})
+
+// Totales desglosados del conjunto filtrado (sin excluir nada para el total general)
+const filteredTotals = computed(() => {
+  const all = filteredExpenses.value
+  let normal = 0
+  let charges = 0
+  let paymentsPaid = 0
+  let paymentsPending = 0
+  for (const e of all) {
+    const credit = isCreditPayment(e)
+    const type = String(e?.entryType || '').toLowerCase()
+    const status = String(e?.status || '').toLowerCase()
+    const amount = Number(e.amount) || 0
+    if (!credit) {
+      normal += amount
+      continue
+    }
+    if (type === 'payment') {
+      if (status === 'pending') paymentsPending += amount
+      else paymentsPaid += amount
+      continue
+    }
+    // Si es crédito y no es 'payment', contarlo como cargo
+    charges += amount
+  }
+  const allTotal = normal + charges + paymentsPaid + paymentsPending
+  return { all: allTotal, normal, charges, paymentsPaid, paymentsPending }
+})
+
+// Totales del periodo (ignorando filtros; respeta periodo/rango seleccionado)
+const periodTotals = computed(() => {
+  const base = baseByPeriodWithRange.value
+  let normal = 0
+  let charges = 0
+  let paymentsPaid = 0
+  let paymentsPending = 0
+  for (const e of base) {
+    const credit = isCreditPayment(e)
+    const type = String(e?.entryType || '').toLowerCase()
+    const status = String(e?.status || '').toLowerCase()
+    const amount = Number(e.amount) || 0
+    if (!credit) {
+      normal += amount
+      continue
+    }
+    if (type === 'payment') {
+      if (status === 'pending') paymentsPending += amount
+      else paymentsPaid += amount
+      continue
+    }
+    charges += amount
+  }
+  const all = normal + charges + paymentsPaid + paymentsPending
+  return { all, normal, charges, paymentsPaid, paymentsPending }
+})
+
+// Totales simples basados en el resultado filtrado (para mostrar lo pedido)
+const filteredTotalsSimple = computed(() => {
+  const all = filteredExpenses.value
+  let charges = 0
+  let paymentsPaid = 0
+  let paymentsPending = 0
+  for (const e of all) {
+    const credit = isCreditPayment(e)
+    const type = String(e?.entryType || '').toLowerCase()
+    const status = String(e?.status || '').toLowerCase()
+    const amount = Number(e.amount) || 0
+    if (credit && type === 'payment') {
+      if (status === 'pending') paymentsPending += amount
+      else paymentsPaid += amount
+    } else if (credit && type !== 'payment') {
+      charges += amount
+    }
+  }
+  const totalAll = all.reduce((s, e) => s + (Number(e.amount) || 0), 0)
+  const totalNet = totalAll - paymentsPending
+  return { totalAll, charges, paymentsPaid, paymentsPending, totalNet }
+})
 const loading = computed(() => expenseStore.loading)
 
 // Cargar gastos fijos cuando se monta el componente
@@ -372,13 +532,14 @@ const isCreditPayment = (expense) => {
 const searchQuery = ref('')
 const selectedCategoryId = ref('')
 const selectedEntryType = ref('') // '' | 'charge' | 'payment'
+const selectedStatus = ref('') // '' | 'pending' | 'paid' (solo aplica si entryType === 'payment')
 const period = ref('month') // month | 7 | 30 | all
 const sortOrder = ref('desc') // desc | asc
 const pageSize = ref(10)
 const shownCount = ref(pageSize.value)
 
 // reiniciar paginación cuando cambian filtros o query (señal de verdad)
-watch([searchQuery, selectedCategoryId, selectedEntryType, period, sortOrder], () => {
+watch([searchQuery, selectedCategoryId, selectedEntryType, selectedStatus, period, sortOrder], () => {
   shownCount.value = pageSize.value
 })
 
@@ -393,6 +554,12 @@ const typeOptions = [
   { label: 'Cargos', value: 'charge' },
   { label: 'Abonos', value: 'payment' },
   { label: 'Créditos', value: 'credit' }
+]
+
+const statusFilterOptions = [
+  { label: 'Todos', value: '' },
+  { label: 'Pagado', value: 'paid' },
+  { label: 'Pendiente', value: 'pending' }
 ]
 
 const periodOptions = [
@@ -483,6 +650,10 @@ const activeChips = computed(() => {
   if (selectedEntryType.value) {
     const map = { charge: 'Cargos', payment: 'Abonos', credit: 'Créditos' }
     chips.push({ key: 'type', label: `Tipo: ${map[selectedEntryType.value] || selectedEntryType.value}`, onClear: () => (selectedEntryType.value = '') })
+  }
+  if (selectedEntryType.value === 'payment' && selectedStatus.value) {
+    const map = { paid: 'Pagado', pending: 'Pendiente' }
+    chips.push({ key: 'status', label: `Estado: ${map[selectedStatus.value] || selectedStatus.value}`, onClear: () => (selectedStatus.value = '') })
   }
   if (period.value !== 'month') {
     const map = { '7': 'Últimos 7 días', '30': 'Últimos 30 días', all: 'Todos' }
@@ -742,7 +913,9 @@ const filteredExpenses = computed(() => {
     const matchesSearch = !query || (e.description || '').toLowerCase().includes(query)
     const matchesType = !selectedEntryType.value
       || (selectedEntryType.value === 'credit' ? isCreditPayment(e) : (String(e.entryType || '').toLowerCase() === selectedEntryType.value))
-    return matchesCat && matchesSearch && matchesType
+    const matchesStatus = !(selectedEntryType.value === 'payment' && selectedStatus.value)
+      || (String(e.status || '').toLowerCase() === selectedStatus.value)
+    return matchesCat && matchesSearch && matchesType && matchesStatus
   })
 })
 
@@ -782,4 +955,9 @@ const onDelete = async (expense) => {
     notify.error('No se pudo eliminar el gasto')
   }
 }
+
+// Resetear estado si el tipo ya no es "payment"
+watch(() => selectedEntryType.value, (val) => {
+  if (val !== 'payment') selectedStatus.value = ''
+})
 </script>
