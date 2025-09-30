@@ -6,6 +6,9 @@ import * as BudgetAPI from './api/budget'
 import * as FixedAPI from './api/fixedExpenses'
 
 class GoogleSheetsBackendService {
+  constructor() {
+    this._categoriesCache = null
+  }
 
   // ==========================
   // Deudas (Debts) API
@@ -57,7 +60,14 @@ class GoogleSheetsBackendService {
   async getDebtInstallments(id, opts) { return DebtsAPI.getDebtInstallments(id, opts) }
 
   // Obtener categorías
-  async getCategories() { return CategoriesAPI.getCategories() }
+  async getCategories() {
+    if (Array.isArray(this._categoriesCache) && this._categoriesCache.length > 0) {
+      return this._categoriesCache
+    }
+    const cats = await CategoriesAPI.getCategories()
+    this._categoriesCache = cats
+    return cats
+  }
 
   // Obtener gastos
   async getExpenses() { return ExpensesAPI.getExpenses() }
@@ -72,14 +82,14 @@ class GoogleSheetsBackendService {
       
       // Crear mapa de categorías para lookup rápido
       const categoryMap = categories.reduce((map, category) => {
-        map[category.id] = category
+        map[String(category.id)] = category
         return map
       }, {})
       
       // Combinar gastos con información de categorías
       const expensesWithCategories = expenses.map(expense => ({
         ...expense,
-        category: categoryMap[expense.categoryId] || {
+        category: categoryMap[String(expense.categoryId)] || {
           id: expense.categoryId,
           name: 'Categoría no encontrada',
           color: '#6B7280',
@@ -116,10 +126,18 @@ class GoogleSheetsBackendService {
   async updateBudget(budget) { return BudgetAPI.updateBudget(budget) }
 
   // Agregar nueva categoría
-  async addCategory(category) { return CategoriesAPI.addCategory(category) }
+  async addCategory(category) {
+    const res = await CategoriesAPI.addCategory(category)
+    this._categoriesCache = null
+    return res
+  }
 
   // Actualizar categoría
-  async updateCategory(category) { return CategoriesAPI.updateCategory(category) }
+  async updateCategory(category) {
+    const res = await CategoriesAPI.updateCategory(category)
+    this._categoriesCache = null
+    return res
+  }
 
   // Probar conexión con el backend
   async testConnection() { return makeRequest('/test') }

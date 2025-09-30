@@ -185,7 +185,7 @@ const generateFixedExpenses = async () => {
 }
 
 const getCategoryName = (categoryId) => {
-  const category = expenseStore.categories.find(c => c.id === categoryId)
+  const category = expenseStore.categories.find(c => String(c.id) === String(categoryId))
   return category ? category.name : 'Categoría no encontrada'
 }
 
