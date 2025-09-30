@@ -127,7 +127,7 @@ function updateDropdownPosition() {
     left: `${left}px`,
     width: `${dropdownWidth}px`,
     maxHeight: `${dropdownMaxHeight}px`,
-    overflow: 'hidden'
+    overflow: 'auto'
   }
 }
 

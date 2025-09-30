@@ -443,7 +443,7 @@ onMounted(async () => {
   selectedDate.value = new Date()
 })
 
-// Opciones para AppSelect (categorías)
+// Opciones para AppSelect (categorías activas)
 const categoryOptions = computed(() =>
   (expenseStore.activeCategories || []).map(c => ({ label: c.name, value: c.id }))
 )
