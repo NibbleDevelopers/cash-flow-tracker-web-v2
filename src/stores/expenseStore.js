@@ -18,17 +18,41 @@ export const useExpenseStore = defineStore('expense', () => {
   // Getters computados
   const currentMonthExpenses = computed(() => {
     const now = new Date()
+    const currentMonthStr = format(now, 'yyyy-MM')
     const monthStart = startOfMonth(now)
     const monthEnd = endOfMonth(now)
     
-    return expenses.value.filter(expense => {
-      const expenseDate = parseLocalDate(expense.date)
+    return (expenses.value || []).filter(expense => {
+      const rawDate = expense?.date
+      // Camino rápido y robusto: comparar prefijo cuando la fecha es 'yyyy-MM-...'
+      if (typeof rawDate === 'string' && /^\d{4}-\d{2}/.test(rawDate)) {
+        return rawDate.slice(0, 7) === currentMonthStr
+      }
+      // Fallback: parseo local y verificación por intervalo
+      const expenseDate = parseLocalDate(rawDate)
+      const time = expenseDate?.getTime?.()
+      if (Number.isNaN(time)) return false
       return isWithinInterval(expenseDate, { start: monthStart, end: monthEnd })
     })
   })
 
+  // Total gastado del mes que impacta el presupuesto:
+  // - Incluye gastos normales (sin debtId)
+  // - Incluye pagos de crédito (payment) que no estén 'pending'
+  // - Excluye cargos de crédito (charge)
   const totalSpent = computed(() => {
-    return currentMonthExpenses.value.reduce((sum, expense) => sum + expense.amount, 0)
+    return currentMonthExpenses.value
+      .filter(expense => {
+        const isCredit = !!expense?.debtId
+        if (!isCredit) return true
+        const type = String(expense?.entryType || '').toLowerCase()
+        const status = String(expense?.status || '').toLowerCase()
+        if (type === 'payment') {
+          return status !== 'pending'
+        }
+        return false
+      })
+      .reduce((sum, expense) => sum + expense.amount, 0)
   })
 
   const budgetProgress = computed(() => {

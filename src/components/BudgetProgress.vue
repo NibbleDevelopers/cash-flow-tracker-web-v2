@@ -76,22 +76,91 @@
 <script setup>
 import { computed } from 'vue'
 import { useExpenseStore } from '../stores/expenseStore'
+import { parseLocalDate } from '../utils/date'
 
 const props = defineProps({
   amountSize: {
     type: String,
     default: 'lg',
     validator: (value) => ['sm', 'base', 'lg', 'xl', '2xl'].includes(value)
+  },
+  // Mes opcional en formato 'yyyy-MM'. Si no se pasa, usa el mes actual del store
+  month: {
+    type: String,
+    default: ''
   }
 })
 
 const expenseStore = useExpenseStore()
 
-const budget = computed(() => expenseStore.budget)
-const totalSpent = computed(() => expenseStore.totalSpent)
-const budgetProgress = computed(() => expenseStore.budgetProgress)
-const remainingBudget = computed(() => expenseStore.remainingBudget)
-const isOverBudget = computed(() => expenseStore.isOverBudget)
+// ¿Se pidió un mes específico?
+const selectedMonth = computed(() => {
+  const m = (props.month || '').trim()
+  return /^\d{4}-\d{2}$/.test(m) ? m : ''
+})
+
+// Filtrar gastos por mes cuando se provee 'month'; si no, usar los del store
+const expensesForPeriod = computed(() => {
+  if (!selectedMonth.value) return expenseStore.currentMonthExpenses
+  const month = selectedMonth.value
+  const list = expenseStore.expenses || []
+  return list.filter(e => {
+    const d = e?.date
+    if (typeof d === 'string' && /^\d{4}-\d{2}/.test(d)) {
+      return d.slice(0, 7) === month
+    }
+    const ld = parseLocalDate(d)
+    if (Number.isNaN(ld?.getTime?.())) return false
+    const ym = `${ld.getFullYear()}-${String(ld.getMonth() + 1).padStart(2, '0')}`
+    return ym === month
+  })
+})
+
+// Filtrar solo egresos que impactan presupuesto:
+// - Gastos normales (sin debtId)
+// - Pagos de crédito (entryType==='payment') y no 'pending'
+const outflowExpenses = computed(() => {
+  return (expensesForPeriod.value || []).filter(e => {
+    const isCredit = !!e?.debtId
+    if (!isCredit) return true
+    const type = String(e?.entryType || '').toLowerCase()
+    const status = String(e?.status || '').toLowerCase()
+    if (type === 'payment') {
+      return status !== 'pending'
+    }
+    // Excluir cargos de crédito (compras) del presupuesto
+    return false
+  })
+})
+
+// Total gastado para el periodo (solo egresos reales)
+const totalSpent = computed(() => {
+  return outflowExpenses.value.reduce((sum, e) => sum + (Number(e.amount) || 0), 0)
+})
+
+// Presupuesto del periodo
+const budgetAmount = computed(() => {
+  if (!selectedMonth.value) return expenseStore.budget.amount
+  const map = expenseStore.budgetsByMonth || {}
+  return Number(map[selectedMonth.value]) || 0
+})
+
+// Objeto presupuesto para mantener API de la plantilla
+const budget = computed(() => ({ amount: budgetAmount.value }))
+
+// Derivados del periodo
+const budgetProgress = computed(() => {
+  if (budgetAmount.value === 0) return 0
+  return Math.min((totalSpent.value / budgetAmount.value) * 100, 100)
+})
+
+const remainingBudget = computed(() => {
+  return Math.max(budgetAmount.value - totalSpent.value, 0)
+})
+
+const isOverBudget = computed(() => {
+  return budgetAmount.value > 0 && totalSpent.value > budgetAmount.value
+})
 
 const progressBarClass = computed(() => {
   if (budgetProgress.value >= 100) return 'bg-red-500'
