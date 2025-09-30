@@ -44,8 +44,8 @@
         </div>
       </div>
 
-      <!-- Fila 2: Categoría y Tipo -->
-      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <!-- Fila 2: Categoría, Tipo y Estado (alineados) -->
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
         <div class="flex flex-col">
           <label class="block text-sm font-medium text-gray-700 mb-2">Categoría</label>
           <AppSelect
@@ -64,20 +64,20 @@
             class="h-10"
           />
         </div>
-      </div>
-
-      <!-- Fila condicional: Estado (solo si Tipo = Abonos) -->
-      <div v-if="selectedEntryType === 'payment'" class="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <div class="flex flex-col">
+        <div class="flex flex-col" :class="selectedEntryType !== 'payment' ? 'opacity-50' : ''" :aria-disabled="selectedEntryType !== 'payment'">
           <label class="block text-sm font-medium text-gray-700 mb-2">Estado</label>
           <AppSelect
             v-model="selectedStatus"
             :options="statusFilterOptions"
             placeholder="Todos los estados"
             class="h-10"
+            :disabled="selectedEntryType !== 'payment'"
+            :title="selectedEntryType !== 'payment' ? 'Disponible al seleccionar Abonos' : ''"
           />
         </div>
       </div>
+
+      
       
       <!-- Fila 2: Periodo, Orden y Rango de fechas -->
       <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -202,9 +202,19 @@
         </div>
       </div>
 
-      <!-- Contador -->
+      <!-- Contador y acción -->
       <div class="flex items-center justify-between text-xs text-gray-500 mb-2" v-else>
         <span>Mostrando {{ Math.min(shownCount, totalFiltered) }} de {{ totalFiltered }}</span>
+        <button
+          v-if="hasActiveFilters"
+          type="button"
+          class="inline-flex items-center gap-1 px-2 py-0.5 rounded-md border border-gray-300 text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-primary-500"
+          @click="clearAllFilters"
+          title="Limpiar filtros"
+        >
+          <svg class="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+          Limpiar
+        </button>
       </div>
 
       <!-- Lista agrupada por fecha -->
@@ -662,6 +672,24 @@ const activeChips = computed(() => {
   if (sortOrder.value !== 'desc') chips.push({ key: 'sort', label: 'Orden: antiguos primero', onClear: () => (sortOrder.value = 'desc') })
   return chips
 })
+
+const hasActiveFilters = computed(() => activeChips.value.length > 0)
+
+const clearAllFilters = () => {
+  searchInput.value = ''
+  searchQuery.value = ''
+  selectedCategoryId.value = ''
+  selectedEntryType.value = ''
+  selectedStatus.value = ''
+  period.value = 'month'
+  sortOrder.value = 'desc'
+  // limpiar rango personalizado
+  rangeStart.value = null
+  rangeEnd.value = null
+  tempStart.value = null
+  tempEnd.value = null
+  showRange.value = false
+}
 
 // Estado de filtrado para mostrar skeletons breves
 const isFiltering = ref(false)
