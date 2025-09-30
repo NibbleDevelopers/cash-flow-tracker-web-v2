@@ -28,7 +28,7 @@
     />
 
     <!-- Progreso del presupuesto -->
-    <BudgetProgress />
+    <BudgetProgress :show-credits="true" />
 
     <!-- Gráfico de gastos por categoría -->
     <ExpensesByCategoryChart :expenses-by-category="expensesByCategory" />

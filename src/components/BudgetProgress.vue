@@ -19,7 +19,7 @@
       </div>
 
       <!-- Información del presupuesto -->
-      <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+      <div :class="gridColsClass">
         <div class="text-center p-4 bg-blue-50 rounded-lg border border-blue-100">
           <div class="w-10 h-10 bg-blue-400 rounded-lg flex items-center justify-center mx-auto mb-3">
             <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -55,6 +55,27 @@
             ${{ remainingBudget.toLocaleString('en-US', { minimumFractionDigits: 2 }) }}
           </p>
         </div>
+
+        <!-- Cargos de crédito del periodo (solo informativo) -->
+        <div v-if="showCredits" class="text-center p-4 bg-purple-50 rounded-lg border border-purple-100">
+          <div class="w-10 h-10 bg-purple-400 rounded-lg flex items-center justify-center mx-auto mb-3">
+            <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
+            </svg>
+          </div>
+          <p class="text-sm text-purple-700 font-medium mb-2">Cargos de crédito</p>
+          <p :class="[amountTextClass, 'text-purple-900']">
+            ${{ totalCreditCharges.toLocaleString('en-US', { minimumFractionDigits: 2 }) }}
+          </p>
+        </div>
+      </div>
+
+      <!-- Total del mes (impacta presupuesto) -->
+      <div class="flex items-center justify-between text-sm text-gray-700">
+        <span>Total del mes</span>
+        <span class="font-semibold">
+          ${{ totalSpent.toLocaleString('en-US', { minimumFractionDigits: 2 }) }}
+        </span>
       </div>
 
       <!-- Alerta si se excede el presupuesto -->
@@ -88,6 +109,11 @@ const props = defineProps({
   month: {
     type: String,
     default: ''
+  },
+  // Mostrar tarjeta de cargos de crédito informativa
+  showCredits: {
+    type: Boolean,
+    default: false
   }
 })
 
@@ -162,6 +188,16 @@ const isOverBudget = computed(() => {
   return budgetAmount.value > 0 && totalSpent.value > budgetAmount.value
 })
 
+// (sin cómputo extra: usamos totalSpent que ya excluye cargos de crédito)
+
+// Total de cargos de crédito (entryType==='charge') en el periodo
+const totalCreditCharges = computed(() => {
+  const list = expensesForPeriod.value || []
+  return list
+    .filter(e => !!e?.debtId && String(e?.entryType || '').toLowerCase() === 'charge')
+    .reduce((sum, e) => sum + (Number(e.amount) || 0), 0)
+})
+
 const progressBarClass = computed(() => {
   if (budgetProgress.value >= 100) return 'bg-red-500'
   if (budgetProgress.value >= 80) return 'bg-yellow-500'
@@ -177,5 +213,12 @@ const amountTextClass = computed(() => {
     '2xl': 'text-2xl'
   }
   return `font-bold break-all ${sizeMap[props.amountSize]}`
+})
+
+// Grid responsivo: si showCredits está activo, mostrar 4 columnas en lg
+const gridColsClass = computed(() => {
+  return props.showCredits
+    ? 'grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4'
+    : 'grid grid-cols-1 sm:grid-cols-3 gap-4'
 })
 </script>
