@@ -21,7 +21,7 @@
 
     <div v-else class="space-y-3">
       <div
-        v-for="fixedExpense in expenseStore.activeFixedExpenses"
+        v-for="fixedExpense in pagedFixedExpenses"
         :key="fixedExpense.id"
         class="flex items-center justify-between p-4 bg-gray-50 rounded-lg border border-gray-200"
       >
@@ -63,6 +63,37 @@
             </button>
           </div>
         </div>
+      </div>
+
+      <!-- Controles de paginación -->
+      <div v-if="totalPages > 1" class="pt-2">
+        <nav class="flex items-center justify-center gap-3" aria-label="Paginación de gastos fijos">
+          <button
+            class="h-9 w-9 inline-flex items-center justify-center rounded-full border border-gray-300 text-gray-600 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-primary-500 disabled:opacity-50 disabled:cursor-not-allowed"
+            :disabled="page === 1"
+            @click="prevPage"
+            aria-label="Página anterior"
+            title="Anterior"
+          >
+            <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
+            </svg>
+          </button>
+
+          <span class="text-xs text-gray-600 select-none">Página {{ page }} de {{ totalPages }}</span>
+
+          <button
+            class="h-9 w-9 inline-flex items-center justify-center rounded-full border border-gray-300 text-gray-600 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-primary-500 disabled:opacity-50 disabled:cursor-not-allowed"
+            :disabled="page === totalPages"
+            @click="nextPage"
+            aria-label="Página siguiente"
+            title="Siguiente"
+          >
+            <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+            </svg>
+          </button>
+        </nav>
       </div>
     </div>
 
@@ -114,7 +145,7 @@
 </template>
 
 <script setup>
-import { ref, computed } from 'vue'
+import { ref, computed, watch } from 'vue'
 import { format } from 'date-fns'
 import { useExpenseStore } from '../stores/expenseStore'
 import FixedExpenseModal from './FixedExpenseModal.vue'
@@ -190,6 +221,21 @@ const getCategoryName = (categoryId) => {
 }
 
 const loading = computed(() => expenseStore.loading)
+
+// Paginación
+const page = ref(1)
+const pageSize = 5
+const totalItems = computed(() => expenseStore.activeFixedExpenses.length)
+const totalPages = computed(() => Math.max(1, Math.ceil(totalItems.value / pageSize)))
+const pagedFixedExpenses = computed(() => {
+  const start = (page.value - 1) * pageSize
+  return expenseStore.activeFixedExpenses.slice(start, start + pageSize)
+})
+const prevPage = () => { if (page.value > 1) page.value -= 1 }
+const nextPage = () => { if (page.value < totalPages.value) page.value += 1 }
+
+// Resetear a la primera página cuando cambie la lista
+watch(() => totalItems.value, () => { page.value = 1 })
 
 const showEdit = ref(false)
 const editing = ref(null)
