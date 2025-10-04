@@ -228,6 +228,9 @@
               'flex items-center justify-between p-4 rounded-xl border transition hover:shadow-sm',
               expense.isFixed ? 'bg-blue-50 border-blue-200' : 'bg-gray-50 border-gray-200'
         ]"
+            v-motion
+            :initial="{ opacity: 0, y: 8 }"
+            :enter="{ opacity: 1, y: 0, transition: { duration: 0.25 } }"
       >
         <div class="flex-1">
           <div class="flex items-center space-x-3">

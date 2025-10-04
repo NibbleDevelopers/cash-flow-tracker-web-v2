@@ -8,6 +8,7 @@ import 'notivue/notification.css'
 import 'notivue/animations.css'
 import VueConfirmPlugin from 'v3confirm'
 import VueApexCharts from 'vue3-apexcharts'
+import { MotionPlugin } from '@vueuse/motion'
 
 const app = createApp(App)
 const pinia = createPinia()
@@ -16,6 +17,7 @@ app.use(pinia)
 app.use(router)
 app.use(createNotivue({ position: 'top-right', avoidDuplicates: true }))
 app.use(VueApexCharts)
+app.use(MotionPlugin)
 app.use(VueConfirmPlugin, {
   root: '#confirm',
   yesText: 'Aceptar',

@@ -10,16 +10,21 @@
   * {
     @apply border-gray-200;
   }
+
+  /* Focus visible accesible en elementos interactivos */
+  :where(button, [href], input, select, textarea, [role="button"]) {
+    @apply focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-500/40 focus-visible:ring-offset-2;
+  }
 }
 
 @layer components {
   /* Botones */
   .btn-primary {
-    @apply bg-primary-600 hover:bg-primary-700 text-white font-medium py-2.5 px-4 rounded-lg transition-all duration-200 shadow-sm hover:shadow-md focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed;
+    @apply bg-primary-600 hover:bg-primary-700 text-white font-medium py-2.5 px-4 rounded-lg transition-all duration-200 ease-out shadow-sm hover:shadow-md focus:outline-none focus:ring-2 focus:ring-primary-500/40 focus:ring-offset-2 active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed;
   }
   
   .btn-secondary {
-    @apply bg-white hover:bg-gray-50 text-gray-700 font-medium py-2.5 px-4 rounded-lg border border-gray-300 transition-all duration-200 shadow-sm hover:shadow-md focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed;
+    @apply bg-white hover:bg-gray-50 text-gray-700 font-medium py-2.5 px-4 rounded-lg border border-gray-300 transition-all duration-200 ease-out shadow-sm hover:shadow-md focus:outline-none focus:ring-2 focus:ring-primary-500/40 focus:ring-offset-2 active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed;
   }
   
   .btn-danger {
@@ -45,11 +50,20 @@
   
   /* Cards */
   .card {
-    @apply bg-white rounded-xl shadow-sm border border-gray-200 p-6 transition-shadow duration-200;
+    @apply bg-white rounded-xl shadow-sm border border-gray-200 p-6 transition-all duration-200 ease-out;
   }
   
   .card:hover {
-    @apply shadow-md;
+    @apply shadow-md translate-y-[-1px];
+  }
+
+  /* Preferencias de movimiento reducido */
+  @media (prefers-reduced-motion: reduce) {
+    * {
+      transition: none !important;
+      animation: none !important;
+      scroll-behavior: auto !important;
+    }
   }
 
   .kpi-card {

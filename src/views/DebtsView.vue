@@ -11,28 +11,28 @@
     </div>
 
     <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
-      <div class="card">
+      <div class="card" v-motion :initial="{opacity:0,y:8}" :enter="{opacity:1,y:0,transition:{duration:0.25, delay:0}}">
         <div class="text-xs text-gray-500">Total créditos</div>
         <div class="text-2xl font-semibold">
           <span v-if="!loading">{{ formatCurrency(totalBalance) }}</span>
           <LoadingSkeleton v-else type="text" width="6rem" />
         </div>
       </div>
-      <div class="card">
+      <div class="card" v-motion :initial="{opacity:0,y:8}" :enter="{opacity:1,y:0,transition:{duration:0.25, delay:0.05}}">
         <div class="text-xs text-gray-500">Límite total</div>
         <div class="text-2xl font-semibold">
           <span v-if="!loading">{{ formatCurrency(totalCreditLimit) }}</span>
           <LoadingSkeleton v-else type="text" width="6rem" />
         </div>
       </div>
-      <div class="card">
+      <div class="card" v-motion :initial="{opacity:0,y:8}" :enter="{opacity:1,y:0,transition:{duration:0.25, delay:0.1}}">
         <div class="text-xs text-gray-500">Utilización</div>
         <div class="text-2xl font-semibold">
           <span v-if="!loading">{{ utilization.toFixed(1) }}%</span>
           <LoadingSkeleton v-else type="text" width="4rem" />
         </div>
       </div>
-      <div class="card">
+      <div class="card" v-motion :initial="{opacity:0,y:8}" :enter="{opacity:1,y:0,transition:{duration:0.25, delay:0.15}}">
         <div class="text-xs text-gray-500">Activas</div>
         <div class="text-2xl font-semibold">
           <span v-if="!loading">{{ activeCount }}</span>

@@ -39,7 +39,13 @@
           </svg>
         </button>
         
-        <h4 class="text-sm sm:text-base font-semibold text-gray-900">
+        <h4
+          class="text-sm sm:text-base font-semibold text-gray-900"
+          :key="format(currentDate, 'yyyy-MM')"
+          v-motion
+          :initial="{ opacity: 0, y: -4 }"
+          :enter="{ opacity: 1, y: 0, transition: { duration: 0.2 } }"
+        >
           {{ format(currentDate, 'MMMM yyyy', { locale: es }) }}
         </h4>
         
@@ -118,7 +124,7 @@
       <!-- Calendario -->
       <div class="grid grid-cols-7 gap-1.5">
         <div
-          v-for="day in calendarDays"
+          v-for="(day, i) in calendarDays"
           :key="day.date"
           :class="[
             'relative p-2 min-h-[70px] border border-gray-100 rounded-lg transition-colors duration-150 cursor-pointer group',
@@ -126,6 +132,9 @@
             day.isToday ? 'ring-1 ring-primary-400 border-primary-300 bg-primary-50/50' : '',
             getDayClass(day)
           ]"
+          v-motion
+          :initial="{ opacity: 0, y: 6 }"
+          :enter="{ opacity: 1, y: 0, transition: { duration: 0.18, delay: (i % 7) * 0.02 } }"
           @mouseenter="hoveredDay = day"
           @mouseleave="hoveredDay = null"
           @click="openDayModal(day)"

@@ -4,6 +4,33 @@
       <div>
         <h1 class="cf-title">Dashboard de Análisis</h1>
         <p class="cf-subtitle">Vista general y análisis detallado de tus finanzas</p>
+        <div class="flex items-center gap-2 mt-2">
+          <span
+            class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-primary-50 text-primary-700"
+            v-motion
+            :initial="{ opacity: 0, y: -4 }"
+            :enter="{ opacity: 1, y: 0, transition: { duration: 0.2 } }"
+          >
+            {{ formattedMonthLabel }}
+          </span>
+          <span
+            class="inline-flex items-center px-2 py-1 rounded-full text-[10px] font-semibold bg-gray-100 text-gray-700"
+            v-motion
+            :initial="{ opacity: 0, y: -4 }"
+            :enter="{ opacity: 1, y: 0, transition: { duration: 0.2, delay: 0.03 } }"
+          >
+            {{ currentMonthExpenses.length }} gastos
+          </span>
+          <span
+            class="inline-flex items-center px-2 py-1 rounded-full text-[10px] font-semibold"
+            :class="budgetProgressBadgeClass"
+            v-motion
+            :initial="{ opacity: 0, y: -4 }"
+            :enter="{ opacity: 1, y: 0, transition: { duration: 0.2, delay: 0.06 } }"
+          >
+            {{ Math.round(budgetProgress) }}%
+          </span>
+        </div>
       </div>
       <div class="flex items-center gap-2">
         <AppDatePicker v-model="selectedMonth" mode="month" aria-label="Seleccionar mes" />
@@ -11,7 +38,8 @@
     </div>
 
     <!-- Métricas clave -->
-    <KeyMetricsCards
+    <div v-motion :initial="{opacity:0,y:8}" :enter="{opacity:1,y:0,transition:{duration:0.25}}">
+      <KeyMetricsCards
       :total-spent="totalSpent"
       :remaining-budget="remainingBudget"
       :budget-progress="budgetProgress"
@@ -19,36 +47,47 @@
       :total-fixed-expenses="totalFixedExpenses"
       :expenses-count="currentMonthExpenses.length"
       :fixed-expenses-count="fixedExpensesThisMonth.length"
-    />
+      />
+    </div>
 
     <!-- Progreso del presupuesto -->
-    <BudgetProgress :show-credits="true" :month="selectedMonth" />
+    <div v-motion :initial="{opacity:0,y:8}" :enter="{opacity:1,y:0,transition:{duration:0.25, delay:0.05}}">
+      <BudgetProgress :show-credits="true" :month="selectedMonth" />
+    </div>
 
     <!-- Gráfico de gastos por categoría -->
-    <ExpensesByCategoryChart :expenses-by-category="expensesByCategoryForMonth" />
+    <div v-motion :initial="{opacity:0,y:8}" :enter="{opacity:1,y:0,transition:{duration:0.25, delay:0.1}}">
+      <ExpensesByCategoryChart :expenses-by-category="expensesByCategoryForMonth" />
+    </div>
 
     <!-- Gráfico de gastos diarios -->
-    <DailyExpensesChart 
+    <div v-motion :initial="{opacity:0,y:8}" :enter="{opacity:1,y:0,transition:{duration:0.25, delay:0.15}}">
+      <DailyExpensesChart 
       :daily-data="dailyExpensesDataForMonth" 
       :current-month="selectedMonth || currentMonth"
-    />
+      />
+    </div>
 
     <!-- Gráfico de progreso mensual -->
-    <MonthlyProgressChart 
+    <div v-motion :initial="{opacity:0,y:8}" :enter="{opacity:1,y:0,transition:{duration:0.25, delay:0.2}}">
+      <MonthlyProgressChart 
       :daily-data="dailyExpensesDataForMonth" 
       :budget="budgetAmountForMonth"
       :current-month="selectedMonth || currentMonth"
-    />
+      />
+    </div>
 
     <!-- Calendario de gastos -->
-    <ExpensesCalendar 
+    <div v-motion :initial="{opacity:0,y:8}" :enter="{opacity:1,y:0,transition:{duration:0.25, delay:0.25}}">
+      <ExpensesCalendar 
       :daily-data="dailyExpensesDataForMonth"
       :expenses="expensesForMonth"
       :fixed-expenses="fixedExpensesForMonth"
       :monthly-budget="budgetAmountForMonth"
       :month="selectedMonth"
       @month-changed="onCalendarMonthChanged"
-    />
+      />
+    </div>
 
     <!-- Categorías de gastos -->
     <div class="cf-card">
@@ -62,9 +101,12 @@
       
       <div v-else class="space-y-2">
         <div
-          v-for="category in expensesByCategory"
+          v-for="(category, i) in expensesByCategory"
           :key="category.category.id"
           class="cf-row"
+          v-motion
+          :initial="{ opacity: 0, y: 6 }"
+          :enter="{ opacity: 1, y: 0, transition: { duration: 0.2, delay: i * 0.015 } }"
         >
           <div class="flex items-center space-x-3">
             <div class="w-3 h-3 rounded-full" :style="{ backgroundColor: category.category.color }"></div>
@@ -92,9 +134,12 @@
       
       <div v-else class="space-y-2">
         <div
-          v-for="expense in fixedExpensesThisMonth"
+          v-for="(expense, i) in fixedExpensesThisMonth"
           :key="expense.id"
           class="cf-row cf-row-fixed"
+          v-motion
+          :initial="{ opacity: 0, y: 6 }"
+          :enter="{ opacity: 1, y: 0, transition: { duration: 0.2, delay: i * 0.02 } }"
         >
           <div class="flex items-center space-x-3">
             <div class="flex-shrink-0">
@@ -145,9 +190,12 @@
       
       <div v-else class="space-y-2">
         <div
-          v-for="expense in creditExpensesThisMonth"
+          v-for="(expense, i) in creditExpensesThisMonth"
           :key="expense.id"
           class="cf-row cf-row-credit"
+          v-motion
+          :initial="{ opacity: 0, y: 6 }"
+          :enter="{ opacity: 1, y: 0, transition: { duration: 0.2, delay: i * 0.02 } }"
         >
           <div class="flex items-center space-x-3">
             <div class="flex-shrink-0">
@@ -198,12 +246,15 @@
       
       <div v-else class="space-y-2">
         <div
-          v-for="expense in recentExpenses.slice(0, 5)"
+          v-for="(expense, i) in recentExpenses.slice(0, 5)"
           :key="expense.id"
           :class="[
             'cf-row',
             expense.isFixed ? 'cf-row-fixed' : ''
           ]"
+          v-motion
+          :initial="{ opacity: 0, y: 6 }"
+          :enter="{ opacity: 1, y: 0, transition: { duration: 0.2, delay: i * 0.02 } }"
         >
           <div class="flex items-center space-x-3">
             <span class="cf-chip">
@@ -327,6 +378,21 @@ const onCalendarMonthChanged = (newMonth) => {
     selectedMonth.value = newMonth
   }
 }
+
+// Etiquetas del header
+const formattedMonthLabel = computed(() => {
+  try {
+    const [y, m] = selectedMonth.value.split('-').map(Number)
+    return format(new Date(y, (m || 1) - 1, 1), 'MMMM yyyy')
+  } catch { return selectedMonth.value }
+})
+
+const budgetProgressBadgeClass = computed(() => {
+  const p = Number(budgetProgress.value) || 0
+  if (p >= 100) return 'bg-red-100 text-red-700'
+  if (p >= 80) return 'bg-amber-100 text-amber-700'
+  return 'bg-emerald-100 text-emerald-700'
+})
 
 const recentExpenses = computed(() => {
   return [...currentMonthExpenses.value].sort((a, b) => parseLocalDate(b.date) - parseLocalDate(a.date))

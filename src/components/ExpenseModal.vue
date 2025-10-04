@@ -31,7 +31,12 @@
         @click.self="closeModal"
       >
         <div class="flex min-h-full items-end justify-center p-4 text-center sm:items-center sm:p-0">
-          <div class="relative transform overflow-hidden rounded-lg bg-white text-left shadow-xl transition-all sm:my-8 sm:w-full sm:max-w-lg">
+          <div
+            class="relative transform overflow-hidden rounded-lg bg-white text-left shadow-xl transition-all sm:my-8 sm:w-full sm:max-w-lg"
+            v-motion
+            :initial="{ opacity: 0, y: 16, scale: 0.98 }"
+            :enter="{ opacity: 1, y: 0, scale: 1, transition: { duration: 0.25 } }"
+          >
             <!-- Header -->
             <div class="bg-gradient-to-r from-primary-600 to-primary-700 px-6 py-4">
               <div class="flex items-center justify-between">

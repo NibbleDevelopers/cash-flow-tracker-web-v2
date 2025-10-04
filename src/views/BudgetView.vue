@@ -39,6 +39,9 @@
           role="button"
           :aria-current="isCurrentMonth(idx) ? 'date' : 'false'"
           :aria-label="`Editar presupuesto de ${label} ${currentYear}: ${getAmountFor(idx).toLocaleString('es-ES', { minimumFractionDigits: 2 })}`"
+          v-motion
+          :initial="{ opacity: 0, y: 10 }"
+          :enter="{ opacity: 1, y: 0, transition: { duration: 0.25, delay: (idx % 4) * 0.05 } }"
         >
           <div class="flex items-center justify-between">
             <span class="text-sm font-medium" :class="isCurrentMonth(idx) ? 'text-primary-700' : 'text-gray-900'">{{ label }}</span>
