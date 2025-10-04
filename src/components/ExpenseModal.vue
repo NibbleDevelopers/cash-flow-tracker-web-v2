@@ -128,6 +128,7 @@
                     </div>
                   </div>
                   <div class="mt-2 flex items-center gap-2">
+                    <button type="button" class="px-2 py-1 text-xs rounded-md bg-gray-100 hover:bg-gray-200" @click="selectYesterday">Ayer</button>
                     <button type="button" class="px-2 py-1 text-xs rounded-md bg-gray-100 hover:bg-gray-200" @click="selectToday">Hoy</button>
                     <button type="button" class="px-2 py-1 text-xs rounded-md bg-gray-100 hover:bg-gray-200" @click="selectTomorrow">Mañana</button>
                   </div>
@@ -205,6 +206,12 @@
                         
                         <!-- Botones de acción -->
                         <div class="flex justify-between mt-2 pt-2 border-t border-gray-200">
+                          <button
+                            @click="selectYesterday"
+                            class="px-1.5 py-0.5 text-xs text-primary-600 hover:text-primary-700 font-medium"
+                          >
+                            Ayer
+                          </button>
                           <button
                             @click="selectToday"
                             class="px-1.5 py-0.5 text-xs text-primary-600 hover:text-primary-700 font-medium"
@@ -589,6 +596,15 @@ const selectToday = () => {
   selectedDate.value = today
   form.date = format(today, 'yyyy-MM-dd')
   currentDate.value = today
+  showDatePicker.value = false
+}
+
+const selectYesterday = () => {
+  const y = new Date()
+  y.setDate(y.getDate() - 1)
+  selectedDate.value = y
+  form.date = format(y, 'yyyy-MM-dd')
+  currentDate.value = y
   showDatePicker.value = false
 }
 
