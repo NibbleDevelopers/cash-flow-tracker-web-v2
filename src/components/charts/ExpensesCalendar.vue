@@ -32,22 +32,22 @@
       <div class="flex justify-between items-center mb-4">
         <button
           @click="previousMonth"
-          class="p-2 rounded-lg hover:bg-gray-100 transition-all duration-200"
+          class="p-1.5 rounded-md border border-transparent text-primary-700 hover:bg-primary-50 hover:border-primary-200 transition-colors"
         >
-          <svg class="w-4 h-4 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
           </svg>
         </button>
         
-        <h4 class="text-lg font-bold text-gray-900">
+        <h4 class="text-sm sm:text-base font-semibold text-gray-900">
           {{ format(currentDate, 'MMMM yyyy', { locale: es }) }}
         </h4>
         
         <button
           @click="nextMonth"
-          class="p-2 rounded-lg hover:bg-gray-100 transition-all duration-200"
+          class="p-1.5 rounded-md border border-transparent text-primary-700 hover:bg-primary-50 hover:border-primary-200 transition-colors"
         >
-          <svg class="w-4 h-4 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
           </svg>
         </button>
@@ -105,25 +105,25 @@
       </div>
 
       <!-- Días de la semana -->
-      <div class="grid grid-cols-7 gap-1 mb-2">
+      <div class="grid grid-cols-7 gap-1.5 mb-2">
         <div
           v-for="day in WEEK_DAYS"
           :key="day"
-          class="text-center text-xs font-semibold text-gray-600 py-2 bg-gray-50 rounded-md"
+          class="text-center text-xs font-medium text-gray-500 py-1 bg-gray-50 rounded-md"
         >
           {{ day }}
         </div>
       </div>
 
       <!-- Calendario -->
-      <div class="grid grid-cols-7 gap-1">
+      <div class="grid grid-cols-7 gap-1.5">
         <div
           v-for="day in calendarDays"
           :key="day.date"
           :class="[
-            'relative p-2 min-h-[65px] border border-gray-200 rounded-lg transition-all duration-200 hover:shadow-md cursor-pointer group',
-            day.isCurrentMonth ? 'bg-white hover:bg-gray-50' : 'bg-gray-50',
-            day.isToday ? 'ring-2 ring-blue-500 ring-opacity-60 bg-blue-50' : '',
+            'relative p-2 min-h-[70px] border border-gray-100 rounded-lg transition-colors duration-150 cursor-pointer group',
+            day.isCurrentMonth ? 'bg-white hover:bg-primary-50/30' : 'bg-gray-50',
+            day.isToday ? 'ring-1 ring-primary-400 border-primary-300 bg-primary-50/50' : '',
             getDayClass(day)
           ]"
           @mouseenter="hoveredDay = day"
@@ -131,8 +131,21 @@
           @click="openDayModal(day)"
         >
           <!-- Número del día -->
-          <div class="text-sm font-bold mb-1" :class="day.isCurrentMonth ? 'text-gray-900' : 'text-gray-400'">
-            {{ day.dayNumber }}
+          <div class="mb-1">
+            <span
+              :class="[
+                'inline-flex items-center justify-center w-6 h-6 rounded-full text-xs font-semibold',
+                day.isToday
+                  ? 'bg-primary-600 text-white'
+                  : (day.isCurrentMonth
+                      ? (hoveredDay && hoveredDay.date === day.date
+                          ? 'bg-primary-100 text-primary-900'
+                          : 'text-gray-700')
+                      : 'text-gray-400')
+              ]"
+            >
+              {{ day.dayNumber }}
+            </span>
           </div>
 
           <!-- Indicadores de gastos -->
@@ -366,11 +379,15 @@ const props = defineProps({
   monthlyBudget: {
     type: Number,
     default: 0
+  },
+  month: {
+    type: String,
+    default: '' // formato 'yyyy-MM'
   }
 })
 
 // Emits
-const emit = defineEmits(['day-selected'])
+const emit = defineEmits(['day-selected', 'month-changed'])
 
 // Estado reactivo
 const currentDate = ref(new Date())
@@ -483,6 +500,9 @@ const navigateMonth = (direction) => {
   
   currentDate.value = newDate
   clearModalState()
+  try {
+    emit('month-changed', format(newDate, 'yyyy-MM'))
+  } catch {}
 }
 
 // Funciones de eventos
@@ -502,6 +522,15 @@ const nextMonth = () => navigateMonth('next')
 
 // Watchers
 watch(currentDate, clearModalState)
+
+// Sincronizar mes externo (yyyy-MM)
+watch(() => props.month, (m) => {
+  const val = (m || '').trim()
+  if (/^\d{4}-\d{2}$/.test(val)) {
+    const [y, mm] = val.split('-').map(Number)
+    currentDate.value = new Date(y, mm - 1, 1)
+  }
+})
 </script>
 
 <style scoped>

@@ -110,125 +110,7 @@
                   <label for="date" class="block text-sm font-medium text-gray-700 mb-1">
                     Fecha
                   </label>
-                  <div class="relative">
-                    <input
-                      id="date"
-                      ref="dateInputRef"
-                      v-model="form.date"
-                      type="date"
-                      required
-                      class="input-field h-10 cursor-pointer"
-                      @click="showDatePicker = !showDatePicker"
-                      readonly
-                    />
-                    <div class="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
-                      <svg class="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                      </svg>
-                    </div>
-                  </div>
-                  <div class="mt-2 flex items-center gap-2">
-                    <button type="button" class="px-2 py-1 text-xs rounded-md bg-gray-100 hover:bg-gray-200" @click="selectYesterday">Ayer</button>
-                    <button type="button" class="px-2 py-1 text-xs rounded-md bg-gray-100 hover:bg-gray-200" @click="selectToday">Hoy</button>
-                    <button type="button" class="px-2 py-1 text-xs rounded-md bg-gray-100 hover:bg-gray-200" @click="selectTomorrow">Mañana</button>
-                  </div>
-                  
-                  <!-- Date Picker Personalizado -->
-                  <Teleport to="body">
-                    <Transition
-                      enter-active-class="ease-out duration-200"
-                      enter-from-class="opacity-0 scale-95"
-                      enter-to-class="opacity-100 scale-100"
-                      leave-active-class="ease-in duration-150"
-                      leave-from-class="opacity-100 scale-100"
-                      leave-to-class="opacity-0 scale-95"
-                    >
-                      <div
-                        v-if="showDatePicker"
-                        data-datepicker
-                        class="fixed z-[60] bg-white border border-gray-200 rounded-lg shadow-xl"
-                        :style="datePickerStyle"
-                        @click.stop
-                      >
-                      <div class="p-2">
-                        <!-- Header del calendario -->
-                        <div class="flex items-center justify-between mb-2">
-                          <button
-                            @click="previousMonth"
-                            class="p-1 hover:bg-gray-100 rounded transition-colors"
-                          >
-                            <svg class="h-3 w-3 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
-                            </svg>
-                          </button>
-                          <h3 class="text-xs font-semibold text-gray-900">
-                            {{ currentMonthName }} {{ currentYear }}
-                          </h3>
-                          <button
-                            @click="nextMonth"
-                            class="p-1 hover:bg-gray-100 rounded transition-colors"
-                          >
-                            <svg class="h-3 w-3 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
-                            </svg>
-                          </button>
-                        </div>
-                        
-                        <!-- Días de la semana -->
-                        <div class="grid grid-cols-7 gap-0.5 mb-1">
-                          <div v-for="day in weekDays" :key="day" class="text-center text-xs font-medium text-gray-500 py-0.5">
-                            {{ day }}
-                          </div>
-                        </div>
-                        
-                        <!-- Días del mes -->
-                        <div class="grid grid-cols-7 gap-0.5">
-                          <button
-                            v-for="day in calendarDays"
-                            :key="day.date"
-                            @click="selectDate(day.date)"
-                            :class="[
-                              'h-7 w-7 rounded text-xs font-medium transition-colors',
-                              day.isCurrentMonth 
-                                ? 'text-gray-900 hover:bg-primary-100' 
-                                : 'text-gray-400',
-                              day.isToday 
-                                ? 'bg-primary-600 text-white hover:bg-primary-700' 
-                                : '',
-                              day.isSelected 
-                                ? 'bg-primary-100 text-primary-900 border border-primary-500' 
-                                : ''
-                            ]"
-                          >
-                            {{ day.day }}
-                          </button>
-                        </div>
-                        
-                        <!-- Botones de acción -->
-                        <div class="flex justify-between mt-2 pt-2 border-t border-gray-200">
-                          <button
-                            @click="selectYesterday"
-                            class="px-1.5 py-0.5 text-xs text-primary-600 hover:text-primary-700 font-medium"
-                          >
-                            Ayer
-                          </button>
-                          <button
-                            @click="selectToday"
-                            class="px-1.5 py-0.5 text-xs text-primary-600 hover:text-primary-700 font-medium"
-                          >
-                            Hoy
-                          </button>
-                          <button
-                            @click="showDatePicker = false"
-                            class="px-1.5 py-0.5 text-xs text-gray-600 hover:text-gray-700 font-medium"
-                          >
-                            Cerrar
-                          </button>
-                        </div>
-                      </div>
-                    </div>
-                  </Transition>
-                  </Teleport>
+                  <AppDatePicker v-model="form.date" mode="date" aria-label="Seleccionar fecha" />
                 </div>
 
                 <!-- Toggle gasto fijo (checkbox estilizado) -->
@@ -334,6 +216,7 @@ import { format } from 'date-fns'
 import { useExpenseStore } from '../stores/expenseStore'
 import AppSelect from './ui/AppSelect.vue'
 import AppSwitch from './ui/AppSwitch.vue'
+import AppDatePicker from './ui/AppDatePicker.vue'
 import { useDebtStore } from '../stores/debtStore'
 import { useConfirm } from '../composables/useConfirm'
 
@@ -422,21 +305,9 @@ watch(
 
 const error = ref('')
 const descriptionInput = ref(null)
-const showDatePicker = ref(false)
-const dateInputRef = ref(null)
+// AppDatePicker maneja su propio panel; no se requiere estado local
 
-// Variables para el datepicker personalizado
-const currentDate = ref(new Date())
-const selectedDate = ref(new Date())
-
-// Días de la semana en español
-const weekDays = ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb']
-
-// Meses en español
-const months = [
-  'Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio',
-  'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'
-]
+// Sin variables del datepicker personalizado
 
 onMounted(async () => {
   if (!expenseStore.categories?.length) {
@@ -447,7 +318,6 @@ onMounted(async () => {
   }
   // Inicializar fecha actual
   form.date = format(new Date(), 'yyyy-MM-dd')
-  selectedDate.value = new Date()
 })
 
 // Opciones para AppSelect (categorías activas)
@@ -470,81 +340,7 @@ const statusOptions = [
   { label: 'Pagado', value: 'paid' }
 ]
 
-// Computed properties para el datepicker
-const currentYear = computed(() => currentDate.value.getFullYear())
-const currentMonth = computed(() => currentDate.value.getMonth())
-const currentMonthName = computed(() => months[currentMonth.value])
-
-// Estilo para posicionar el datepicker
-const datePickerStyle = computed(() => {
-  if (!dateInputRef.value || !showDatePicker.value) return {}
-  
-  const rect = dateInputRef.value.getBoundingClientRect()
-  const viewportHeight = window.innerHeight
-  const datepickerHeight = 240 // Altura más pequeña
-  
-  // Por defecto, mostrarlo arriba
-  let top = rect.top - datepickerHeight - 4
-  let left = rect.left
-  
-  // Si no cabe arriba, mostrarlo abajo
-  if (top < 16) {
-    top = rect.bottom + 4
-  }
-  
-  // Asegurar que no se salga por la derecha
-  const datepickerWidth = 280 // Ancho más pequeño
-  if (left + datepickerWidth > window.innerWidth) {
-    left = window.innerWidth - datepickerWidth - 16
-  }
-  
-  // Asegurar que no se salga por la izquierda
-  if (left < 16) {
-    left = 16
-  }
-  
-  return {
-    top: `${top}px`,
-    left: `${left}px`,
-    width: `${datepickerWidth}px`
-  }
-})
-
-const calendarDays = computed(() => {
-  const year = currentYear.value
-  const month = currentMonth.value
-  
-  // Primer día del mes
-  const firstDay = new Date(year, month, 1)
-  // Último día del mes
-  const lastDay = new Date(year, month + 1, 0)
-  // Primer día de la semana (domingo = 0)
-  const startDate = new Date(firstDay)
-  startDate.setDate(startDate.getDate() - firstDay.getDay())
-  
-  const days = []
-  const today = new Date()
-  
-  // Generar 42 días (6 semanas)
-  for (let i = 0; i < 42; i++) {
-    const date = new Date(startDate)
-    date.setDate(startDate.getDate() + i)
-    
-    const isCurrentMonth = date.getMonth() === month
-    const isToday = date.toDateString() === today.toDateString()
-    const isSelected = date.toDateString() === selectedDate.value.toDateString()
-    
-    days.push({
-      date: date.toISOString().split('T')[0],
-      day: date.getDate(),
-      isCurrentMonth,
-      isToday,
-      isSelected
-    })
-  }
-  
-  return days
-})
+// Sin cálculos del datepicker personalizado
 
 // Focus on description input when modal opens
 watch(() => props.isOpen, async (newValue) => {
@@ -566,56 +362,10 @@ const resetForm = () => {
   form.entryType = ''
   form.status = ''
   error.value = ''
-  showDatePicker.value = false
-  selectedDate.value = new Date()
-  currentDate.value = new Date()
 }
 
 // Métodos para el datepicker
-const previousMonth = () => {
-  const newDate = new Date(currentDate.value)
-  newDate.setMonth(newDate.getMonth() - 1)
-  currentDate.value = newDate
-}
-
-const nextMonth = () => {
-  const newDate = new Date(currentDate.value)
-  newDate.setMonth(newDate.getMonth() + 1)
-  currentDate.value = newDate
-}
-
-const selectDate = (dateString) => {
-  const date = new Date(dateString)
-  selectedDate.value = date
-  form.date = dateString
-  showDatePicker.value = false
-}
-
-const selectToday = () => {
-  const today = new Date()
-  selectedDate.value = today
-  form.date = format(today, 'yyyy-MM-dd')
-  currentDate.value = today
-  showDatePicker.value = false
-}
-
-const selectYesterday = () => {
-  const y = new Date()
-  y.setDate(y.getDate() - 1)
-  selectedDate.value = y
-  form.date = format(y, 'yyyy-MM-dd')
-  currentDate.value = y
-  showDatePicker.value = false
-}
-
-const selectTomorrow = () => {
-  const t = new Date()
-  t.setDate(t.getDate() + 1)
-  selectedDate.value = t
-  form.date = format(t, 'yyyy-MM-dd')
-  currentDate.value = t
-  showDatePicker.value = false
-}
+// Selección rápida ahora puede hacerse externamente si se requiere
 
 const closeModal = () => {
   resetForm()
@@ -722,32 +472,17 @@ watch(() => form.isCredit, (isCredit) => {
 // Close modal with ESC key
 const handleKeydown = (event) => {
   if (event.key === 'Escape' && props.isOpen) {
-    if (showDatePicker.value) {
-      showDatePicker.value = false
-    } else {
       closeModal()
-    }
-  }
-}
-
-// Cerrar datepicker al hacer clic fuera
-const handleClickOutside = (event) => {
-  if (showDatePicker.value && 
-      !event.target.closest('.datepicker-container') && 
-      !event.target.closest('[data-datepicker]')) {
-    showDatePicker.value = false
   }
 }
 
 onMounted(() => {
   document.addEventListener('keydown', handleKeydown)
-  document.addEventListener('click', handleClickOutside)
   document.addEventListener('keydown', handleShortcutSave)
 })
 
 onUnmounted(() => {
   document.removeEventListener('keydown', handleKeydown)
-  document.removeEventListener('click', handleClickOutside)
   document.removeEventListener('keydown', handleShortcutSave)
 })
 </script>
