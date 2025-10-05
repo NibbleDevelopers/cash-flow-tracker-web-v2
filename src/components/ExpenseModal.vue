@@ -27,18 +27,18 @@
     >
       <div
         v-if="isOpen"
-        class="fixed inset-0 z-50 overflow-y-auto"
+        class="fixed inset-0 z-50 overflow-hidden sm:overflow-y-auto"
         @click.self="closeModal"
       >
-        <div class="flex min-h-full items-end justify-center p-4 text-center sm:items-center sm:p-0">
+        <div class="flex h-full items-stretch justify-center p-0 text-center sm:min-h-full sm:items-center sm:p-0">
           <div
-            class="relative transform overflow-hidden rounded-lg bg-white text-left shadow-xl transition-all sm:my-8 sm:w-full sm:max-w-lg"
+            class="relative transform overflow-hidden bg-white text-left shadow-xl transition-all w-full h-full flex flex-col sm:rounded-lg sm:my-8 sm:w-full sm:max-w-lg sm:h-auto sm:flex-none"
             v-motion
             :initial="{ opacity: 0, y: 16, scale: 0.98 }"
             :enter="{ opacity: 1, y: 0, scale: 1, transition: { duration: 0.25 } }"
           >
             <!-- Header -->
-            <div class="bg-gradient-to-r from-primary-600 to-primary-700 px-6 py-4">
+            <div class="bg-gradient-to-r from-primary-600 to-primary-700 px-4 py-4 sm:px-6 sm:py-4">
               <div class="flex items-center justify-between">
                 <h3 class="text-lg font-semibold text-white">
                   {{ isEditMode ? 'Editar Gasto' : 'Agregar Nuevo Gasto' }}
@@ -56,7 +56,7 @@
             </div>
 
             <!-- Form -->
-            <div class="px-6 py-6">
+            <div class="px-4 py-4 sm:px-6 sm:py-6 flex-1 overflow-y-auto sm:overflow-visible sm:flex-none">
               <form @submit.prevent="handleSubmit" class="space-y-4">
                 <div>
                   <label for="description" class="block text-sm font-medium text-gray-700 mb-1">
@@ -196,7 +196,7 @@
                 <!-- Sticky footer actions -->
               </form>
             </div>
-            <div class="px-6 py-4 border-t bg-white sticky bottom-0">
+            <div class="px-4 py-4 sm:px-6 sm:py-4 border-t bg-white sticky bottom-0">
               <div class="flex space-x-3">
                 <button type="button" @click="closeModal" class="btn-secondary flex-1">Cancelar</button>
                 <button type="button" @click="onSave(false)" :disabled="loading" class="btn-primary flex-1" :class="{ 'opacity-50 cursor-not-allowed': loading }" title="Tip: Ctrl+Enter guarda y crea otro">
@@ -345,11 +345,16 @@ const statusOptions = [
 
 // Sin cálculos del datepicker personalizado
 
-// Focus on description input when modal opens
+// Focus on description input when modal opens and lock body scroll
 watch(() => props.isOpen, async (newValue) => {
   if (newValue) {
+    // Bloquear scroll del body
+    document.body.style.overflow = 'hidden'
     await nextTick()
     descriptionInput.value?.focus()
+  } else {
+    // Restaurar scroll del body
+    document.body.style.overflow = ''
   }
 })
 
@@ -487,6 +492,8 @@ onMounted(() => {
 onUnmounted(() => {
   document.removeEventListener('keydown', handleKeydown)
   document.removeEventListener('keydown', handleShortcutSave)
+  // Restaurar scroll del body al desmontar
+  document.body.style.overflow = ''
 })
 </script>
 

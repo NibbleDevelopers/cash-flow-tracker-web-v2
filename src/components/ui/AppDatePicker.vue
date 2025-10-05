@@ -31,6 +31,90 @@
           <!-- Overlay for mobile -->
           <div v-if="isMobile" class="fixed inset-0 z-[75] bg-black/30" @click="show = false"></div>
 
+          <!-- Mobile panel (bottom sheet) -->
+          <div
+            v-if="isMobile"
+            data-datepicker
+            class="fixed inset-x-0 bottom-0 z-[80] bg-white rounded-t-xl shadow-2xl max-h-[80vh] overflow-hidden"
+            @click.stop
+          >
+            <div class="p-4">
+              <!-- Month mode -->
+              <template v-if="isMonthMode">
+                <div class="flex items-center justify-between px-3 py-2 bg-white rounded-t-xl border-b border-gray-100">
+                  <button @click="prevYear" class="p-2 hover:bg-gray-100 rounded-md text-primary-700">
+                    <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
+                    </svg>
+                  </button>
+                  <h3 class="text-lg font-semibold text-gray-900">{{ currentYear }}</h3>
+                  <button @click="nextYear" class="p-2 hover:bg-gray-100 rounded-md text-primary-700">
+                    <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+                    </svg>
+                  </button>
+                </div>
+                <div class="grid grid-cols-3 gap-2 p-3">
+                  <button
+                    v-for="month in months"
+                    :key="month.value"
+                    @click="selectCurrentMonth(month.value)"
+                    :class="monthClass(month.value)"
+                  >
+                    {{ month.name }}
+                  </button>
+                </div>
+              </template>
+
+              <!-- Date mode -->
+              <template v-else>
+                <div class="flex items-center justify-between px-3 py-2 bg-white rounded-t-xl border-b border-gray-100">
+                  <button @click="previousMonth" class="p-2 hover:bg-gray-100 rounded-md text-primary-700">
+                    <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
+                    </svg>
+                  </button>
+                  <h3 class="text-lg font-semibold text-gray-900">{{ format(currentDate, 'MMMM yyyy', { locale: es }) }}</h3>
+                  <button @click="nextMonth" class="p-2 hover:bg-gray-100 rounded-md text-primary-700">
+                    <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+                    </svg>
+                  </button>
+                </div>
+                <div class="px-3 py-2">
+                  <div class="grid grid-cols-7 gap-1 mb-2">
+                    <div v-for="day in ['L', 'M', 'X', 'J', 'V', 'S', 'D']" :key="day" class="h-8 w-8 flex items-center justify-center text-xs font-medium text-gray-500">
+                      {{ day }}
+                    </div>
+                  </div>
+                  <div class="grid grid-cols-7 gap-1">
+                    <button
+                      v-for="day in calendarDays"
+                      :key="`${day.date}-mobile`"
+                      @click="selectDate(day.date)"
+                      :class="[
+                        'h-12 w-12 rounded-full text-sm font-semibold transition-colors focus:outline-none focus:ring-2 focus:ring-primary-500/40',
+                        day.isCurrentMonth ? 'text-gray-700 hover:bg-primary-100' : 'text-gray-400',
+                        day.isToday ? 'bg-primary-600 text-white hover:bg-primary-700' : '',
+                        day.isSelected ? 'bg-primary-100 text-primary-900 ring-2 ring-primary-500' : ''
+                      ]"
+                    >
+                      {{ day.day }}
+                    </button>
+                  </div>
+                </div>
+                <div class="flex justify-between px-4 py-3 border-t border-gray-200 rounded-b-2xl bg-white">
+                  <div class="space-x-2">
+                    <button @click="selectYesterday" class="px-3 py-2 text-sm text-primary-600 hover:text-primary-700 font-medium">Ayer</button>
+                    <button @click="selectToday" class="px-3 py-2 text-sm text-primary-600 hover:text-primary-700 font-medium">Hoy</button>
+                    <button @click="selectTomorrow" class="px-3 py-2 text-sm text-primary-600 hover:text-primary-700 font-medium">Mañana</button>
+                  </div>
+                  <button @click="show = false" class="px-3 py-2 text-sm text-gray-600 hover:text-gray-700 font-medium">Cerrar</button>
+                </div>
+              </template>
+            </div>
+          </div>
+
           <!-- Desktop panel -->
           <div
             v-if="!isMobile"
@@ -425,6 +509,30 @@ const handleKeydown = (e) => {
     show.value = false
   }
 }
+
+// Prevenir scroll del body cuando el calendario mobile está abierto
+watch(show, (newValue) => {
+  if (isMobile.value) {
+    if (newValue) {
+      // Prevenir scroll cuando se abre
+      document.body.style.overflow = 'hidden'
+      document.body.style.position = 'fixed'
+      document.body.style.width = '100%'
+    } else {
+      // Restaurar scroll cuando se cierra
+      document.body.style.overflow = ''
+      document.body.style.position = ''
+      document.body.style.width = ''
+    }
+  }
+})
+
+// Limpiar estilos al desmontar
+onUnmounted(() => {
+  document.body.style.overflow = ''
+  document.body.style.position = ''
+  document.body.style.width = ''
+})
 </script>
 
 <style scoped>
