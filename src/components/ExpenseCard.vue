@@ -1,36 +1,39 @@
 <template>
   <div
     :class="[
-      'flex flex-col sm:flex-row sm:items-center justify-between p-3 sm:p-4 rounded-xl border transition hover:shadow-sm',
-      expense.isFixed ? 'bg-blue-50 border-blue-200' : 'bg-gray-50 border-gray-200'
+      'flex flex-col sm:flex-row sm:items-center justify-between p-3 sm:p-4 rounded-xl border transition-all duration-200 hover:shadow-md hover:scale-[1.02] hover:-translate-y-0.5 cursor-pointer',
+      expense.isFixed ? 'bg-blue-50 border-blue-200 hover:bg-blue-100' : 'bg-gray-50 border-gray-200 hover:bg-gray-100'
     ]"
+    role="article"
+    :aria-label="`Gasto: ${expense.description} por $${(expense?.amount || 0).toLocaleString('es-ES', { minimumFractionDigits: 2 })}`"
+    tabindex="0"
   >
     <div class="flex-1 min-w-0">
       <div class="flex flex-col sm:flex-row sm:items-center space-y-2 sm:space-y-0 sm:space-x-3">
         <div class="flex-shrink-0">
-          <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-primary-100 text-primary-800">
+          <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-primary-100 text-primary-800 transition-all duration-200 hover:bg-primary-200 hover:scale-105">
             {{ expense.category.name }}
           </span>
         </div>
         <div class="flex-1 min-w-0">
           <div class="flex flex-col sm:flex-row sm:items-center space-y-1 sm:space-y-0 sm:space-x-2">
             <h3 class="text-sm font-medium text-gray-900 truncate">{{ expense.description }}</h3>
-            <span v-if="expense.isFixed" class="inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-bold bg-blue-600 text-white uppercase tracking-wide">Fijo</span>
-            <span v-if="isCreditPayment(expense)" class="inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-bold bg-red-600 text-white uppercase tracking-wide">
-              <svg class="w-3 h-3 mr-1" fill="currentColor" viewBox="0 0 20 20">
+            <span v-if="expense.isFixed" class="inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-bold bg-blue-600 text-white uppercase tracking-wide transition-all duration-200 hover:bg-blue-700 hover:scale-105">Fijo</span>
+            <span v-if="isCreditPayment(expense)" class="inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-bold bg-red-600 text-white uppercase tracking-wide transition-all duration-200 hover:bg-red-700 hover:scale-105">
+              <svg class="w-3 h-3 mr-1 transition-transform duration-200" fill="currentColor" viewBox="0 0 20 20">
                 <path fill-rule="evenodd" d="M4 4a2 2 0 00-2 2v4a2 2 0 002 2V6h10a2 2 0 00-2-2H4zm2 6a2 2 0 012-2h8a2 2 0 012 2v4a2 2 0 01-2 2H8a2 2 0 01-2-2v-4zm6 4a2 2 0 100-4 2 2 0 000 4z" clip-rule="evenodd" />
               </svg>
               Crédito
             </span>
             <span
               v-if="expense.entryType === 'payment'"
-              class="inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-bold bg-emerald-100 text-emerald-800 uppercase tracking-wide"
+              class="inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-bold bg-emerald-100 text-emerald-800 uppercase tracking-wide transition-all duration-200 hover:bg-emerald-200 hover:scale-105"
             >
               Abono
             </span>
             <span
               v-else-if="expense.entryType === 'charge'"
-              class="inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-bold bg-amber-100 text-amber-800 uppercase tracking-wide"
+              class="inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-bold bg-amber-100 text-amber-800 uppercase tracking-wide transition-all duration-200 hover:bg-amber-200 hover:scale-105"
             >
               Cargo
             </span>
@@ -53,22 +56,26 @@
       </p>
       <div class="mt-2 flex justify-end gap-2">
         <button
-          class="p-1.5 rounded-md border border-gray-200 bg-white text-gray-600 hover:bg-gray-50 hover:text-primary-700"
-          title="Editar"
+          class="p-1.5 rounded-md border border-gray-200 bg-white text-gray-600 hover:bg-gray-50 hover:text-primary-700 transition-all duration-200 hover:scale-105 hover:shadow-sm focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-1 active:scale-95"
+          :aria-label="`Editar gasto: ${expense.description}`"
+          title="Editar gasto"
           @click.stop="$emit('edit', expense)"
         >
-          <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+          <svg class="h-4 w-4 transition-transform duration-200" viewBox="0 0 24 24" fill="none" stroke="currentColor" aria-hidden="true">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5h2m-6 14h10a2 2 0 002-2v-5.586a1 1 0 00-.293-.707l-6.414-6.414A1 1 0 0011.586 4H6a2 2 0 00-2 2v10a2 2 0 002 2z"/>
           </svg>
+          <span class="sr-only">Editar gasto</span>
         </button>
         <button
-          class="p-1.5 rounded-md border border-gray-200 bg-white text-red-600 hover:bg-red-50"
-          title="Eliminar"
+          class="p-1.5 rounded-md border border-gray-200 bg-white text-red-600 hover:bg-red-50 transition-all duration-200 hover:scale-105 hover:shadow-sm focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-1 active:scale-95"
+          :aria-label="`Eliminar gasto: ${expense.description}`"
+          title="Eliminar gasto"
           @click.stop="$emit('delete', expense)"
         >
-          <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+          <svg class="h-4 w-4 transition-transform duration-200" viewBox="0 0 24 24" fill="none" stroke="currentColor" aria-hidden="true">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6M9 7h6m-7 0V5a2 2 0 012-2h2a2 2 0 012 2v2"/>
           </svg>
+          <span class="sr-only">Eliminar gasto</span>
         </button>
       </div>
     </div>

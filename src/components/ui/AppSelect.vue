@@ -6,6 +6,7 @@
           ref="buttonRef"
           @click="onOpenToggle"
           :class="buttonClass"
+          :id="props.id"
         >
           <span class="block truncate" v-if="selectedLabel">{{ selectedLabel }}</span>
           <span class="block truncate text-gray-400" v-else>{{ placeholder }}</span>
@@ -87,6 +88,10 @@ const props = defineProps({
   maxItems: {
     type: Number,
     default: 5
+  },
+  id: {
+    type: String,
+    default: null
   }
 })
 

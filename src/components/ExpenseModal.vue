@@ -36,11 +36,18 @@
             v-motion
             :initial="{ opacity: 0, y: 16, scale: 0.98 }"
             :enter="{ opacity: 1, y: 0, scale: 1, transition: { duration: 0.25 } }"
+            role="dialog"
+            aria-modal="true"
+            :aria-labelledby="isEditMode ? 'edit-expense-title' : 'add-expense-title'"
+            aria-describedby="expense-modal-description"
           >
             <!-- Header -->
             <div class="bg-gradient-to-r from-primary-600 to-primary-700 px-4 py-4 sm:px-6 sm:py-4">
               <div class="flex items-center justify-between">
-                <h3 class="text-lg font-semibold text-white">
+                <h3 
+                  :id="isEditMode ? 'edit-expense-title' : 'add-expense-title'"
+                  class="text-lg font-semibold text-white"
+                >
                   {{ isEditMode ? 'Editar Gasto' : 'Agregar Nuevo Gasto' }}
                 </h3>
                 <button
@@ -53,6 +60,11 @@
                   </svg>
                 </button>
               </div>
+            </div>
+
+            <!-- Description for screen readers -->
+            <div id="expense-modal-description" class="sr-only">
+              {{ isEditMode ? 'Editar los detalles del gasto seleccionado' : 'Completar el formulario para agregar un nuevo gasto' }}
             </div>
 
             <!-- Form -->
@@ -70,7 +82,12 @@
                     class="input-field"
                     placeholder="Ej: Netflix, Luz, Teléfono..."
                     ref="descriptionInput"
+                    aria-describedby="description-help"
+                    autocomplete="off"
                   />
+                  <div id="description-help" class="sr-only">
+                    Ingresa una descripción clara del gasto
+                  </div>
                 </div>
 
                 <div>
@@ -87,6 +104,8 @@
                       required
                       class="input-field pr-20"
                       placeholder="0.00"
+                      aria-describedby="amount-help"
+                      aria-label="Monto del gasto en pesos"
                     />
                     <div class="absolute inset-y-0 right-0 flex items-center">
                       <div class="flex items-center bg-primary-600 text-white px-3 py-2 rounded-r-md">
@@ -96,6 +115,9 @@
                           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
                         </svg>
                       </div>
+                    </div>
+                    <div id="amount-help" class="sr-only">
+                      Ingresa el monto del gasto. Puedes usar decimales para centavos.
                     </div>
                   </div>
                 </div>
@@ -198,12 +220,28 @@
             </div>
             <div class="px-4 py-4 sm:px-6 sm:py-4 border-t bg-white sticky bottom-0">
               <div class="flex space-x-3">
-                <button type="button" @click="closeModal" class="btn-secondary flex-1">Cancelar</button>
-                <button type="button" @click="onSave(false)" :disabled="loading" class="btn-primary flex-1" :class="{ 'opacity-50 cursor-not-allowed': loading }" title="Tip: Ctrl+Enter guarda y crea otro">
-                  <svg v-if="loading" class="animate-spin -ml-1 mr-2 h-4 w-4 text-white" fill="none" viewBox="0 0 24 24">
+                <button 
+                  type="button" 
+                  @click="closeModal" 
+                  class="btn-secondary flex-1"
+                  :aria-label="isEditMode ? 'Cancelar edición de gasto' : 'Cancelar creación de gasto'"
+                >
+                  Cancelar
+                </button>
+                <button 
+                  type="button" 
+                  @click="onSave(false)" 
+                  :disabled="loading" 
+                  class="btn-primary flex-1" 
+                  :class="{ 'opacity-50 cursor-not-allowed': loading }"
+                  :aria-label="loading ? (isEditMode ? 'Guardando cambios...' : 'Agregando gasto...') : (isEditMode ? 'Guardar cambios del gasto' : 'Guardar nuevo gasto')"
+                  title="Tip: Ctrl+Enter guarda y crea otro"
+                >
+                  <svg v-if="loading" class="animate-spin -ml-1 mr-2 h-4 w-4 text-white" fill="none" viewBox="0 0 24 24" aria-hidden="true">
                     <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
                     <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                   </svg>
+                  <span v-if="loading" class="sr-only">{{ isEditMode ? 'Guardando cambios...' : 'Agregando gasto...' }}</span>
                   {{ loading ? (isEditMode ? 'Guardando...' : 'Agregando...') : (isEditMode ? 'Guardar Cambios' : 'Guardar') }}
                 </button>
               </div>
