@@ -295,8 +295,6 @@ watch(
             debtStore.loadDebts()
           }
         } catch {}
-        selectedDate.value = new Date(form.date)
-        currentDate.value = new Date(form.date)
       } else {
         resetForm()
       }
