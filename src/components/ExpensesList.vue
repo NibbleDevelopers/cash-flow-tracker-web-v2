@@ -669,28 +669,53 @@
       </div>
     </div>
 
+    <!-- Infinite Scroll System -->
     <div v-if="totalFiltered > 0 && !isFiltering" class="mt-6">
-      <div class="flex justify-center">
-        <button
-          v-if="shownCount < totalFiltered"
-          class="inline-flex items-center justify-center px-6 py-3 sm:px-4 sm:py-2 rounded-lg text-white bg-gradient-to-r from-primary-600 to-primary-700 hover:from-primary-700 hover:to-primary-800 shadow-sm transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed w-full sm:w-auto min-h-[48px] sm:min-h-auto"
-          :disabled="loadingMore"
-          @click="onLoadMore"
-        >
-          <svg v-if="loadingMore" class="animate-spin -ml-1 mr-2 h-5 w-5 text-white" fill="none" viewBox="0 0 24 24" aria-hidden="true">
+      <!-- Infinite Scroll Trigger -->
+      <div 
+        v-if="shownCount < totalFiltered"
+        ref="infiniteScrollTrigger"
+        class="flex items-center justify-center py-8"
+      >
+        <!-- Loading indicator -->
+        <div v-if="loadingMore" class="flex items-center space-x-3 text-primary-600">
+          <svg class="animate-spin h-5 w-5" fill="none" viewBox="0 0 24 24">
             <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
             <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
           </svg>
-          <span v-if="loadingMore" class="flex items-center text-sm sm:text-base">
-            <span class="animate-pulse">Cargando más gastos...</span>
-          </span>
-          <span v-else class="flex items-center text-sm sm:text-base">
-            <svg class="w-4 h-4 sm:w-5 sm:h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
-            </svg>
-            Cargar más gastos
-          </span>
+          <span class="text-sm font-medium">Cargando más gastos...</span>
+        </div>
+        
+        <!-- Load more button (fallback for desktop) -->
+        <button
+          v-else-if="!loadingMore"
+          class="hidden sm:inline-flex items-center justify-center px-6 py-3 rounded-lg text-white bg-gradient-to-r from-primary-600 to-primary-700 hover:from-primary-700 hover:to-primary-800 shadow-sm transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+          :disabled="loadingMore"
+          @click="onLoadMore"
+        >
+          <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+          </svg>
+          Cargar más ({{ Math.min(pageSize, totalFiltered - shownCount) }} gastos)
         </button>
+        
+        <!-- Mobile hint -->
+        <div v-else class="sm:hidden text-center text-gray-500 text-sm">
+          <svg class="w-5 h-5 mx-auto mb-2 animate-bounce" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+          </svg>
+          <p>Desliza hacia abajo para cargar más</p>
+        </div>
+      </div>
+      
+      <!-- End of list indicator -->
+      <div v-else class="flex items-center justify-center py-8 text-gray-400">
+        <div class="text-center">
+          <svg class="w-8 h-8 mx-auto mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+          </svg>
+          <p class="text-sm">Has visto todos los gastos</p>
+        </div>
       </div>
     </div>
 
@@ -877,11 +902,20 @@ onMounted(async () => {
   await expenseStore.loadFixedExpenses()
   // Inicializar filtros rápidos
   generateQuickFilters()
+  // Setup infinite scroll después de que el DOM esté listo
+  nextTick(() => {
+    setupInfiniteScroll()
+  })
+  
+  // Listener para cambios de tamaño de ventana
+  window.addEventListener('resize', setupInfiniteScroll)
 })
 
 // Limpiar scroll del body al desmontar
 onUnmounted(() => {
   document.body.style.overflow = ''
+  cleanupInfiniteScroll()
+  window.removeEventListener('resize', setupInfiniteScroll)
 })
 
 // Función para obtener el día del mes de un gasto fijo
@@ -910,6 +944,10 @@ const shownCount = ref(pageSize.value)
 const showSuggestions = ref(false)
 const searchSuggestions = ref([])
 const quickFilters = ref([])
+
+// Infinite scroll
+const infiniteScrollTrigger = ref(null)
+const intersectionObserver = ref(null)
 
 
 // Estado del acordeón de filtros (solo mobile)
@@ -992,6 +1030,48 @@ const onLoadMore = async () => {
   await new Promise(r => setTimeout(r, 350))
   shownCount.value = Math.min(shownCount.value + pageSize.value, totalFiltered.value)
   loadingMore.value = false
+}
+
+// Infinite scroll setup (solo para mobile)
+const setupInfiniteScroll = () => {
+  if (!infiniteScrollTrigger.value) return
+  
+  // Solo activar infinite scroll en mobile (< 640px)
+  if (window.innerWidth >= 640) {
+    cleanupInfiniteScroll()
+    return
+  }
+  
+  // Clean up existing observer
+  if (intersectionObserver.value) {
+    intersectionObserver.value.disconnect()
+  }
+  
+  // Create new observer
+  intersectionObserver.value = new IntersectionObserver(
+    (entries) => {
+      const entry = entries[0]
+      if (entry.isIntersecting && !loadingMore.value && shownCount.value < totalFiltered.value) {
+        onLoadMore()
+      }
+    },
+    {
+      root: null,
+      rootMargin: '100px', // Start loading 100px before the trigger is visible
+      threshold: 0.1
+    }
+  )
+  
+  // Start observing
+  intersectionObserver.value.observe(infiniteScrollTrigger.value)
+}
+
+// Clean up observer
+const cleanupInfiniteScroll = () => {
+  if (intersectionObserver.value) {
+    intersectionObserver.value.disconnect()
+    intersectionObserver.value = null
+  }
 }
 
 // Search helpers
@@ -1505,6 +1585,13 @@ const onDelete = async (expense) => {
 watch(() => selectedEntryType.value, (val) => {
   if (val !== 'payment') selectedStatus.value = ''
 })
+
+// Reconfigurar infinite scroll cuando cambien los filtros o la cantidad mostrada
+watch([shownCount, totalFiltered], () => {
+  nextTick(() => {
+    setupInfiniteScroll()
+  })
+}, { flush: 'post' })
 
 // Funciones expuestas para el componente padre
 const expandFiltersAndFocusCategory = () => {

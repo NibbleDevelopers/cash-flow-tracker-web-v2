@@ -71,11 +71,11 @@
             <div class="px-4 py-4 sm:px-6 sm:py-6 flex-1 overflow-y-auto sm:overflow-visible sm:flex-none">
               <form @submit.prevent="handleSubmit" class="space-y-4">
                 <div>
-                  <label for="description" class="block text-sm font-medium text-gray-700 mb-1">
+                  <label for="expense-modal-description-input" class="block text-sm font-medium text-gray-700 mb-1">
                     Descripción
                   </label>
                   <input
-                    id="description"
+                    id="expense-modal-description-input"
                     v-model="form.description"
                     type="text"
                     required
@@ -91,12 +91,12 @@
                 </div>
 
                 <div>
-                  <label for="amount" class="block text-sm font-medium text-gray-700 mb-1">
+                  <label for="expense-modal-amount" class="block text-sm font-medium text-gray-700 mb-1">
                     Monto
                   </label>
                   <div class="relative">
                     <input
-                      id="amount"
+                      id="expense-modal-amount"
                       v-model="form.amount"
                       type="number"
                       step="0.01"
@@ -123,11 +123,11 @@
                 </div>
 
                 <div>
-                  <label for="category" class="block text-sm font-medium text-gray-700 mb-1">
+                  <label for="expense-modal-category" class="block text-sm font-medium text-gray-700 mb-1">
                     Categoría
                   </label>
                   <AppSelect
-                    id="category"
+                    id="expense-modal-category"
                     v-model="form.categoryId"
                     :options="categoryOptions"
                     placeholder="Selecciona una categoría"
@@ -135,10 +135,10 @@
                 </div>
 
                 <div class="datepicker-container">
-                  <label for="date" class="block text-sm font-medium text-gray-700 mb-1">
+                  <label for="expense-modal-date" class="block text-sm font-medium text-gray-700 mb-1">
                     Fecha
                   </label>
-                  <AppDatePicker id="date" v-model="form.date" mode="date" aria-label="Seleccionar fecha" />
+                  <AppDatePicker id="expense-modal-date" v-model="form.date" mode="date" aria-label="Seleccionar fecha" />
                 </div>
 
                 <!-- Toggle gasto fijo (checkbox estilizado) -->
@@ -163,11 +163,11 @@
                   leave-to-class="opacity-0 -translate-y-2"
                 >
                   <div v-if="form.isFixed" class="space-y-2">
-                    <label for="dayOfMonth" class="block text-sm font-medium text-gray-700">
+                    <label for="expense-modal-dayOfMonth" class="block text-sm font-medium text-gray-700">
                       Día del mes
                     </label>
                     <input
-                      id="dayOfMonth"
+                      id="expense-modal-dayOfMonth"
                       v-model="form.dayOfMonth"
                       type="number"
                       min="1"

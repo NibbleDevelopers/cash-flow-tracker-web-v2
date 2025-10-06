@@ -35,9 +35,12 @@
     <div
       ref="cardRef"
       :class="[
-        'relative flex flex-col sm:flex-row sm:items-center justify-between p-3 sm:p-4 rounded-xl border transition-all duration-200 hover:shadow-md hover:scale-[1.02] hover:-translate-y-0.5 cursor-pointer touch-pan-y',
-        expense.isFixed ? 'bg-blue-50 border-blue-200 hover:bg-blue-100' : 'bg-gray-50 border-gray-200 hover:bg-gray-100',
-        { 'transition-transform duration-200 ease-out': isDragging }
+        'relative flex flex-col sm:flex-row sm:items-center justify-between p-3 sm:p-4 rounded-xl border transition-all duration-300 ease-out hover:shadow-lg hover:scale-[1.01] hover:-translate-y-1 cursor-pointer touch-pan-y',
+        expense.isFixed ? 'bg-blue-50 border-blue-200 hover:bg-blue-100 hover:border-blue-300' : 'bg-gray-50 border-gray-200 hover:bg-gray-100 hover:border-gray-300',
+        { 
+          'transition-transform duration-200 ease-out': isDragging,
+          'shadow-md scale-[1.005] -translate-y-0.5': shouldShowMobileAnimations.value
+        }
       ]"
       :style="{ transform: `translateX(${swipeOffset}px)` }"
       role="article"
@@ -46,37 +49,77 @@
       @touchstart="onTouchStart"
       @touchmove="onTouchMove"
       @touchend="onTouchEnd"
+      @mouseenter="onMouseEnter"
+      @mouseleave="onMouseLeave"
       @mousedown="onMouseDown"
       @mousemove="onMouseMove"
       @mouseup="onMouseEnd"
-      @mouseleave="onMouseEnd"
     >
     <div class="flex-1 min-w-0">
       <div class="flex flex-col sm:flex-row sm:items-center space-y-2 sm:space-y-0 sm:space-x-3">
         <div class="flex-shrink-0">
-          <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-primary-100 text-primary-800 transition-all duration-200 hover:bg-primary-200 hover:scale-105">
+          <span 
+            :class="[
+              'inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-primary-100 text-primary-800 transition-all duration-300 ease-out hover:bg-primary-200 hover:scale-105',
+              { 'bg-primary-200 scale-102': shouldShowMobileAnimations.value }
+            ]"
+          >
             {{ expense.category.name }}
           </span>
         </div>
         <div class="flex-1 min-w-0">
           <div class="flex flex-col sm:flex-row sm:items-center space-y-1 sm:space-y-0 sm:space-x-2">
-            <h3 class="text-sm font-medium text-gray-900 truncate">{{ expense.description }}</h3>
-            <span v-if="expense.isFixed" class="inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-bold bg-blue-600 text-white uppercase tracking-wide transition-all duration-200 hover:bg-blue-700 hover:scale-105">Fijo</span>
-            <span v-if="isCreditPayment(expense)" class="inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-bold bg-red-600 text-white uppercase tracking-wide transition-all duration-200 hover:bg-red-700 hover:scale-105">
-              <svg class="w-3 h-3 mr-1 transition-transform duration-200" fill="currentColor" viewBox="0 0 20 20">
+            <h3 
+              :class="[
+                'text-sm font-medium text-gray-900 truncate transition-all duration-300 ease-out hover:text-gray-700',
+                { 'text-gray-700': shouldShowMobileAnimations.value }
+              ]"
+            >
+              {{ expense.description }}
+            </h3>
+            <span 
+              v-if="expense.isFixed" 
+              :class="[
+                'inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-bold bg-blue-600 text-white uppercase tracking-wide transition-all duration-300 ease-out hover:bg-blue-700 hover:scale-105',
+                { 'bg-blue-700 scale-102': shouldShowMobileAnimations.value }
+              ]"
+            >
+              Fijo
+            </span>
+            <span 
+              v-if="isCreditPayment(expense)" 
+              :class="[
+                'inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-bold bg-red-600 text-white uppercase tracking-wide transition-all duration-300 ease-out hover:bg-red-700 hover:scale-105',
+                { 'bg-red-700 scale-102': shouldShowMobileAnimations.value }
+              ]"
+            >
+              <svg 
+                :class="[
+                  'w-3 h-3 mr-1 transition-transform duration-300 ease-out hover:rotate-12',
+                  { 'rotate-6': shouldShowMobileAnimations.value }
+                ]"
+                fill="currentColor" 
+                viewBox="0 0 20 20"
+              >
                 <path fill-rule="evenodd" d="M4 4a2 2 0 00-2 2v4a2 2 0 002 2V6h10a2 2 0 00-2-2H4zm2 6a2 2 0 012-2h8a2 2 0 012 2v4a2 2 0 01-2 2H8a2 2 0 01-2-2v-4zm6 4a2 2 0 100-4 2 2 0 000 4z" clip-rule="evenodd" />
               </svg>
               Crédito
             </span>
             <span
               v-if="expense.entryType === 'payment'"
-              class="inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-bold bg-emerald-100 text-emerald-800 uppercase tracking-wide transition-all duration-200 hover:bg-emerald-200 hover:scale-105"
+              :class="[
+                'inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-bold bg-emerald-100 text-emerald-800 uppercase tracking-wide transition-all duration-300 ease-out hover:bg-emerald-200 hover:scale-105',
+                { 'bg-emerald-200 scale-102': shouldShowMobileAnimations.value }
+              ]"
             >
               Abono
             </span>
             <span
               v-else-if="expense.entryType === 'charge'"
-              class="inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-bold bg-amber-100 text-amber-800 uppercase tracking-wide transition-all duration-200 hover:bg-amber-200 hover:scale-105"
+              :class="[
+                'inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-bold bg-amber-100 text-amber-800 uppercase tracking-wide transition-all duration-300 ease-out hover:bg-amber-200 hover:scale-105',
+                { 'bg-amber-200 scale-102': shouldShowMobileAnimations.value }
+              ]"
             >
               Cargo
             </span>
@@ -94,28 +137,57 @@
       </div>
     </div>
     <div class="text-right mt-3 sm:mt-0">
-      <p class="text-sm font-semibold text-gray-900">
+      <p 
+        :class="[
+          'text-sm font-semibold text-gray-900 transition-all duration-300 ease-out hover:text-gray-700 hover:scale-105',
+          { 'text-gray-700 scale-102': shouldShowMobileAnimations.value }
+        ]"
+      >
         ${{ (expense?.amount || 0).toLocaleString('es-ES', { minimumFractionDigits: 2 }) }}
       </p>
       <div class="mt-2 flex justify-end gap-2">
         <button
-          class="p-1.5 rounded-md border border-gray-200 bg-white text-gray-600 hover:bg-gray-50 hover:text-primary-700 transition-all duration-200 hover:scale-105 hover:shadow-sm focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-1 active:scale-95"
+          :class="[
+            'p-1.5 rounded-md border border-gray-200 bg-white text-gray-600 hover:bg-gray-50 hover:text-primary-700 transition-all duration-300 ease-out hover:scale-110 hover:shadow-md focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-1 opacity-70 hover:opacity-100',
+            { 'scale-105 bg-gray-50 shadow-sm opacity-100': shouldShowMobileAnimations.value }
+          ]"
           :aria-label="`Editar gasto: ${expense.description}`"
           title="Editar gasto"
           @click.stop="$emit('edit', expense)"
         >
-          <svg class="h-4 w-4 transition-transform duration-200" viewBox="0 0 24 24" fill="none" stroke="currentColor" aria-hidden="true">
+          <svg 
+            :class="[
+              'h-4 w-4 transition-transform duration-300 ease-out hover:rotate-12',
+              { 'rotate-6': shouldShowMobileAnimations.value }
+            ]"
+            viewBox="0 0 24 24" 
+            fill="none" 
+            stroke="currentColor" 
+            aria-hidden="true"
+          >
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5h2m-6 14h10a2 2 0 002-2v-5.586a1 1 0 00-.293-.707l-6.414-6.414A1 1 0 0011.586 4H6a2 2 0 00-2 2v10a2 2 0 002 2z"/>
           </svg>
           <span class="sr-only">Editar gasto</span>
         </button>
         <button
-          class="p-1.5 rounded-md border border-gray-200 bg-white text-red-600 hover:bg-red-50 transition-all duration-200 hover:scale-105 hover:shadow-sm focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-1 active:scale-95"
+          :class="[
+            'p-1.5 rounded-md border border-gray-200 bg-white text-red-600 hover:bg-red-50 transition-all duration-300 ease-out hover:scale-110 hover:shadow-md focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-1 opacity-70 hover:opacity-100',
+            { 'scale-105 bg-red-50 shadow-sm opacity-100': shouldShowMobileAnimations.value }
+          ]"
           :aria-label="`Eliminar gasto: ${expense.description}`"
           title="Eliminar gasto"
           @click.stop="$emit('delete', expense)"
         >
-          <svg class="h-4 w-4 transition-transform duration-200" viewBox="0 0 24 24" fill="none" stroke="currentColor" aria-hidden="true">
+          <svg 
+            :class="[
+              'h-4 w-4 transition-transform duration-300 ease-out hover:rotate-12',
+              { 'rotate-6': shouldShowMobileAnimations.value }
+            ]"
+            viewBox="0 0 24 24" 
+            fill="none" 
+            stroke="currentColor" 
+            aria-hidden="true"
+          >
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6M9 7h6m-7 0V5a2 2 0 012-2h2a2 2 0 012 2v2"/>
           </svg>
           <span class="sr-only">Eliminar gasto</span>
@@ -127,7 +199,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted, onUnmounted } from 'vue'
+import { ref, onMounted, onUnmounted, computed } from 'vue'
 import { format } from 'date-fns'
 import { es } from 'date-fns/locale'
 import { useExpenseStore } from '../stores/expenseStore'
@@ -150,17 +222,36 @@ const isDragging = ref(false)
 const startX = ref(0)
 const currentX = ref(0)
 const isMouseDown = ref(false)
+const isTouching = ref(false)
+const isMobile = ref(false)
+
+// Computed for mobile animations
+const shouldShowMobileAnimations = computed(() => isMobile.value && isTouching.value)
+
+// Initialize mobile detection
+onMounted(() => {
+  isMobile.value = window.innerWidth < 640
+})
+
+// Also check on touch start in case component isn't mounted yet
+const checkIfMobile = () => {
+  if (typeof window !== 'undefined') {
+    isMobile.value = window.innerWidth < 640
+  }
+}
 
 // Touch events
 const onTouchStart = (e) => {
-  if (window.innerWidth >= 640) return // Only on mobile
+  checkIfMobile() // Check screen size on each touch
+  if (!isMobile.value) return // Only on mobile
   startX.value = e.touches[0].clientX
   currentX.value = e.touches[0].clientX
   isDragging.value = true
+  isTouching.value = true
 }
 
 const onTouchMove = (e) => {
-  if (!isDragging.value || window.innerWidth >= 640) return
+  if (!isDragging.value || !isMobile.value) return
   e.preventDefault()
   currentX.value = e.touches[0].clientX
   const deltaX = currentX.value - startX.value
@@ -168,7 +259,7 @@ const onTouchMove = (e) => {
 }
 
 const onTouchEnd = () => {
-  if (!isDragging.value || window.innerWidth >= 640) return
+  if (!isDragging.value || !isMobile.value) return
   isDragging.value = false
   
   const threshold = 50
@@ -182,11 +273,32 @@ const onTouchEnd = () => {
   
   // Reset position
   swipeOffset.value = 0
+  
+  // Delay to show animation before removing touch state
+  setTimeout(() => {
+    isTouching.value = false
+  }, 150)
 }
 
-// Mouse events (for desktop testing)
+// Mouse events for hover animations and swipe testing
+const onMouseEnter = () => {
+  if (isMobile.value) {
+    // On mobile, show hover-like animations when mouse enters
+    isTouching.value = true
+  }
+}
+
+const onMouseLeave = () => {
+  if (isMobile.value) {
+    // On mobile, hide hover-like animations when mouse leaves
+    setTimeout(() => {
+      isTouching.value = false
+    }, 100)
+  }
+}
+
 const onMouseDown = (e) => {
-  if (window.innerWidth < 640) return // Only on desktop for testing
+  if (isMobile.value) return // Only on desktop for testing
   isMouseDown.value = true
   startX.value = e.clientX
   currentX.value = e.clientX
@@ -195,14 +307,14 @@ const onMouseDown = (e) => {
 }
 
 const onMouseMove = (e) => {
-  if (!isMouseDown.value || !isDragging.value || window.innerWidth < 640) return
+  if (!isMouseDown.value || !isDragging.value || isMobile.value) return
   currentX.value = e.clientX
   const deltaX = currentX.value - startX.value
   swipeOffset.value = Math.max(-100, Math.min(100, deltaX))
 }
 
 const onMouseEnd = () => {
-  if (!isMouseDown.value || window.innerWidth < 640) return
+  if (!isMouseDown.value || isMobile.value) return
   isMouseDown.value = false
   isDragging.value = false
   
