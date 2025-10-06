@@ -4,12 +4,12 @@
     
     <form @submit.prevent="handleSubmit" class="space-y-4">
       <div class="datepicker-container">
-        <label for="month" class="block text-sm font-medium text-gray-700 mb-1">
+        <label for="budget-month" class="block text-sm font-medium text-gray-700 mb-1">
           Mes
         </label>
         <div class="relative">
           <input
-            id="month"
+            id="budget-month"
             ref="monthInputRef"
             :value="displayMonthLabel"
             type="text"
@@ -76,11 +76,11 @@
       </div>
 
       <div>
-        <label for="amount" class="block text-sm font-medium text-gray-700 mb-1">
+        <label for="budget-amount" class="block text-sm font-medium text-gray-700 mb-1">
           Presupuesto
         </label>
         <input
-          id="amount"
+          id="budget-amount"
           v-model="form.amount"
           type="number"
           step="0.01"

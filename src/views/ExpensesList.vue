@@ -3,8 +3,9 @@
     <div class="flex justify-between items-center">
       <h1 class="text-2xl font-bold text-gray-900">Gastos</h1>
       <button
+        v-if="showAddButton"
         @click="showModal = true"
-        class="btn-primary inline-flex items-center space-x-2"
+        class="btn-primary items-center space-x-2"
       >
         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
@@ -13,7 +14,8 @@
       </button>
     </div>
 
-    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+    <!-- Layout Desktop: Grid tradicional -->
+    <div class="hidden lg:grid lg:grid-cols-3 gap-6">
       <div class="lg:col-span-2">
         <ExpensesListComponent ref="expensesListRef" @edit-expense="openEdit" @delete-expense="confirmDelete" />
       </div>
@@ -23,6 +25,112 @@
         <FixedExpensesManager />
       </div>
     </div>
+
+    <!-- Layout Mobile: Tabs -->
+    <div class="lg:hidden">
+      <!-- Tab Content -->
+      <div class="min-h-[calc(100vh-200px)] pb-20">
+        <!-- Tab: Gastos -->
+        <Transition
+          enter-active-class="transition ease-out duration-300"
+          enter-from-class="transform opacity-0 translate-x-4"
+          enter-to-class="transform opacity-100 translate-x-0"
+          leave-active-class="transition ease-in duration-200"
+          leave-from-class="transform opacity-100 translate-x-0"
+          leave-to-class="transform opacity-0 -translate-x-4"
+        >
+          <div v-if="activeTab === 'expenses'" class="space-y-4">
+            <ExpensesListComponent ref="expensesListRef" @edit-expense="openEdit" @delete-expense="confirmDelete" />
+          </div>
+        </Transition>
+
+        <!-- Tab: Gastos Fijos -->
+        <Transition
+          enter-active-class="transition ease-out duration-300"
+          enter-from-class="transform opacity-0 translate-x-4"
+          enter-to-class="transform opacity-100 translate-x-0"
+          leave-active-class="transition ease-in duration-200"
+          leave-from-class="transform opacity-100 translate-x-0"
+          leave-to-class="transform opacity-0 -translate-x-4"
+        >
+          <div v-if="activeTab === 'fixed'" class="space-y-4">
+            <FixedExpensesManager />
+          </div>
+        </Transition>
+
+        <!-- Tab: Resumen -->
+        <Transition
+          enter-active-class="transition ease-out duration-300"
+          enter-from-class="transform opacity-0 translate-x-4"
+          enter-to-class="transform opacity-100 translate-x-0"
+          leave-active-class="transition ease-in duration-200"
+          leave-from-class="transform opacity-100 translate-x-0"
+          leave-to-class="transform opacity-0 -translate-x-4"
+        >
+          <div v-if="activeTab === 'summary'" class="space-y-4">
+            <BudgetProgress amount-size="sm" />
+          </div>
+        </Transition>
+      </div>
+    </div>
+
+    <!-- Bottom Navigation Tabs (solo mobile) -->
+    <Teleport to="body">
+      <div class="lg:hidden fixed bottom-0 left-0 right-0 z-40 bg-white border-t border-gray-200 shadow-lg">
+        <div class="flex">
+          <button
+            @click="activeTab = 'expenses'"
+            :class="[
+              'flex-1 py-3 px-2 text-xs font-medium text-center transition-colors duration-200',
+              activeTab === 'expenses' 
+                ? 'text-primary-600 bg-primary-50' 
+                : 'text-gray-500 hover:text-gray-700'
+            ]"
+          >
+            <div class="flex flex-col items-center space-y-1">
+              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+              </svg>
+              <span>Gastos</span>
+            </div>
+          </button>
+          
+          <button
+            @click="activeTab = 'fixed'"
+            :class="[
+              'flex-1 py-3 px-2 text-xs font-medium text-center transition-colors duration-200',
+              activeTab === 'fixed' 
+                ? 'text-primary-600 bg-primary-50' 
+                : 'text-gray-500 hover:text-gray-700'
+            ]"
+          >
+            <div class="flex flex-col items-center space-y-1">
+              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+              </svg>
+              <span>Fijos</span>
+            </div>
+          </button>
+          
+          <button
+            @click="activeTab = 'summary'"
+            :class="[
+              'flex-1 py-3 px-2 text-xs font-medium text-center transition-colors duration-200',
+              activeTab === 'summary' 
+                ? 'text-primary-600 bg-primary-50' 
+                : 'text-gray-500 hover:text-gray-700'
+            ]"
+          >
+            <div class="flex flex-col items-center space-y-1">
+              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+              </svg>
+              <span>Resumen</span>
+            </div>
+          </button>
+        </div>
+      </div>
+    </Teleport>
 
     <!-- Modal para agregar gastos -->
     <ExpenseModal 
@@ -35,7 +143,7 @@
 
     <!-- Quick Actions Flotante (solo mobile) -->
     <Teleport to="body">
-      <div class="fixed bottom-4 right-4 z-50 sm:hidden">
+      <div class="fixed bottom-20 right-4 z-50 sm:hidden">
         <!-- Botón Principal -->
         <button
           @click="toggleQuickActions"
@@ -118,7 +226,7 @@
 </template>
 
 <script setup>
-import { ref } from 'vue'
+import { ref, onMounted, onUnmounted } from 'vue'
 import ExpenseModal from '../components/ExpenseModal.vue'
 import { notify } from '../services/notifications.js'
 import ExpensesListComponent from '../components/ExpensesList.vue'
@@ -131,6 +239,8 @@ const showModal = ref(false)
 const editingExpense = ref(null)
 const showQuickActions = ref(false)
 const expensesListRef = ref(null)
+const activeTab = ref('expenses') // 'expenses' | 'fixed' | 'summary'
+const showAddButton = ref(false) // Solo mostrar en desktop
 
 const openEdit = (expense) => {
   editingExpense.value = expense
@@ -185,6 +295,21 @@ const closeModal = () => {
 }
 
 const afterChange = () => { closeModal(); notify.success('Cambios guardados') }
+
+// Detectar tamaño de pantalla para mostrar/ocultar botón
+const updateScreenSize = () => {
+  showAddButton.value = window.innerWidth >= 640
+}
+
+// Inicializar y escuchar cambios de tamaño
+onMounted(() => {
+  updateScreenSize()
+  window.addEventListener('resize', updateScreenSize)
+})
+
+onUnmounted(() => {
+  window.removeEventListener('resize', updateScreenSize)
+})
 </script>
 
 <style scoped>

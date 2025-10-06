@@ -93,8 +93,8 @@
               </div>
               <div class="px-6 py-6 space-y-4">
                 <div>
-                  <label for="amount" class="block text-sm font-medium text-gray-700 mb-1">Monto</label>
-                  <input id="amount" ref="amountInputRef" v-model="amountInput" type="number" inputmode="decimal" step="0.01" min="0" max="100000000" class="input-field" placeholder="0.00" @keydown.enter.prevent="saveBudget" />
+                  <label for="budget-modal-amount" class="block text-sm font-medium text-gray-700 mb-1">Monto</label>
+                  <input id="budget-modal-amount" ref="amountInputRef" v-model="amountInput" type="number" inputmode="decimal" step="0.01" min="0" max="100000000" class="input-field" placeholder="0.00" @keydown.enter.prevent="saveBudget" />
                   <div class="flex justify-between mt-2">
                     <button v-if="canDuplicatePrev" type="button" class="text-xs text-gray-600 hover:text-gray-800" @click="duplicatePrev">Duplicar mes anterior</button>
                     <button type="button" class="text-xs text-primary-600 hover:text-primary-700" @click="applyToNextMonths">Aplicar a próximos meses</button>

@@ -4,11 +4,11 @@
     
     <form @submit.prevent="handleSubmit" class="space-y-4">
       <div>
-        <label for="description" class="block text-sm font-medium text-gray-700 mb-1">
+        <label for="add-expense-description" class="block text-sm font-medium text-gray-700 mb-1">
           Descripción
         </label>
         <input
-          id="description"
+          id="add-expense-description"
           v-model="form.description"
           type="text"
           required
@@ -18,11 +18,11 @@
       </div>
 
       <div>
-        <label for="amount" class="block text-sm font-medium text-gray-700 mb-1">
+        <label for="add-expense-amount" class="block text-sm font-medium text-gray-700 mb-1">
           Monto
         </label>
         <input
-          id="amount"
+          id="add-expense-amount"
           v-model="form.amount"
           type="number"
           step="0.01"
@@ -34,11 +34,11 @@
       </div>
 
       <div>
-        <label for="category" class="block text-sm font-medium text-gray-700 mb-1">
+        <label for="add-expense-category" class="block text-sm font-medium text-gray-700 mb-1">
           Categoría
         </label>
         <select
-          id="category"
+          id="add-expense-category"
           v-model="form.categoryId"
           class="input-field"
           required
@@ -71,11 +71,11 @@
       </div>
 
       <div>
-        <label for="date" class="block text-sm font-medium text-gray-700 mb-1">
+        <label for="add-expense-date" class="block text-sm font-medium text-gray-700 mb-1">
           Fecha
         </label>
         <input
-          id="date"
+          id="add-expense-date"
           v-model="form.date"
           type="date"
           required
@@ -98,11 +98,11 @@
 
       <!-- Campo para día del mes (solo visible si es fijo) -->
       <div v-if="form.isFixed">
-        <label for="dayOfMonth" class="block text-sm font-medium text-gray-700 mb-1">
+        <label for="add-expense-dayOfMonth" class="block text-sm font-medium text-gray-700 mb-1">
           Día del mes
         </label>
         <input
-          id="dayOfMonth"
+          id="add-expense-dayOfMonth"
           v-model="form.dayOfMonth"
           type="number"
           min="1"
