@@ -6,7 +6,7 @@
           ref="buttonRef"
           @click="onOpenToggle"
           :class="buttonClass"
-          :id="props.id"
+          v-bind="props.id ? { id: props.id } : {}"
         >
           <span class="block truncate" v-if="selectedLabel">{{ selectedLabel }}</span>
           <span class="block truncate text-gray-400" v-else>{{ placeholder }}</span>
@@ -149,7 +149,19 @@ onMounted(() => {
   window.addEventListener('resize', onWindowChange)
   window.addEventListener('scroll', onWindowChange, true)
   nextTick(updateDropdownPosition)
+  
+  // Assign ID to the button element
+  if (props.id && buttonRef.value) {
+    buttonRef.value.id = props.id
+  }
 })
+
+// Watch for changes in the button ref and assign ID
+watch(buttonRef, (newRef) => {
+  if (newRef && props.id) {
+    newRef.id = props.id
+  }
+}, { immediate: true })
 
 onBeforeUnmount(() => {
   window.removeEventListener('resize', onWindowChange)

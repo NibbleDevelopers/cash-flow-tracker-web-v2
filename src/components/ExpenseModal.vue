@@ -123,10 +123,11 @@
                 </div>
 
                 <div>
-                  <label class="block text-sm font-medium text-gray-700 mb-1">
+                  <label for="category" class="block text-sm font-medium text-gray-700 mb-1">
                     Categoría
                   </label>
                   <AppSelect
+                    id="category"
                     v-model="form.categoryId"
                     :options="categoryOptions"
                     placeholder="Selecciona una categoría"
@@ -137,7 +138,7 @@
                   <label for="date" class="block text-sm font-medium text-gray-700 mb-1">
                     Fecha
                   </label>
-                  <AppDatePicker v-model="form.date" mode="date" aria-label="Seleccionar fecha" />
+                  <AppDatePicker id="date" v-model="form.date" mode="date" aria-label="Seleccionar fecha" />
                 </div>
 
                 <!-- Toggle gasto fijo (checkbox estilizado) -->

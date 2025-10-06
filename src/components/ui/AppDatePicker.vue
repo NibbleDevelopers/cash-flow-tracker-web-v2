@@ -4,6 +4,7 @@
     <div class="relative">
       <input
         ref="inputRef"
+        :id="props.id"
         type="text"
         class="input-field h-10 cursor-pointer pr-9 focus:ring-2 focus:ring-primary-500/40 focus:border-primary-500"
         :value="displayValue"
@@ -298,7 +299,8 @@ const props = defineProps({
   modelValue: { type: String, default: '' }, // 'yyyy-MM' for month, 'yyyy-MM-dd' for date
   mode: { type: String, default: 'date' }, // 'date' | 'month'
   label: { type: String, default: '' },
-  ariaLabel: { type: String, default: '' }
+  ariaLabel: { type: String, default: '' },
+  id: { type: String, default: null }
 })
 const emit = defineEmits(['update:modelValue'])
 
@@ -496,7 +498,19 @@ onMounted(() => {
   updateIsMobile()
   window.addEventListener('resize', updateIsMobile)
   window.__appDatePickerResize = updateIsMobile
+  
+  // Assign ID to the input element
+  if (props.id && inputRef.value) {
+    inputRef.value.id = props.id
+  }
 })
+
+// Watch for changes in the input ref and assign ID
+watch(inputRef, (newRef) => {
+  if (newRef && props.id) {
+    newRef.id = props.id
+  }
+}, { immediate: true })
 onUnmounted(() => {
   document.removeEventListener('click', handleClickOutside)
   document.removeEventListener('keydown', handleKeydown)

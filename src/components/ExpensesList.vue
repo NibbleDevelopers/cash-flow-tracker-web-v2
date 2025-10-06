@@ -10,11 +10,11 @@
     </div>
 
     <!-- Filtros -->
-    <div class="space-y-3 sm:space-y-4 mb-4 sm:mb-6">
-      <!-- Fila 1: Búsqueda (full width) -->
+    <div id="filters-section" class="space-y-3 sm:space-y-4 mb-4 sm:mb-6">
+      <!-- Fila 1: Búsqueda mejorada con sugerencias -->
       <div class="grid grid-cols-1 gap-3 sm:gap-4">
         <div class="flex flex-col">
-          <label class="block text-sm font-medium text-gray-700 mb-2">Buscar gastos</label>
+          <label for="search-input" class="block text-sm font-medium text-gray-700 mb-2">Buscar gastos</label>
           <div class="relative">
             <span class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
               <svg class="h-4 w-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -22,12 +22,17 @@
               </svg>
             </span>
             <input
+              id="search-input"
               ref="searchInputRef"
               v-model="searchInput"
               type="text"
               class="input-field h-10 pl-9 pr-8 transition-all duration-200 focus:ring-2 focus:ring-primary-500/40 focus:border-primary-500 hover:border-gray-400"
               placeholder="Buscar por descripción, categoría o palabra clave"
               @keydown.enter.prevent="applySearchNow"
+              @input="onSearchInput"
+              @focus="showSuggestions = true"
+              @blur="hideSuggestions"
+              autocomplete="off"
             />
             <button
               v-if="searchQuery"
@@ -41,6 +46,56 @@
               </svg>
             </button>
           </div>
+
+          <!-- Panel de sugerencias -->
+          <Transition
+            enter-active-class="transition ease-out duration-200"
+            enter-from-class="transform opacity-0 scale-95"
+            enter-to-class="transform opacity-100 scale-100"
+            leave-active-class="transition ease-in duration-150"
+            leave-from-class="transform opacity-100 scale-100"
+            leave-to-class="transform opacity-0 scale-95"
+          >
+            <div 
+              v-if="showSuggestions && (searchSuggestions.length > 0 || quickFilters.length > 0)" 
+              class="absolute top-full left-0 right-0 mt-1 bg-white border border-gray-200 rounded-lg shadow-lg z-50 max-h-80 overflow-y-auto"
+            >
+              <!-- Sugerencias de búsqueda -->
+              <div v-if="searchSuggestions.length > 0" class="p-2">
+                <div class="text-xs font-medium text-gray-500 mb-2 px-2">Sugerencias</div>
+                <button
+                  v-for="suggestion in searchSuggestions"
+                  :key="suggestion"
+                  @click="selectSuggestion(suggestion)"
+                  class="w-full text-left px-3 py-2 text-sm text-gray-700 hover:bg-primary-50 hover:text-primary-700 rounded-md transition-colors duration-150"
+                >
+                  <svg class="inline w-4 h-4 mr-2 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-4.35-4.35M10 18a8 8 0 100-16 8 8 0 000 16z" />
+                  </svg>
+                  {{ suggestion }}
+                </button>
+              </div>
+
+              <!-- Filtros rápidos -->
+              <div v-if="quickFilters.length > 0" class="p-2 border-t border-gray-100">
+                <div class="text-xs font-medium text-gray-500 mb-2 px-2">Filtros rápidos</div>
+                <div class="flex flex-wrap gap-2">
+                  <button
+                    v-for="filter in quickFilters"
+                    :key="filter.key"
+                    @click="applyQuickFilter(filter)"
+                    class="inline-flex items-center px-3 py-1.5 text-xs font-medium rounded-full transition-colors duration-150"
+                    :class="filter.active ? 'bg-primary-100 text-primary-800' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'"
+                  >
+                    <svg v-if="filter.icon" class="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" :d="filter.icon" />
+                    </svg>
+                    {{ filter.label }}
+                  </button>
+                </div>
+              </div>
+            </div>
+          </Transition>
         </div>
       </div>
 
@@ -88,6 +143,7 @@
             v-model="selectedCategoryId"
             :options="categoryFilterOptions"
             placeholder="Todas las categorías"
+            data-category-select
             class="h-10"
           />
         </div>
@@ -168,6 +224,7 @@
               v-model="selectedCategoryId"
               :options="categoryFilterOptions"
               placeholder="Todas las categorías"
+              data-category-select
               class="h-10"
             />
           </div>
@@ -283,7 +340,7 @@
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
                 </svg>
               </button>
-            </div>
+          </div>
           </div>
 
           <!-- Contenido del calendario -->
@@ -297,7 +354,7 @@
                   @click="applyPreset('today')"
                 >
                   Hoy
-                </button>
+            </button>
                 <button 
                   class="px-2 py-1 sm:px-2 sm:py-1 text-xs rounded-lg bg-gray-100 hover:bg-gray-200 text-gray-700 transition-colors duration-200" 
                   @click="applyPreset('7')"
@@ -321,9 +378,9 @@
                   @click="applyPreset('lastMonth')"
                 >
                   Mes anterior
-                </button>
-              </div>
-            </div>
+            </button>
+          </div>
+          </div>
 
             <!-- Header del calendario -->
             <div class="flex items-center justify-between mb-1.5 sm:mb-2">
@@ -354,21 +411,21 @@
             </div>
 
             <!-- Días del calendario -->
-            <div class="grid grid-cols-7 gap-1">
-              <button
-                v-for="day in rangeCalendarDays"
-                :key="day.date"
-                @click="onPickWithAuto(day.date)"
-                :class="[
+          <div class="grid grid-cols-7 gap-1">
+            <button
+              v-for="day in rangeCalendarDays"
+              :key="day.date"
+              @click="onPickWithAuto(day.date)"
+              :class="[
                   'h-7 w-7 sm:h-7 sm:w-7 rounded-full text-xs font-semibold transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-primary-500/40',
                   !day.isCurrentMonth ? 'text-gray-300' : 'text-gray-700 hover:bg-primary-100',
-                  day.isInRange ? 'bg-primary-100 text-primary-900' : '',
+                day.isInRange ? 'bg-primary-100 text-primary-900' : '',
                   day.isStart || day.isEnd ? 'bg-primary-600 text-white hover:bg-primary-700 shadow-sm' : ''
-                ]"
-              >
-                {{ day.day }}
-              </button>
-            </div>
+              ]"
+            >
+              {{ day.day }}
+            </button>
+          </div>
           </div>
 
           <!-- Footer con botones mejorados -->
@@ -699,11 +756,12 @@
         </div>
       </div>
     </div>
+
   </div>
 </template>
 
 <script setup>
-import { ref, computed, onMounted, onBeforeUnmount, onUnmounted, watch } from 'vue'
+import { ref, computed, onMounted, onBeforeUnmount, onUnmounted, watch, nextTick } from 'vue'
 import { format } from 'date-fns'
 import { notify } from '../services/notifications.js'
 import { es } from 'date-fns/locale'
@@ -817,6 +875,8 @@ const loading = computed(() => expenseStore.loading)
 // Cargar gastos fijos cuando se monta el componente
 onMounted(async () => {
   await expenseStore.loadFixedExpenses()
+  // Inicializar filtros rápidos
+  generateQuickFilters()
 })
 
 // Limpiar scroll del body al desmontar
@@ -845,6 +905,12 @@ const period = ref('month') // month | 7 | 30 | all
 const sortOrder = ref('desc') // desc | asc
 const pageSize = ref(10)
 const shownCount = ref(pageSize.value)
+
+// Búsqueda mejorada con sugerencias
+const showSuggestions = ref(false)
+const searchSuggestions = ref([])
+const quickFilters = ref([])
+
 
 // Estado del acordeón de filtros (solo mobile)
 const filtersExpanded = ref(false)
@@ -950,8 +1016,114 @@ const applySearchNow = () => {
 const clearSearch = () => {
   searchInput.value = ''
   applySearchNow()
+  showSuggestions.value = false
   // refocus for quick typing
   try { searchInputRef.value?.focus() } catch {}
+}
+
+// Funciones para búsqueda mejorada
+const onSearchInput = () => {
+  if (searchInput.value.length >= 2) {
+    generateSuggestions()
+  } else {
+    searchSuggestions.value = []
+  }
+  generateQuickFilters()
+}
+
+const generateSuggestions = () => {
+  const query = searchInput.value.toLowerCase()
+  const suggestions = new Set()
+  
+  // Buscar en descripciones de gastos
+  expenseStore.currentMonthExpenses.forEach(expense => {
+    if (expense.description.toLowerCase().includes(query)) {
+      suggestions.add(expense.description)
+    }
+  })
+  
+  // Buscar en categorías
+  expenseStore.activeCategories.forEach(category => {
+    if (category.name.toLowerCase().includes(query)) {
+      suggestions.add(category.name)
+    }
+  })
+  
+  // Convertir a array y limitar a 5 sugerencias
+  searchSuggestions.value = Array.from(suggestions).slice(0, 5)
+}
+
+const generateQuickFilters = () => {
+  const filters = [
+    {
+      key: 'this-month',
+      label: 'Este mes',
+      icon: 'M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z',
+      active: period.value === 'month'
+    },
+    {
+      key: 'last-week',
+      label: 'Última semana',
+      icon: 'M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z',
+      active: period.value === '7'
+    },
+    {
+      key: 'fixed',
+      label: 'Gastos fijos',
+      icon: 'M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z',
+      active: false
+    }
+  ]
+  
+  // Agregar categorías populares
+  const popularCategories = expenseStore.activeCategories.slice(0, 3)
+  popularCategories.forEach(category => {
+    filters.push({
+      key: `category-${category.id}`,
+      label: category.name,
+      icon: 'M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z',
+      active: selectedCategoryId.value === category.id.toString()
+    })
+  })
+  
+  quickFilters.value = filters
+}
+
+const selectSuggestion = (suggestion) => {
+  searchInput.value = suggestion
+  applySearchNow()
+  showSuggestions.value = false
+}
+
+const applyQuickFilter = (filter) => {
+  showSuggestions.value = false
+  
+  switch (filter.key) {
+    case 'this-month':
+      period.value = 'month'
+      break
+    case 'last-week':
+      period.value = '7'
+      break
+    case 'fixed':
+      // Filtrar solo gastos fijos
+      searchInput.value = 'fijo'
+      applySearchNow()
+      break
+    default:
+      if (filter.key.startsWith('category-')) {
+        const categoryId = filter.key.replace('category-', '')
+        selectedCategoryId.value = categoryId
+      }
+      break
+  }
+}
+
+const hideSuggestions = () => {
+  // Delay para permitir clicks en las sugerencias
+  setTimeout(() => {
+    showSuggestions.value = false
+  }, 200)
 }
 
 
@@ -1328,8 +1500,61 @@ const onDelete = async (expense) => {
   }
 }
 
+
 // Resetear estado si el tipo ya no es "payment"
 watch(() => selectedEntryType.value, (val) => {
   if (val !== 'payment') selectedStatus.value = ''
+})
+
+// Funciones expuestas para el componente padre
+const expandFiltersAndFocusCategory = () => {
+  // Expandir filtros en mobile si están colapsados
+  filtersExpanded.value = true
+  // Scroll hacia arriba para mostrar los filtros
+  nextTick(() => {
+    // Scroll suave hacia el área de filtros
+    const filtersSection = document.getElementById('filters-section')
+    if (filtersSection) {
+      filtersSection.scrollIntoView({ 
+        behavior: 'smooth', 
+        block: 'start',
+        inline: 'nearest'
+      })
+    }
+    // Focus en el select de categoría después del scroll
+    setTimeout(() => {
+      const categorySelect = document.querySelector('[data-category-select]')
+      if (categorySelect) {
+        categorySelect.focus()
+      }
+    }, 500) // Esperar a que termine el scroll
+  })
+}
+
+const expandFiltersAndOpenDateRange = () => {
+  // Expandir filtros en mobile si están colapsados
+  filtersExpanded.value = true
+  // Scroll hacia arriba para mostrar los filtros
+  nextTick(() => {
+    // Scroll suave hacia el área de filtros
+    const filtersSection = document.getElementById('filters-section')
+    if (filtersSection) {
+      filtersSection.scrollIntoView({ 
+        behavior: 'smooth', 
+        block: 'start',
+        inline: 'nearest'
+      })
+    }
+    // Abrir el calendario de rango después del scroll
+    setTimeout(() => {
+      showRange.value = true
+    }, 500) // Esperar a que termine el scroll
+  })
+}
+
+// Exponer funciones al componente padre
+defineExpose({
+  expandFiltersAndFocusCategory,
+  expandFiltersAndOpenDateRange
 })
 </script>
