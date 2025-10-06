@@ -465,7 +465,7 @@
       <div class="space-y-3">
         <button
           @click="$emit('add-expense')"
-          class="inline-flex items-center px-6 py-3 bg-gradient-to-r from-primary-600 to-primary-700 text-white font-medium rounded-lg shadow-sm hover:from-primary-700 hover:to-primary-800 transition-all duration-200 transform hover:scale-105 hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 active:scale-95"
+          class="inline-flex items-center px-6 py-3 sm:px-4 sm:py-2 bg-gradient-to-r from-primary-600 to-primary-700 text-white font-medium rounded-lg shadow-sm hover:from-primary-700 hover:to-primary-800 transition-all duration-200 transform hover:scale-105 hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 active:scale-95"
         >
           <svg class="w-5 h-5 mr-2 transition-transform duration-200 group-hover:rotate-90" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
@@ -515,7 +515,7 @@
         <button
           v-if="hasActiveFilters"
           type="button"
-          class="inline-flex items-center justify-center gap-1 px-3 py-2 rounded-md border border-gray-300 text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-primary-500 transition-all duration-200 hover:scale-105 active:scale-95"
+          class="inline-flex items-center justify-center gap-1 px-3 py-2 sm:px-3 sm:py-1.5 rounded-md border border-gray-300 text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-primary-500 transition-all duration-200 hover:scale-105 active:scale-95"
           @click="clearAllFilters"
           title="Limpiar filtros"
         >
@@ -567,7 +567,7 @@
         <div class="space-y-3">
                 <button
             @click="clearAllFilters"
-            class="inline-flex items-center px-6 py-3 bg-gradient-to-r from-gray-600 to-gray-700 text-white font-medium rounded-lg shadow-sm hover:from-gray-700 hover:to-gray-800 transition-all duration-200 transform hover:scale-105 hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2 active:scale-95"
+            class="inline-flex items-center px-6 py-3 sm:px-4 sm:py-2 bg-gradient-to-r from-gray-600 to-gray-700 text-white font-medium rounded-lg shadow-sm hover:from-gray-700 hover:to-gray-800 transition-all duration-200 transform hover:scale-105 hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2 active:scale-95"
                 >
             <svg class="w-5 h-5 mr-2 transition-transform duration-200 hover:rotate-180" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
@@ -616,7 +616,7 @@
       <div class="flex justify-center">
         <button
           v-if="shownCount < totalFiltered"
-          class="inline-flex items-center justify-center px-6 py-3 sm:px-3 sm:py-1.5 rounded-lg text-white bg-gradient-to-r from-primary-600 to-primary-700 hover:from-primary-700 hover:to-primary-800 shadow-sm transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed w-full sm:w-auto min-h-[48px] sm:min-h-auto"
+          class="inline-flex items-center justify-center px-6 py-3 sm:px-4 sm:py-2 rounded-lg text-white bg-gradient-to-r from-primary-600 to-primary-700 hover:from-primary-700 hover:to-primary-800 shadow-sm transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed w-full sm:w-auto min-h-[48px] sm:min-h-auto"
           :disabled="loadingMore"
           @click="onLoadMore"
         >

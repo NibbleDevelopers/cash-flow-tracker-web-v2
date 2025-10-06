@@ -1,13 +1,56 @@
 <template>
-  <div
-    :class="[
-      'flex flex-col sm:flex-row sm:items-center justify-between p-3 sm:p-4 rounded-xl border transition-all duration-200 hover:shadow-md hover:scale-[1.02] hover:-translate-y-0.5 cursor-pointer',
-      expense.isFixed ? 'bg-blue-50 border-blue-200 hover:bg-blue-100' : 'bg-gray-50 border-gray-200 hover:bg-gray-100'
-    ]"
-    role="article"
-    :aria-label="`Gasto: ${expense.description} por $${(expense?.amount || 0).toLocaleString('es-ES', { minimumFractionDigits: 2 })}`"
-    tabindex="0"
-  >
+  <div class="relative overflow-hidden">
+    <!-- Swipe Actions Background -->
+    <div class="absolute inset-0 flex">
+      <!-- Left Action (Edit) -->
+      <div 
+        class="flex items-center justify-center bg-blue-500 text-white px-6 transition-all duration-200"
+        :class="{ 'opacity-100': swipeOffset > 0, 'opacity-0': swipeOffset <= 0 }"
+        :style="{ width: `${Math.min(Math.abs(swipeOffset), 80)}px` }"
+      >
+        <div class="flex flex-col items-center">
+          <svg class="w-6 h-6 mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5h2m-6 14h10a2 2 0 002-2v-5.586a1 1 0 00-.293-.707l-6.414-6.414A1 1 0 0011.586 4H6a2 2 0 00-2 2v10a2 2 0 002 2z"/>
+          </svg>
+          <span class="text-xs font-medium">Editar</span>
+        </div>
+      </div>
+      
+      <!-- Right Action (Delete) -->
+      <div 
+        class="flex items-center justify-center bg-red-500 text-white px-6 ml-auto transition-all duration-200"
+        :class="{ 'opacity-100': swipeOffset < 0, 'opacity-0': swipeOffset >= 0 }"
+        :style="{ width: `${Math.min(Math.abs(swipeOffset), 80)}px` }"
+      >
+        <div class="flex flex-col items-center">
+          <svg class="w-6 h-6 mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6M9 7h6m-7 0V5a2 2 0 012-2h2a2 2 0 012 2v2"/>
+          </svg>
+          <span class="text-xs font-medium">Eliminar</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Main Card Content -->
+    <div
+      ref="cardRef"
+      :class="[
+        'relative flex flex-col sm:flex-row sm:items-center justify-between p-3 sm:p-4 rounded-xl border transition-all duration-200 hover:shadow-md hover:scale-[1.02] hover:-translate-y-0.5 cursor-pointer touch-pan-y',
+        expense.isFixed ? 'bg-blue-50 border-blue-200 hover:bg-blue-100' : 'bg-gray-50 border-gray-200 hover:bg-gray-100',
+        { 'transition-transform duration-200 ease-out': isDragging }
+      ]"
+      :style="{ transform: `translateX(${swipeOffset}px)` }"
+      role="article"
+      :aria-label="`Gasto: ${expense.description} por $${(expense?.amount || 0).toLocaleString('es-ES', { minimumFractionDigits: 2 })}`"
+      tabindex="0"
+      @touchstart="onTouchStart"
+      @touchmove="onTouchMove"
+      @touchend="onTouchEnd"
+      @mousedown="onMouseDown"
+      @mousemove="onMouseMove"
+      @mouseup="onMouseEnd"
+      @mouseleave="onMouseEnd"
+    >
     <div class="flex-1 min-w-0">
       <div class="flex flex-col sm:flex-row sm:items-center space-y-2 sm:space-y-0 sm:space-x-3">
         <div class="flex-shrink-0">
@@ -79,16 +122,18 @@
         </button>
       </div>
     </div>
+    </div>
   </div>
 </template>
 
 <script setup>
+import { ref, onMounted, onUnmounted } from 'vue'
 import { format } from 'date-fns'
 import { es } from 'date-fns/locale'
 import { useExpenseStore } from '../stores/expenseStore'
 
 // Props
-defineProps({
+const props = defineProps({
   expense: {
     type: Object,
     required: true
@@ -96,7 +141,89 @@ defineProps({
 })
 
 // Emits
-defineEmits(['edit', 'delete'])
+const emit = defineEmits(['edit', 'delete'])
+
+// Swipe functionality
+const cardRef = ref(null)
+const swipeOffset = ref(0)
+const isDragging = ref(false)
+const startX = ref(0)
+const currentX = ref(0)
+const isMouseDown = ref(false)
+
+// Touch events
+const onTouchStart = (e) => {
+  if (window.innerWidth >= 640) return // Only on mobile
+  startX.value = e.touches[0].clientX
+  currentX.value = e.touches[0].clientX
+  isDragging.value = true
+}
+
+const onTouchMove = (e) => {
+  if (!isDragging.value || window.innerWidth >= 640) return
+  e.preventDefault()
+  currentX.value = e.touches[0].clientX
+  const deltaX = currentX.value - startX.value
+  swipeOffset.value = Math.max(-100, Math.min(100, deltaX))
+}
+
+const onTouchEnd = () => {
+  if (!isDragging.value || window.innerWidth >= 640) return
+  isDragging.value = false
+  
+  const threshold = 50
+  if (swipeOffset.value > threshold) {
+    // Swipe right - Edit
+    emit('edit', props.expense)
+  } else if (swipeOffset.value < -threshold) {
+    // Swipe left - Delete
+    emit('delete', props.expense)
+  }
+  
+  // Reset position
+  swipeOffset.value = 0
+}
+
+// Mouse events (for desktop testing)
+const onMouseDown = (e) => {
+  if (window.innerWidth < 640) return // Only on desktop for testing
+  isMouseDown.value = true
+  startX.value = e.clientX
+  currentX.value = e.clientX
+  isDragging.value = true
+  e.preventDefault()
+}
+
+const onMouseMove = (e) => {
+  if (!isMouseDown.value || !isDragging.value || window.innerWidth < 640) return
+  currentX.value = e.clientX
+  const deltaX = currentX.value - startX.value
+  swipeOffset.value = Math.max(-100, Math.min(100, deltaX))
+}
+
+const onMouseEnd = () => {
+  if (!isMouseDown.value || window.innerWidth < 640) return
+  isMouseDown.value = false
+  isDragging.value = false
+  
+  const threshold = 50
+  if (swipeOffset.value > threshold) {
+    // Swipe right - Edit
+    emit('edit', props.expense)
+  } else if (swipeOffset.value < -threshold) {
+    // Swipe left - Delete
+    emit('delete', props.expense)
+  }
+  
+  // Reset position
+  swipeOffset.value = 0
+}
+
+// Cleanup
+onUnmounted(() => {
+  isDragging.value = false
+  isMouseDown.value = false
+})
 
 // Store
 const expenseStore = useExpenseStore()
