@@ -56,17 +56,25 @@
     >
       <!-- Header de la card -->
       <div class="flex items-start justify-between mb-3">
-        <div class="flex-1">
-          <h3 class="font-medium text-gray-900 text-sm transition-all duration-300 ease-out hover:text-gray-700 group-hover:scale-105" :class="{ 'text-gray-700': shouldShowMobileAnimations }">
-            {{ credit.name }}
-          </h3>
-          <div class="flex items-center space-x-2 mt-1">
-            <span v-if="credit.brand" class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium transition-all duration-300 ease-out hover:scale-105" 
-                  :style="{ backgroundColor: getCardTypeColor(credit.brand) + '20', color: getCardTypeColor(credit.brand) }"
-                  :class="{ 'scale-102': shouldShowMobileAnimations }">
-              {{ credit.brand }}
-            </span>
-            <span v-if="credit.maskPan" class="text-xs text-gray-400">•••• {{ credit.maskPan }}</span>
+        <div class="flex items-center space-x-3 flex-1">
+          <div class="flex-shrink-0">
+                <CreditCardIcon 
+                  :type="getCardType(credit.brand)" 
+                  size="medium" 
+                />
+          </div>
+          <div class="flex-1">
+            <h3 class="font-medium text-gray-900 text-sm transition-all duration-300 ease-out hover:text-gray-700 group-hover:scale-105" :class="{ 'text-gray-700': shouldShowMobileAnimations }">
+              {{ credit.name }}
+            </h3>
+            <div class="flex items-center space-x-2 mt-1">
+              <span v-if="credit.brand" class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium transition-all duration-300 ease-out hover:scale-105" 
+                    :style="{ backgroundColor: getCardTypeColor(credit.brand) + '20', color: getCardTypeColor(credit.brand) }"
+                    :class="{ 'scale-102': shouldShowMobileAnimations }">
+                {{ credit.brand }}
+              </span>
+              <span v-if="credit.maskPan" class="text-xs text-gray-400">•••• {{ credit.maskPan }}</span>
+            </div>
           </div>
         </div>
           <span :class="[
@@ -181,6 +189,7 @@
 
 <script setup>
 import { ref, onMounted, onUnmounted, computed } from 'vue'
+import CreditCardIcon from './ui/CreditCardIcon.vue'
 
 const props = defineProps({
   credit: {
@@ -335,6 +344,18 @@ const getUtilizationWidth = (balance, creditLimit) => {
   if (!creditLimit || creditLimit <= 0) return '0%'
   const percentage = Math.min(100, Math.max(0, ((balance || 0) / creditLimit) * 100))
   return `${percentage.toFixed(1)}%`
+}
+
+const getCardType = (brand) => {
+  if (!brand) return 'generic'
+  
+  const brandLower = brand.toLowerCase()
+  if (brandLower.includes('visa')) return 'visa'
+  if (brandLower.includes('mastercard') || brandLower.includes('master')) return 'mastercard'
+  if (brandLower.includes('amex') || brandLower.includes('american express')) return 'amex'
+  if (brandLower.includes('discover')) return 'discover'
+  
+  return 'generic'
 }
 
 const getCardTypeColor = (brand) => {

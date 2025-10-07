@@ -99,13 +99,23 @@
             <tbody class="divide-y divide-gray-200 bg-white">
               <tr v-for="(d, index) in debts" :key="d.id" class="hover:bg-gray-50 transition-all duration-300 ease-out hover:shadow-sm group animate-in slide-in-from-left-4 fade-in" :style="{ animationDelay: `${index * 50}ms` }">
                 <td class="px-3 py-2">
-                  <div class="font-medium">{{ d.name }}</div>
-                  <div class="flex items-center space-x-2 text-xs text-gray-500">
-                    <span v-if="d.brand" class="badge" 
-                          :style="{ backgroundColor: getCardTypeColor(d.brand) + '20', color: getCardTypeColor(d.brand) }">
-                      {{ d.brand }}
-                    </span>
-                    <span v-if="d.maskPan" class="text-gray-400">•••• {{ d.maskPan }}</span>
+                  <div class="flex items-center space-x-3">
+                    <div class="flex-shrink-0">
+                <CreditCardIcon 
+                  :type="getCardType(d.brand)" 
+                  size="medium" 
+                />
+                    </div>
+                    <div class="flex-1">
+                      <div class="font-medium">{{ d.name }}</div>
+                      <div class="flex items-center space-x-2 text-xs text-gray-500">
+                        <span v-if="d.brand" class="badge" 
+                              :style="{ backgroundColor: getCardTypeColor(d.brand) + '20', color: getCardTypeColor(d.brand) }">
+                          {{ d.brand }}
+                        </span>
+                        <span v-if="d.maskPan" class="text-gray-400">•••• {{ d.maskPan }}</span>
+                      </div>
+                    </div>
                   </div>
                 </td>
                 <td class="px-3 py-2">{{ d.issuer }}</td>
