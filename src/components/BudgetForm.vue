@@ -76,11 +76,11 @@
       </div>
 
       <div>
-        <label for="budget-amount" class="block text-sm font-medium text-gray-700 mb-1">
+        <label for="budget-form-amount" class="block text-sm font-medium text-gray-700 mb-1">
           Presupuesto
         </label>
         <input
-          id="budget-amount"
+          id="budget-form-amount"
           v-model="form.amount"
           type="number"
           step="0.01"

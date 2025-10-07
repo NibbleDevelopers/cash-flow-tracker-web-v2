@@ -1,62 +1,88 @@
 <template>
-  <div class="space-y-6">
-    <div class="flex items-center justify-between">
-      <h2 class="text-xl font-semibold">Créditos</h2>
-      <button class="btn-primary inline-flex items-center space-x-2 px-4 py-2 rounded-md text-sm" @click="openCreate">
-        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+  <div class="space-y-4 sm:space-y-6">
+    <!-- Header responsive -->
+    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-0">
+      <h2 class="text-lg sm:text-xl font-semibold text-gray-900">Créditos</h2>
+      <button 
+        v-if="showAddButton"
+        class="btn-primary inline-flex items-center justify-center space-x-2 px-3 py-2 sm:px-4 rounded-md text-sm w-full sm:w-auto hover:scale-105 hover:shadow-lg transition-all duration-300 ease-out group" 
+        @click="openCreate"
+      >
+        <svg class="w-4 h-4 sm:w-5 sm:h-5 transition-all duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
         </svg>
         <span>Nuevo crédito</span>
       </button>
     </div>
 
-    <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
-      <div class="card" v-motion :initial="{opacity:0,y:8}" :enter="{opacity:1,y:0,transition:{duration:0.25, delay:0}}">
-        <div class="text-xs text-gray-500">Total créditos</div>
-        <div class="text-2xl font-semibold">
+    <!-- Estadísticas responsive -->
+    <div class="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4" v-motion-slide-visible-once-bottom>
+      <div class="card p-3 sm:p-4 hover:scale-105 hover:shadow-lg transition-all duration-300 ease-out group" v-motion :initial="{opacity:0,y:8}" :enter="{opacity:1,y:0,transition:{duration:0.25, delay:0}}">
+        <div class="text-xs text-gray-500 mb-1">Total créditos</div>
+        <div class="text-lg sm:text-2xl font-semibold">
           <span v-if="!loading">{{ formatCurrency(totalBalance) }}</span>
-          <LoadingSkeleton v-else type="text" width="6rem" />
+          <LoadingSkeleton v-else type="text" width="4rem" class="sm:w-6rem animate-pulse" />
         </div>
       </div>
-      <div class="card" v-motion :initial="{opacity:0,y:8}" :enter="{opacity:1,y:0,transition:{duration:0.25, delay:0.05}}">
-        <div class="text-xs text-gray-500">Límite total</div>
-        <div class="text-2xl font-semibold">
+      <div class="card p-3 sm:p-4" v-motion :initial="{opacity:0,y:8}" :enter="{opacity:1,y:0,transition:{duration:0.25, delay:0.05}}">
+        <div class="text-xs text-gray-500 mb-1">Límite total</div>
+        <div class="text-lg sm:text-2xl font-semibold">
           <span v-if="!loading">{{ formatCurrency(totalCreditLimit) }}</span>
-          <LoadingSkeleton v-else type="text" width="6rem" />
+          <LoadingSkeleton v-else type="text" width="4rem" class="sm:w-6rem animate-pulse" />
         </div>
       </div>
-      <div class="card" v-motion :initial="{opacity:0,y:8}" :enter="{opacity:1,y:0,transition:{duration:0.25, delay:0.1}}">
-        <div class="text-xs text-gray-500">Utilización</div>
-        <div class="text-2xl font-semibold">
+      <div class="card p-3 sm:p-4 hover:scale-105 hover:shadow-lg transition-all duration-300 ease-out group" v-motion :initial="{opacity:0,y:8}" :enter="{opacity:1,y:0,transition:{duration:0.25, delay:0.1}}">
+        <div class="text-xs text-gray-500 mb-1">Utilización</div>
+        <div class="text-lg sm:text-2xl font-semibold">
           <span v-if="!loading">{{ utilization.toFixed(1) }}%</span>
-          <LoadingSkeleton v-else type="text" width="4rem" />
+          <LoadingSkeleton v-else type="text" width="3rem" class="sm:w-4rem animate-pulse" />
         </div>
       </div>
-      <div class="card" v-motion :initial="{opacity:0,y:8}" :enter="{opacity:1,y:0,transition:{duration:0.25, delay:0.15}}">
-        <div class="text-xs text-gray-500">Activas</div>
-        <div class="text-2xl font-semibold">
+      <div class="card p-3 sm:p-4 hover:scale-105 hover:shadow-lg transition-all duration-300 ease-out group" v-motion :initial="{opacity:0,y:8}" :enter="{opacity:1,y:0,transition:{duration:0.25, delay:0.15}}">
+        <div class="text-xs text-gray-500 mb-1">Activas</div>
+        <div class="text-lg sm:text-2xl font-semibold">
           <span v-if="!loading">{{ activeCount }}</span>
-          <LoadingSkeleton v-else type="text" width="2rem" />
+          <LoadingSkeleton v-else type="text" width="1.5rem" class="sm:w-2rem animate-pulse" />
         </div>
       </div>
     </div>
 
     <div class="card">
-      <div v-if="loading">
-        <LoadingSkeleton type="table" :rows="3" />
-      </div>
-      <div v-else>
-        <div v-if="debts.length === 0" class="text-center py-12">
-          <div class="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
-            <svg class="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
-            </svg>
-          </div>
-          <h3 class="text-lg font-medium text-gray-900 mb-2">Sin créditos registrados</h3>
-          <p class="text-gray-500 mb-4">Comienza agregando tu primera tarjeta de crédito o préstamo</p>
-          <button class="btn-primary" @click="openCreate">Agregar primer crédito</button>
+      <Transition
+        enter-active-class="transition ease-out duration-500"
+        enter-from-class="opacity-0 transform scale-95"
+        enter-to-class="opacity-100 transform scale-100"
+        leave-active-class="transition ease-in duration-300"
+        leave-from-class="opacity-100 transform scale-100"
+        leave-to-class="opacity-0 transform scale-95"
+        mode="out-in"
+      >
+        <div v-if="loading" key="loading" class="animate-pulse">
+          <LoadingSkeleton type="table" :rows="3" />
         </div>
-        <div v-else class="overflow-x-auto">
+        <div v-else key="content">
+          <Transition
+            enter-active-class="transition ease-out duration-700"
+            enter-from-class="opacity-0 transform translate-y-4"
+            enter-to-class="opacity-100 transform translate-y-0"
+            leave-active-class="transition ease-in duration-300"
+            leave-from-class="opacity-100 transform translate-y-0"
+            leave-to-class="opacity-0 transform -translate-y-4"
+            mode="out-in"
+          >
+            <div v-if="debts.length === 0" key="empty" class="text-center py-12">
+              <div class="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4 animate-pulse">
+                <svg class="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
+                </svg>
+              </div>
+              <h3 class="text-lg font-medium text-gray-900 mb-2">Sin créditos registrados</h3>
+              <p class="text-gray-500 mb-4">Comienza agregando tu primera tarjeta de crédito o préstamo</p>
+              <button class="btn-primary hover:scale-105 transition-transform duration-200" @click="openCreate">Agregar primer crédito</button>
+            </div>
+            <div v-else key="list">
+          <!-- Vista Desktop: Tabla -->
+          <div class="hidden lg:block overflow-x-auto">
           <table class="min-w-full divide-y divide-gray-200">
             <thead class="bg-gray-50">
               <tr>
@@ -71,7 +97,7 @@
               </tr>
             </thead>
             <tbody class="divide-y divide-gray-200 bg-white">
-              <tr v-for="d in debts" :key="d.id">
+              <tr v-for="(d, index) in debts" :key="d.id" class="hover:bg-gray-50 transition-all duration-300 ease-out hover:shadow-sm group animate-in slide-in-from-left-4 fade-in" :style="{ animationDelay: `${index * 50}ms` }">
                 <td class="px-3 py-2">
                   <div class="font-medium">{{ d.name }}</div>
                   <div class="flex items-center space-x-2 text-xs text-gray-500">
@@ -100,66 +126,103 @@
                 </td>
                 <td class="px-3 py-2 text-right space-x-2">
                   <span class="relative group inline-block">
-                    <button class="btn-secondary inline-flex items-center justify-center" @click="openEdit(d)" aria-label="Editar">
-                      <PencilSquareIcon class="h-5 w-5" />
+                    <button class="btn-secondary inline-flex items-center justify-center hover:scale-110 hover:shadow-lg transition-all duration-300 ease-out" @click="openEdit(d)" aria-label="Editar">
+                      <PencilSquareIcon class="h-5 w-5 transition-all duration-300" />
                     </button>
-                    <span class="pointer-events-none absolute -top-7 left-1/2 -translate-x-1/2 whitespace-nowrap px-2 py-0.5 rounded bg-gray-800 text-white text-[10px] opacity-0 group-hover:opacity-100 transition-opacity z-10">Editar</span>
+                    <span class="pointer-events-none absolute -top-7 left-1/2 -translate-x-1/2 whitespace-nowrap px-2 py-0.5 rounded bg-gray-800 text-white text-[10px] opacity-0 group-hover:opacity-100 transition-all duration-300 z-10">Editar</span>
                   </span>
                   <span class="relative group inline-block">
-                    <button class="btn-secondary inline-flex items-center justify-center" @click="openSummary(d)" aria-label="Resumen">
-                      <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <button class="btn-secondary inline-flex items-center justify-center hover:scale-110 hover:shadow-lg transition-all duration-300 ease-out" @click="openSummary(d)" aria-label="Resumen">
+                      <svg class="h-5 w-5 transition-all duration-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                       </svg>
                     </button>
-                    <span class="pointer-events-none absolute -top-7 left-1/2 -translate-x-1/2 whitespace-nowrap px-2 py-0.5 rounded bg-gray-800 text-white text-[10px] opacity-0 group-hover:opacity-100 transition-opacity z-10">Resumen</span>
+                    <span class="pointer-events-none absolute -top-7 left-1/2 -translate-x-1/2 whitespace-nowrap px-2 py-0.5 rounded bg-gray-800 text-white text-[10px] opacity-0 group-hover:opacity-100 transition-all duration-300 z-10">Resumen</span>
                   </span>
                   <span class="relative group inline-block">
-                    <button class="btn-secondary inline-flex items-center justify-center" @click="openInstallments(d)" aria-label="Cuotas">
-                      <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <button class="btn-secondary inline-flex items-center justify-center hover:scale-110 hover:shadow-lg transition-all duration-300 ease-out" @click="openInstallments(d)" aria-label="Cuotas">
+                      <svg class="h-5 w-5 transition-all duration-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
                       </svg>
                     </button>
-                    <span class="pointer-events-none absolute -top-7 left-1/2 -translate-x-1/2 whitespace-nowrap px-2 py-0.5 rounded bg-gray-800 text-white text-[10px] opacity-0 group-hover:opacity-100 transition-opacity z-10">Cuotas</span>
+                    <span class="pointer-events-none absolute -top-7 left-1/2 -translate-x-1/2 whitespace-nowrap px-2 py-0.5 rounded bg-gray-800 text-white text-[10px] opacity-0 group-hover:opacity-100 transition-all duration-300 z-10">Cuotas</span>
                   </span>
                   <span class="relative group inline-block">
-                    <button class="inline-flex items-center justify-center p-2 rounded-md border border-gray-200 bg-white text-red-600 hover:bg-red-50" @click="confirmDelete(d)" aria-label="Eliminar">
-                      <TrashIcon class="h-5 w-5" />
+                    <button class="inline-flex items-center justify-center p-2 rounded-md border border-gray-200 bg-white text-red-600 hover:bg-red-50 hover:border-red-300 hover:scale-110 hover:shadow-lg transition-all duration-300 ease-out" @click="confirmDelete(d)" aria-label="Eliminar">
+                      <TrashIcon class="h-5 w-5 transition-all duration-300" />
                     </button>
-                    <span class="pointer-events-none absolute -top-7 left-1/2 -translate-x-1/2 whitespace-nowrap px-2 py-0.5 rounded bg-gray-800 text-white text-[10px] opacity-0 group-hover:opacity-100 transition-opacity z-10">Eliminar</span>
+                    <span class="pointer-events-none absolute -top-7 left-1/2 -translate-x-1/2 whitespace-nowrap px-2 py-0.5 rounded bg-gray-800 text-white text-[10px] opacity-0 group-hover:opacity-100 transition-all duration-300 z-10">Eliminar</span>
                   </span>
                 </td>
               </tr>
             </tbody>
           </table>
         </div>
-      </div>
+
+          <!-- Vista Mobile: Cards -->
+          <div class="lg:hidden space-y-3">
+            <CreditCard
+              v-for="(d, index) in debts"
+              :key="d.id"
+              :credit="d"
+              :style="{ animationDelay: `${index * 100}ms` }"
+              @edit="openEdit"
+              @delete="confirmDelete"
+              @summary="openSummary"
+              @installments="openInstallments"
+            />
+          </div>
+            </div>
+          </Transition>
+        </div>
+      </Transition>
     </div>
 
     <TransitionRoot as="template" :show="showForm">
-      <Dialog as="div" class="relative z-10" @close="closeForm">
-        <TransitionChild as="template" enter="ease-out duration-200" enter-from="opacity-0" enter-to="opacity-100" leave="ease-in duration-150" leave-from="opacity-100" leave-to="opacity-0">
-          <div class="fixed inset-0 bg-black/30" />
+      <Dialog as="div" class="relative z-50" @close="closeForm">
+        <TransitionChild as="template" enter="ease-out duration-300" enter-from="opacity-0" enter-to="opacity-100" leave="ease-in duration-200" leave-from="opacity-100" leave-to="opacity-0">
+          <div class="fixed inset-0 bg-black/30 backdrop-blur-sm" />
         </TransitionChild>
         <div class="fixed inset-0 overflow-y-auto">
-          <div class="flex min-h-full items-center justify-center p-4">
-            <TransitionChild as="template" enter="ease-out duration-200" enter-from="opacity-0 translate-y-2" enter-to="opacity-100 translate-y-0" leave="ease-in duration-150" leave-from="opacity-100 translate-y-0" leave-to="opacity-0 translate-y-2">
-              <DialogPanel class="w-full max-w-2xl transform overflow-hidden rounded-lg bg-white shadow-xl">
-                <div class="bg-gradient-to-r from-primary-600 to-primary-700 px-6 py-4">
+          <div class="flex min-h-full items-center justify-center p-0 sm:p-4">
+            <TransitionChild as="template" enter="ease-out duration-500" enter-from="opacity-0 translate-y-8 scale-95" enter-to="opacity-100 translate-y-0 scale-100" leave="ease-in duration-300" leave-from="opacity-100 translate-y-0 scale-100" leave-to="opacity-0 translate-y-8 scale-95">
+              <DialogPanel 
+                class="w-full h-full sm:w-full sm:h-auto sm:max-w-2xl transform overflow-hidden bg-white shadow-xl flex flex-col sm:flex-none"
+                role="dialog"
+                aria-modal="true"
+                :aria-labelledby="editing ? 'edit-credit-title' : 'add-credit-title'"
+                aria-describedby="credit-modal-description"
+              >
+                <!-- Header -->
+                <div class="bg-gradient-to-r from-primary-600 to-primary-700 px-4 py-4 sm:px-6 sm:py-4">
                   <div class="flex items-center justify-between">
-                    <DialogTitle class="text-lg font-semibold text-white">{{ editing ? 'Editar crédito' : 'Nuevo crédito' }}</DialogTitle>
+                    <DialogTitle 
+                      :id="editing ? 'edit-credit-title' : 'add-credit-title'" 
+                      class="text-lg font-semibold text-white"
+                    >
+                      {{ editing ? 'Editar crédito' : 'Nuevo crédito' }}
+                    </DialogTitle>
                     <button
                       type="button"
                       class="rounded-md text-white hover:text-gray-200 focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-primary-600"
                       @click="closeForm"
+                      aria-label="Cerrar modal"
                     >
                       <span class="sr-only">Cerrar</span>
-                      <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
                       </svg>
                     </button>
                   </div>
                 </div>
-                <div class="px-6 py-6">
+
+                <!-- Description for screen readers -->
+                <div id="credit-modal-description" class="sr-only">
+                  {{ editing ? 'Editar los detalles del crédito seleccionado' : 'Completar el formulario para agregar un nuevo crédito' }}
+                </div>
+
+                <!-- Form -->
+                <div class="px-4 py-4 sm:px-6 sm:py-6 flex-1 overflow-y-auto sm:overflow-visible sm:flex-none">
                   <DebtForm 
                     v-model="formModel" 
                     :submit-text="editing ? 'Actualizar' : 'Crear'" 
@@ -202,96 +265,97 @@
           leave-from="opacity-100"
           leave-to="opacity-0"
         >
-          <div class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" />
+          <div class="fixed inset-0 bg-gray-500 bg-opacity-75 backdrop-blur-sm transition-opacity" />
         </TransitionChild>
 
         <div class="fixed inset-0 z-10 overflow-y-auto">
-          <div class="flex min-h-full items-end justify-center p-4 text-center sm:items-center sm:p-0">
+          <div class="flex min-h-full items-end justify-center p-0 text-center sm:items-center sm:p-4">
             <TransitionChild
               as="template"
-              enter="ease-out duration-300"
-              enter-from="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95"
+              enter="ease-out duration-500"
+              enter-from="opacity-0 translate-y-8 sm:translate-y-0 sm:scale-95"
               enter-to="opacity-100 translate-y-0 sm:scale-100"
-              leave="ease-in duration-200"
+              leave="ease-in duration-300"
               leave-from="opacity-100 translate-y-0 sm:scale-100"
-              leave-to="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95"
+              leave-to="opacity-0 translate-y-8 sm:translate-y-0 sm:scale-95"
             >
-              <DialogPanel class="relative transform overflow-hidden rounded-lg bg-white text-left shadow-xl transition-all sm:my-8 sm:w-full sm:max-w-6xl">
+              <DialogPanel class="relative transform overflow-hidden bg-white text-left shadow-xl transition-all w-full h-full sm:h-auto sm:my-8 sm:w-full sm:max-w-6xl sm:rounded-lg flex flex-col sm:flex-none">
                 <!-- Header -->
-                <div class="bg-white px-4 pb-4 pt-5 sm:p-6 sm:pb-4">
-                  <div class="flex items-center justify-between mb-6">
-                    <div>
+                <div class="bg-white px-4 pb-4 pt-5 sm:p-6 sm:pb-4 flex-shrink-0">
+                  <div class="flex items-center justify-between mb-4 sm:mb-6">
+                    <div class="flex-1 min-w-0">
                       <DialogTitle as="h3" class="text-lg font-semibold leading-6 text-gray-900">
                         Plan de Cuotas
                       </DialogTitle>
-                      <p class="text-sm text-gray-500 mt-1">{{ installmentsData?.debt?.name }}</p>
+                      <p class="text-sm text-gray-500 mt-1 truncate">{{ installmentsData?.debt?.name }}</p>
                     </div>
                     <button
                       type="button"
-                      class="rounded-md bg-white text-gray-400 hover:text-gray-600 focus:outline-none focus:ring-2 focus:ring-primary-500"
+                      class="rounded-md bg-white text-gray-400 hover:text-gray-600 focus:outline-none focus:ring-2 focus:ring-primary-500 flex-shrink-0 ml-2"
                       @click="installmentsData = null"
+                      aria-label="Cerrar modal"
                     >
                       <span class="sr-only">Cerrar</span>
-                      <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                      <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" aria-hidden="true">
                         <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
                       </svg>
                     </button>
                   </div>
 
                   <!-- Resumen del Plan -->
-                  <div v-if="installmentsData?.totals" class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
-                    <div class="bg-blue-50 rounded-lg p-4 border border-blue-200">
+                  <div v-if="installmentsData?.totals" class="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 mb-4 sm:mb-6">
+                    <div class="bg-blue-50 rounded-lg p-3 sm:p-4 border border-blue-200">
                       <div class="flex items-center">
-                        <div class="w-8 h-8 bg-blue-500 rounded-lg flex items-center justify-center mr-3">
-                          <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <div class="w-6 h-6 sm:w-8 sm:h-8 bg-blue-500 rounded-lg flex items-center justify-center mr-2 sm:mr-3 flex-shrink-0">
+                          <svg class="w-3 h-3 sm:w-4 sm:h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1" />
                           </svg>
                         </div>
-                        <div>
+                        <div class="min-w-0 flex-1">
                           <p class="text-xs text-blue-600 font-medium">Pago Mensual</p>
-                          <p class="text-lg font-bold text-blue-900">{{ formatCurrency(installmentsData.payment) }}</p>
+                          <p class="text-sm sm:text-lg font-bold text-blue-900 truncate">{{ formatCurrency(installmentsData.payment) }}</p>
                         </div>
                       </div>
                     </div>
                     
-                    <div class="bg-orange-50 rounded-lg p-4 border border-orange-200">
+                    <div class="bg-orange-50 rounded-lg p-3 sm:p-4 border border-orange-200">
                       <div class="flex items-center">
-                        <div class="w-8 h-8 bg-orange-500 rounded-lg flex items-center justify-center mr-3">
-                          <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <div class="w-6 h-6 sm:w-8 sm:h-8 bg-orange-500 rounded-lg flex items-center justify-center mr-2 sm:mr-3 flex-shrink-0">
+                          <svg class="w-3 h-3 sm:w-4 sm:h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
                           </svg>
                         </div>
-                        <div>
+                        <div class="min-w-0 flex-1">
                           <p class="text-xs text-orange-600 font-medium">Total a Pagar</p>
-                          <p class="text-lg font-bold text-orange-900">{{ formatCurrency(installmentsData.totals.totalPaid) }}</p>
+                          <p class="text-sm sm:text-lg font-bold text-orange-900 truncate">{{ formatCurrency(installmentsData.totals.totalPaid) }}</p>
                         </div>
                       </div>
                     </div>
                     
-                    <div class="bg-red-50 rounded-lg p-4 border border-red-200">
+                    <div class="bg-red-50 rounded-lg p-3 sm:p-4 border border-red-200">
                       <div class="flex items-center">
-                        <div class="w-8 h-8 bg-red-500 rounded-lg flex items-center justify-center mr-3">
-                          <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <div class="w-6 h-6 sm:w-8 sm:h-8 bg-red-500 rounded-lg flex items-center justify-center mr-2 sm:mr-3 flex-shrink-0">
+                          <svg class="w-3 h-3 sm:w-4 sm:h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1" />
                           </svg>
                         </div>
-                        <div>
+                        <div class="min-w-0 flex-1">
                           <p class="text-xs text-red-600 font-medium">Total Intereses</p>
-                          <p class="text-lg font-bold text-red-900">{{ formatCurrency(installmentsData.totals.totalInterest) }}</p>
+                          <p class="text-sm sm:text-lg font-bold text-red-900 truncate">{{ formatCurrency(installmentsData.totals.totalInterest) }}</p>
                         </div>
                       </div>
                     </div>
                     
-                    <div class="bg-green-50 rounded-lg p-4 border border-green-200">
+                    <div class="bg-green-50 rounded-lg p-3 sm:p-4 border border-green-200">
                       <div class="flex items-center">
-                        <div class="w-8 h-8 bg-green-500 rounded-lg flex items-center justify-center mr-3">
-                          <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <div class="w-6 h-6 sm:w-8 sm:h-8 bg-green-500 rounded-lg flex items-center justify-center mr-2 sm:mr-3 flex-shrink-0">
+                          <svg class="w-3 h-3 sm:w-4 sm:h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
                           </svg>
                         </div>
-                        <div>
+                        <div class="min-w-0 flex-1">
                           <p class="text-xs text-green-600 font-medium">Capital</p>
-                          <p class="text-lg font-bold text-green-900">{{ formatCurrency(installmentsData.totals.totalPrincipal) }}</p>
+                          <p class="text-sm sm:text-lg font-bold text-green-900 truncate">{{ formatCurrency(installmentsData.totals.totalPrincipal) }}</p>
                         </div>
                       </div>
                     </div>
@@ -340,8 +404,8 @@
                   </div>
 
                   <!-- Controles -->
-                  <div class="flex items-center justify-between mb-4">
-                    <div class="flex items-center space-x-4">
+                  <div class="space-y-3 sm:space-y-0 sm:flex sm:items-center sm:justify-between mb-4">
+                    <div class="space-y-3 sm:space-y-0 sm:flex sm:items-center sm:space-x-4">
                       <div class="flex items-center space-x-2">
                         <label class="text-sm font-medium text-gray-700">Duración:</label>
                         <input 
@@ -349,7 +413,7 @@
                           type="number" 
                           min="1" 
                           max="48" 
-                          class="input-field w-20 h-8 text-center" 
+                          class="input-field w-16 sm:w-20 h-8 text-center" 
                         />
                         <span class="text-sm text-gray-500">meses</span>
                       </div>
@@ -357,38 +421,42 @@
                         <input id="biweeklyToggle" v-model="biweeklyPayments" type="checkbox" class="h-4 w-4 text-primary-600 focus:ring-primary-500 border-gray-300 rounded" />
                         <label for="biweeklyToggle" class="text-sm font-medium text-gray-700">Pagos quincenales</label>
                       </div>
-                      <button class="btn-primary px-4 py-2 text-sm inline-flex items-center" @click="reloadInstallments">
-                        <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    </div>
+                    <div class="flex flex-col sm:flex-row gap-2 sm:gap-0 sm:items-center sm:space-x-2">
+                      <button class="btn-primary px-3 py-2 text-sm inline-flex items-center justify-center" @click="reloadInstallments">
+                        <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
                         </svg>
-                        Generar Plan
+                        <span class="hidden sm:inline">Generar Plan</span>
+                        <span class="sm:hidden">Generar</span>
                       </button>
                       <button 
                         v-if="installmentsData?.schedule?.length > 0"
-                        class="btn-secondary px-4 py-2 text-sm inline-flex items-center" 
+                        class="btn-secondary px-3 py-2 text-sm inline-flex items-center justify-center" 
                         @click="createExpensesFromInstallments"
                         :disabled="creatingExpenses || !installmentsData?.debt?.dueDay || !installmentsData?.debt?.cutOffDay || installmentsData?.debt?.dueDay === 0 || installmentsData?.debt?.cutOffDay === 0"
                         :title="(!installmentsData?.debt?.dueDay || !installmentsData?.debt?.cutOffDay || installmentsData?.debt?.dueDay === 0 || installmentsData?.debt?.cutOffDay === 0) ? 'Configura primero los días de vencimiento y corte' : ''"
                       >
-                        <svg v-if="creatingExpenses" class="animate-spin -ml-1 mr-2 h-4 w-4 text-gray-500" fill="none" viewBox="0 0 24 24">
+                        <svg v-if="creatingExpenses" class="animate-spin -ml-1 mr-2 h-4 w-4 text-gray-500" fill="none" viewBox="0 0 24 24" aria-hidden="true">
                           <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
                           <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                         </svg>
-                        <svg v-else class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <svg v-else class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
                         </svg>
-                        {{ creatingExpenses ? 'Creando...' : (biweeklyPayments ? 'Crear Gastos Quincenales' : 'Crear Gastos Automáticos') }}
+                        <span class="hidden sm:inline">{{ creatingExpenses ? 'Creando...' : (biweeklyPayments ? 'Crear Gastos Quincenales' : 'Crear Gastos Automáticos') }}</span>
+                        <span class="sm:hidden">{{ creatingExpenses ? 'Creando...' : 'Crear' }}</span>
                       </button>
                     </div>
-                    <div class="text-sm text-gray-500">
+                    <div class="text-sm text-gray-500 text-center sm:text-right">
                       Mostrando {{ installmentsData?.schedule?.length || 0 }} cuotas
                     </div>
                   </div>
                 </div>
 
                 <!-- Tabla de Cuotas -->
-                <div class="bg-gray-50 px-4 py-3 sm:px-6">
-                  <div class="overflow-x-auto max-h-96">
+                <div class="bg-gray-50 px-4 py-3 sm:px-6 flex-1 overflow-hidden">
+                  <div class="overflow-x-auto h-full max-h-64 sm:max-h-96">
                     <table class="min-w-full divide-y divide-gray-200">
                       <thead class="bg-gray-100 sticky top-0">
                         <tr>
@@ -452,11 +520,12 @@
                 </div>
 
                 <!-- Footer -->
-                <div class="bg-gray-50 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse">
+                <div class="bg-gray-50 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse flex-shrink-0">
                   <button
                     type="button"
                     class="btn-secondary w-full sm:w-auto sm:ml-3"
                     @click="installmentsData = null"
+                    aria-label="Cerrar modal de plan de cuotas"
                   >
                     Cerrar
                   </button>
@@ -467,16 +536,64 @@
         </div>
       </Dialog>
     </TransitionRoot>
+
+    <!-- Botón flotante para mobile -->
+    <Teleport to="body">
+      <div class="fixed bottom-20 right-4 sm:hidden z-40">
+        <!-- Menú de acciones rápidas -->
+        <Transition
+          enter-active-class="transition ease-out duration-200"
+          enter-from-class="transform opacity-0 scale-95"
+          enter-to-class="transform opacity-100 scale-100"
+          leave-active-class="transition ease-in duration-150"
+          leave-from-class="transform opacity-100 scale-100"
+          leave-to-class="transform opacity-0 scale-95"
+        >
+          <div
+            v-if="showQuickActions"
+            class="absolute bottom-16 right-0 mb-2 w-48 bg-white rounded-lg shadow-lg border border-gray-200 py-2"
+          >
+            <button
+              @click="openAddCredit"
+              class="w-full px-4 py-3 text-left text-sm text-gray-700 hover:bg-gray-50 flex items-center space-x-3"
+            >
+              <div class="w-8 h-8 bg-primary-100 rounded-lg flex items-center justify-center">
+                <svg class="w-4 h-4 text-primary-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                </svg>
+              </div>
+              <div>
+                <div class="font-medium">Nuevo crédito</div>
+                <div class="text-xs text-gray-500">Agregar tarjeta o préstamo</div>
+              </div>
+            </button>
+          </div>
+        </Transition>
+
+        <!-- Botón principal flotante -->
+        <button
+          @click="toggleQuickActions"
+          class="w-14 h-14 bg-primary-600 hover:bg-primary-700 text-white rounded-full shadow-lg flex items-center justify-center transition-all duration-200 hover:scale-105 focus:outline-none focus:ring-4 focus:ring-primary-200"
+          :class="{ 'rotate-45': showQuickActions }"
+          aria-label="Acciones rápidas"
+        >
+          <svg class="w-6 h-6 transition-transform duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+          </svg>
+        </button>
+      </div>
+    </Teleport>
   </div>
 </template>
 
 <script setup>
-import { ref, onMounted, computed } from 'vue'
+import { ref, onMounted, onUnmounted, computed, watch, Teleport, Transition } from 'vue'
 import { useDebtStore } from '../stores/debtStore'
 import { useExpenseStore } from '../stores/expenseStore'
 import { useConfirm } from '../composables/useConfirm'
 import { storeToRefs } from 'pinia'
 import DebtForm from '../components/DebtForm.vue'
+import CreditCard from '../components/CreditCard.vue'
 import { Dialog, DialogPanel, DialogTitle, TransitionChild, TransitionRoot } from '@headlessui/vue'
 import { PencilSquareIcon, InformationCircleIcon, CalendarDaysIcon, TrashIcon } from '@heroicons/vue/24/outline'
 import LoadingSkeleton from '../components/ui/LoadingSkeleton.vue'
@@ -498,6 +615,10 @@ const calculatedInstallmentDates = ref(null)
 const installmentMonths = ref(6)
 const creatingExpenses = ref(false)
 const biweeklyPayments = ref(false)
+
+// Botón flotante para mobile
+const showQuickActions = ref(false)
+const showAddButton = ref(true)
 
 // Computed para UI
 const activeCount = computed(() => activeDebts.value.length)
@@ -533,9 +654,19 @@ const getCardTypeColor = (brand) => {
   return colors[brand] || '#6B7280'
 }
 
-onMounted(async () => {
-  if (!debts.value?.length) await debtStore.loadDebts()
-  if (!expenseStore.categories?.length) await expenseStore.loadCategories()
+
+// Bloquear scroll cuando el modal esté abierto
+watch(showForm, (isOpen) => {
+  if (isOpen) {
+    document.body.style.overflow = 'hidden'
+  } else {
+    document.body.style.overflow = ''
+  }
+})
+
+// Limpiar scroll al desmontar el componente
+onUnmounted(() => {
+  document.body.style.overflow = ''
 })
 
 const openCreate = () => {
@@ -551,6 +682,35 @@ const openEdit = (debt) => {
 }
 
 const closeForm = () => { showForm.value = false }
+
+// Funciones del botón flotante
+const toggleQuickActions = () => {
+  showQuickActions.value = !showQuickActions.value
+}
+
+const openAddCredit = () => {
+  showQuickActions.value = false
+  openCreate()
+}
+
+// Actualizar visibilidad del botón según el tamaño de pantalla
+const updateScreenSize = () => {
+  showAddButton.value = window.innerWidth >= 640
+}
+
+onMounted(async () => {
+  if (!debts.value?.length) await debtStore.loadDebts()
+  if (!expenseStore.categories?.length) await expenseStore.loadCategories()
+  
+  // Configurar visibilidad del botón
+  updateScreenSize()
+  window.addEventListener('resize', updateScreenSize)
+})
+
+onUnmounted(() => {
+  document.body.style.overflow = ''
+  window.removeEventListener('resize', updateScreenSize)
+})
 
 const handleSubmit = async (payload) => {
   if (editing.value && payload.id) {

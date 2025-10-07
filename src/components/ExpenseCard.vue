@@ -95,7 +95,7 @@
             >
               <svg 
                 :class="[
-                  'w-3 h-3 mr-1 transition-transform duration-300 ease-out hover:rotate-12',
+                  'w-3 h-3 mr-1 transition-all duration-300 ease-out',
                   { 'rotate-6': shouldShowMobileAnimations.value }
                 ]"
                 fill="currentColor" 
@@ -157,7 +157,7 @@
         >
           <svg 
             :class="[
-              'h-4 w-4 transition-transform duration-300 ease-out hover:rotate-12',
+              'h-4 w-4 transition-all duration-300 ease-out',
               { 'rotate-6': shouldShowMobileAnimations.value }
             ]"
             viewBox="0 0 24 24" 
@@ -180,7 +180,7 @@
         >
           <svg 
             :class="[
-              'h-4 w-4 transition-transform duration-300 ease-out hover:rotate-12',
+              'h-4 w-4 transition-all duration-300 ease-out',
               { 'rotate-6': shouldShowMobileAnimations.value }
             ]"
             viewBox="0 0 24 24" 

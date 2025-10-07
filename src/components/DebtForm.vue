@@ -49,6 +49,7 @@
       <div>
         <label for="debt-brand" class="block text-sm font-medium text-gray-700">Tipo de tarjeta</label>
         <AppSelect
+          id="debt-brand"
           v-model="form.brand"
           :options="cardTypeOptions"
           placeholder="Selecciona el tipo"
@@ -164,6 +165,7 @@
       <!-- Estado -->
       <div class="flex items-center space-x-3">
         <Switch
+          id="debt-active"
           v-model="form.active"
           :class="form.active ? 'bg-primary-600' : 'bg-gray-200'"
           class="relative inline-flex h-6 w-11 items-center rounded-full transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2">
