@@ -238,20 +238,189 @@
       </Dialog>
     </TransitionRoot>
 
-    <div v-if="summaryData" class="card">
-      <div class="flex items-center justify-between mb-2">
-        <h3 class="text-lg font-medium">Resumen: {{ summaryData?.debt?.name }}</h3>
-        <button class="btn-secondary" @click="summaryData = null">Cerrar</button>
-      </div>
-      <dl class="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <div><dt class="text-xs text-gray-500">Tasa mensual</dt><dd class="text-sm">{{ (summaryData.summary?.monthlyRate * 100).toFixed(2) }}%</dd></div>
-        <div><dt class="text-xs text-gray-500">Interés este mes</dt><dd class="text-sm">{{ formatCurrency(summaryData.summary?.interestThisMonth) }}</dd></div>
-        <div><dt class="text-xs text-gray-500">Pago mínimo sugerido</dt><dd class="text-sm">{{ formatCurrency(summaryData.summary?.suggestedMinimumPayment) }}</dd></div>
-        <div><dt class="text-xs text-gray-500">Utilización</dt><dd class="text-sm">{{ (summaryData.summary?.utilizationPercent || 0).toFixed(1) }}%</dd></div>
-        <div><dt class="text-xs text-gray-500">Próx. pago</dt><dd class="text-sm">{{ summaryData.summary?.nextDueDate }}</dd></div>
-        <div><dt class="text-xs text-gray-500">Días para pago</dt><dd class="text-sm">{{ summaryData.summary?.daysToDue }}</dd></div>
-      </dl>
-    </div>
+
+    <!-- Modal de Información de Crédito -->
+    <TransitionRoot as="template" :show="!!creditInfoData">
+      <Dialog class="relative z-50" @close="creditInfoData = null">
+        <TransitionChild
+          as="template"
+          enter="ease-out duration-300"
+          enter-from="opacity-0"
+          enter-to="opacity-100"
+          leave="ease-in duration-200"
+          leave-from="opacity-100"
+          leave-to="opacity-0"
+        >
+          <div class="fixed inset-0 bg-black/30 backdrop-blur-sm" />
+        </TransitionChild>
+
+        <div class="fixed inset-0 z-10 overflow-y-auto">
+          <div class="flex min-h-full items-center justify-center p-4">
+            <TransitionChild
+              as="template"
+              enter="ease-out duration-500"
+              enter-from="opacity-0 translate-y-8 scale-95"
+              enter-to="opacity-100 translate-y-0 scale-100"
+              leave="ease-in duration-300"
+              leave-from="opacity-100 translate-y-0 scale-100"
+              leave-to="opacity-0 translate-y-8 scale-95"
+            >
+              <DialogPanel class="relative transform overflow-hidden bg-white shadow-xl transition-all w-full max-w-2xl rounded-lg">
+                <!-- Header -->
+                <div class="bg-gradient-to-r from-blue-600 to-blue-700 px-6 py-4">
+                  <div class="flex items-center justify-between">
+                    <div class="flex items-center space-x-3">
+                      <div class="w-10 h-10 bg-white/20 rounded-full flex items-center justify-center">
+                        <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
+                        </svg>
+                      </div>
+                      <div>
+                        <h3 class="text-lg font-semibold text-white">{{ creditInfoData?.name }}</h3>
+                        <p class="text-blue-100 text-sm">{{ creditInfoData?.issuer || 'Sin emisor' }}</p>
+                      </div>
+                    </div>
+                    <div class="flex items-center space-x-2">
+                      <span :class="[
+                        'px-3 py-1 rounded-full text-xs font-medium',
+                        creditInfoData?.active ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'
+                      ]">
+                        {{ creditInfoData?.active ? 'Activa' : 'Inactiva' }}
+                      </span>
+                      <button
+                        @click="creditInfoData = null"
+                        class="text-white/80 hover:text-white transition-colors duration-200"
+                      >
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                        </svg>
+                      </button>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Content -->
+                <div class="px-6 py-6 space-y-6">
+                  <!-- Información Básica -->
+                  <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div class="bg-gray-50 rounded-lg p-4">
+                      <div class="flex items-center space-x-2 mb-2">
+                        <svg class="w-5 h-5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" />
+                        </svg>
+                        <span class="text-sm font-medium text-gray-700">Tipo de Tarjeta</span>
+                      </div>
+                      <p class="text-lg font-semibold text-gray-900">
+                        {{ creditInfoData?.brand || 'No especificado' }}
+                      </p>
+                    </div>
+
+                    <div class="bg-gray-50 rounded-lg p-4">
+                      <div class="flex items-center space-x-2 mb-2">
+                        <svg class="w-5 h-5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                        </svg>
+                        <span class="text-sm font-medium text-gray-700">Número</span>
+                      </div>
+                      <p class="text-lg font-semibold text-gray-900">
+                        {{ creditInfoData?.maskPan ? `•••• ${creditInfoData.maskPan}` : 'No especificado' }}
+                      </p>
+                    </div>
+                  </div>
+
+                  <!-- Límites y Saldo -->
+                  <div class="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg p-6">
+                    <h4 class="text-lg font-semibold text-gray-900 mb-4">Límites y Saldo</h4>
+                    
+                    <div class="space-y-4">
+                      <!-- Saldo Actual -->
+                      <div class="flex justify-between items-center">
+                        <span class="text-sm font-medium text-gray-600">Saldo Actual</span>
+                        <span class="text-xl font-bold text-gray-900">{{ formatCurrency(creditInfoData?.balance || 0) }}</span>
+                      </div>
+
+                      <!-- Límite de Crédito -->
+                      <div class="flex justify-between items-center">
+                        <span class="text-sm font-medium text-gray-600">Límite de Crédito</span>
+                        <span class="text-xl font-bold text-gray-900">{{ formatCurrency(creditInfoData?.creditLimit || 0) }}</span>
+                      </div>
+
+                      <!-- Barra de Progreso -->
+                      <div class="space-y-2">
+                        <div class="flex justify-between items-center">
+                          <span class="text-sm font-medium text-gray-600">Utilización</span>
+                          <span class="text-sm font-semibold" :class="getUtilizationColor(creditInfoData?.balance, creditInfoData?.creditLimit)">
+                            {{ getUtilizationPercentage(creditInfoData?.balance, creditInfoData?.creditLimit) }}%
+                          </span>
+                        </div>
+                        <div class="h-3 bg-gray-200 rounded-full overflow-hidden">
+                          <div
+                            class="h-full transition-all duration-700 ease-out rounded-full"
+                            :class="getUtilizationBarColor(creditInfoData?.balance, creditInfoData?.creditLimit)"
+                            :style="{ width: getUtilizationPercentage(creditInfoData?.balance, creditInfoData?.creditLimit) + '%' }"
+                          ></div>
+                        </div>
+                      </div>
+
+                      <!-- Saldo Disponible -->
+                      <div class="flex justify-between items-center pt-2 border-t border-gray-200">
+                        <span class="text-sm font-medium text-gray-600">Saldo Disponible</span>
+                        <span class="text-lg font-semibold text-green-600">
+                          {{ formatCurrency((creditInfoData?.creditLimit || 0) - (creditInfoData?.balance || 0)) }}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+
+                  <!-- Fechas Importantes -->
+                  <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div class="bg-gray-50 rounded-lg p-4">
+                      <div class="flex items-center space-x-2 mb-2">
+                        <svg class="w-5 h-5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                        </svg>
+                        <span class="text-sm font-medium text-gray-700">Día de Corte</span>
+                      </div>
+                      <p class="text-lg font-semibold text-gray-900">
+                        {{ creditInfoData?.cutOffDay || 'No configurado' }}
+                      </p>
+                    </div>
+
+                    <div class="bg-gray-50 rounded-lg p-4">
+                      <div class="flex items-center space-x-2 mb-2">
+                        <svg class="w-5 h-5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1" />
+                        </svg>
+                        <span class="text-sm font-medium text-gray-700">Día de Pago</span>
+                      </div>
+                      <p class="text-lg font-semibold text-gray-900">
+                        {{ creditInfoData?.dueDay || 'No configurado' }}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Footer -->
+                <div class="bg-gray-50 px-6 py-4 flex justify-end space-x-3">
+                  <button
+                    @click="creditInfoData = null"
+                    class="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 transition-colors duration-200"
+                  >
+                    Cerrar
+                  </button>
+                  <button
+                    @click="openEdit(creditInfoData); creditInfoData = null"
+                    class="px-4 py-2 text-sm font-medium text-white bg-blue-600 border border-transparent rounded-md hover:bg-blue-700 transition-colors duration-200"
+                  >
+                    Editar Crédito
+                  </button>
+                </div>
+              </DialogPanel>
+            </TransitionChild>
+          </div>
+        </div>
+      </Dialog>
+    </TransitionRoot>
 
     <!-- Modal de Plan de Cuotas -->
     <TransitionRoot as="template" :show="!!installmentsData">
@@ -609,8 +778,8 @@ const { debts, loading, totalBalance, totalCreditLimit, utilizationRate, activeD
 const showForm = ref(false)
 const editing = ref(false)
 const formModel = ref({})
-const summaryData = ref(null)
 const installmentsData = ref(null)
+const creditInfoData = ref(null)
 const calculatedInstallmentDates = ref(null)
 const installmentMonths = ref(6)
 const creatingExpenses = ref(false)
@@ -734,7 +903,27 @@ const confirmDelete = async (debt) => {
 }
 
 const openSummary = async (debt) => {
-  summaryData.value = await debtStore.fetchDebtSummary(debt.id)
+  creditInfoData.value = debt
+}
+
+const getUtilizationPercentage = (balance, creditLimit) => {
+  if (!creditLimit || creditLimit <= 0) return 0
+  const percentage = Math.min(100, Math.max(0, ((balance || 0) / creditLimit) * 100))
+  return percentage.toFixed(1)
+}
+
+const getUtilizationColor = (balance, creditLimit) => {
+  const percentage = getUtilizationPercentage(balance, creditLimit)
+  if (percentage >= 90) return 'text-red-600'
+  if (percentage >= 70) return 'text-orange-600'
+  return 'text-green-600'
+}
+
+const getUtilizationBarColor = (balance, creditLimit) => {
+  const percentage = getUtilizationPercentage(balance, creditLimit)
+  if (percentage >= 90) return 'bg-gradient-to-r from-red-500 to-red-600'
+  if (percentage >= 70) return 'bg-gradient-to-r from-orange-500 to-orange-600'
+  return 'bg-gradient-to-r from-green-500 to-green-600'
 }
 
 const openInstallments = async (debt) => {

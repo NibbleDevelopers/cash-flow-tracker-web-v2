@@ -67,19 +67,21 @@
         leave-from-class="opacity-100"
         leave-to-class="opacity-0"
       >
-        <div v-if="isMonthModalOpen" class="fixed inset-0 bg-black bg-opacity-50 z-40" @click="closeMonthModal"></div>
+        <div v-if="isMonthModalOpen" class="fixed inset-0 bg-black/30 backdrop-blur-sm z-40" @click="closeMonthModal"></div>
       </Transition>
       <Transition
-        enter-active-class="ease-out duration-300"
-        enter-from-class="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95"
-        enter-to-class="opacity-100 translate-y-0 sm:scale-100"
-        leave-active-class="ease-in duration-200"
-        leave-from-class="opacity-100 translate-y-0 sm:scale-100"
-        leave-to-class="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95"
+        enter-active-class="ease-out duration-500"
+        enter-from-class="opacity-0 translate-y-8 scale-95"
+        enter-to-class="opacity-100 translate-y-0 scale-100"
+        leave-active-class="ease-in duration-300"
+        leave-from-class="opacity-100 translate-y-0 scale-100"
+        leave-to-class="opacity-0 translate-y-8 scale-95"
       >
         <div v-if="isMonthModalOpen" class="fixed inset-0 z-50 overflow-y-auto" @click.self="closeMonthModal" role="dialog" aria-modal="true" :aria-labelledby="modalTitleId">
           <div class="flex min-h-full items-end justify-center p-4 text-center sm:items-center sm:p-0">
-            <div class="relative transform overflow-hidden rounded-lg bg-white text-left shadow-xl transition-all sm:my-8 sm:w-full sm:max-w-md">
+            <div 
+              class="relative transform overflow-hidden rounded-lg bg-white text-left shadow-xl transition-all sm:my-8 sm:w-full sm:max-w-md"
+            >
               <div class="bg-gradient-to-r from-primary-600 to-primary-700 px-6 py-4">
                 <div class="flex items-center justify-between">
                   <h3 class="text-lg font-semibold text-white" :id="modalTitleId">Editar presupuesto — {{ editMonthLabel }}</h3>

@@ -11,19 +11,19 @@
     >
       <div
         v-if="isOpen"
-        class="fixed inset-0 bg-black bg-opacity-50 z-40"
+        class="fixed inset-0 bg-black/30 backdrop-blur-sm z-40"
         @click="closeModal"
       ></div>
     </Transition>
 
     <!-- Modal -->
     <Transition
-      enter-active-class="ease-out duration-300"
-      enter-from-class="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95"
-      enter-to-class="opacity-100 translate-y-0 sm:scale-100"
-      leave-active-class="ease-in duration-200"
-      leave-from-class="opacity-100 translate-y-0 sm:scale-100"
-      leave-to-class="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95"
+      enter-active-class="ease-out duration-500"
+      enter-from-class="opacity-0 translate-y-8 scale-95"
+      enter-to-class="opacity-100 translate-y-0 scale-100"
+      leave-active-class="ease-in duration-300"
+      leave-from-class="opacity-100 translate-y-0 scale-100"
+      leave-to-class="opacity-0 translate-y-8 scale-95"
     >
       <div
         v-if="isOpen"
@@ -33,9 +33,6 @@
         <div class="flex h-full items-stretch justify-center p-0 text-center sm:min-h-full sm:items-center sm:p-0">
           <div
             class="relative transform overflow-hidden bg-white text-left shadow-xl transition-all w-full h-full flex flex-col sm:rounded-lg sm:my-8 sm:w-full sm:max-w-lg sm:h-auto sm:flex-none"
-            v-motion
-            :initial="{ opacity: 0, y: 16, scale: 0.98 }"
-            :enter="{ opacity: 1, y: 0, scale: 1, transition: { duration: 0.25 } }"
             role="dialog"
             aria-modal="true"
             :aria-labelledby="isEditMode ? 'edit-expense-title' : 'add-expense-title'"
