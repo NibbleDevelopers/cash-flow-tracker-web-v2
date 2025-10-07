@@ -58,8 +58,8 @@
         mode="out-in"
       >
         <div v-if="loading" key="loading" class="animate-pulse">
-          <LoadingSkeleton type="table" :rows="3" />
-        </div>
+        <LoadingSkeleton type="table" :rows="3" />
+      </div>
         <div v-else key="content">
           <Transition
             enter-active-class="transition ease-out duration-700"
@@ -72,14 +72,14 @@
           >
             <div v-if="debts.length === 0" key="empty" class="text-center py-12">
               <div class="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4 animate-pulse">
-                <svg class="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
-                </svg>
-              </div>
-              <h3 class="text-lg font-medium text-gray-900 mb-2">Sin créditos registrados</h3>
-              <p class="text-gray-500 mb-4">Comienza agregando tu primera tarjeta de crédito o préstamo</p>
+            <svg class="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
+            </svg>
+          </div>
+          <h3 class="text-lg font-medium text-gray-900 mb-2">Sin créditos registrados</h3>
+          <p class="text-gray-500 mb-4">Comienza agregando tu primera tarjeta de crédito o préstamo</p>
               <button class="btn-primary hover:scale-105 transition-transform duration-200" @click="openCreate">Agregar primer crédito</button>
-            </div>
+        </div>
             <div v-else key="list">
           <!-- Vista Desktop: Tabla -->
           <div class="hidden lg:block overflow-x-auto">
@@ -171,7 +171,7 @@
               @summary="openSummary"
               @installments="openInstallments"
             />
-          </div>
+      </div>
             </div>
           </Transition>
         </div>
@@ -274,7 +274,7 @@
                         <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
                         </svg>
-                      </div>
+      </div>
                       <div>
                         <h3 class="text-lg font-semibold text-white">{{ creditInfoData?.name }}</h3>
                         <p class="text-blue-100 text-sm">{{ creditInfoData?.issuer || 'Sin emisor' }}</p>
@@ -297,123 +297,177 @@
                       </button>
                     </div>
                   </div>
-                </div>
+    </div>
 
-                <!-- Content -->
-                <div class="px-6 py-6 space-y-6">
-                  <!-- Información Básica -->
-                  <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div class="bg-gray-50 rounded-lg p-4">
-                      <div class="flex items-center space-x-2 mb-2">
-                        <svg class="w-5 h-5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" />
-                        </svg>
-                        <span class="text-sm font-medium text-gray-700">Tipo de Tarjeta</span>
+                <!-- Content - Credit Card Design -->
+                <div class="px-2 py-4">
+                  <!-- Credit Card Container -->
+                  <div class="relative max-w-sm mx-auto sm:max-w-lg">
+                    <!-- Credit Card -->
+                    <div class="relative text-white shadow-2xl overflow-hidden rounded-xl p-3 sm:p-4"
+                         :class="[
+                           getCardGradient(creditInfoData?.brand),
+                           'aspect-[3.375/2.125] sm:aspect-[3.375/2.125] md:aspect-[3.375/2.125]',
+                           'min-h-[220px] sm:min-h-0'
+                         ]">
+                      <!-- Card Background Pattern -->
+                      <div class="absolute inset-0 opacity-10">
+                        <div class="absolute top-0 right-0 w-32 h-32 bg-white rounded-full -translate-y-16 translate-x-16"></div>
+                        <div class="absolute bottom-0 left-0 w-24 h-24 bg-white rounded-full translate-y-12 -translate-x-12"></div>
                       </div>
-                      <p class="text-lg font-semibold text-gray-900">
-                        {{ creditInfoData?.brand || 'No especificado' }}
-                      </p>
-                    </div>
-
-                    <div class="bg-gray-50 rounded-lg p-4">
-                      <div class="flex items-center space-x-2 mb-2">
-                        <svg class="w-5 h-5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
-                        </svg>
-                        <span class="text-sm font-medium text-gray-700">Número</span>
-                      </div>
-                      <p class="text-lg font-semibold text-gray-900">
-                        {{ creditInfoData?.maskPan ? `•••• ${creditInfoData.maskPan}` : 'No especificado' }}
-                      </p>
-                    </div>
-                  </div>
-
-                  <!-- Límites y Saldo -->
-                  <div class="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg p-6">
-                    <h4 class="text-lg font-semibold text-gray-900 mb-4">Límites y Saldo</h4>
-                    
-                    <div class="space-y-4">
-                      <!-- Saldo Actual -->
-                      <div class="flex justify-between items-center">
-                        <span class="text-sm font-medium text-gray-600">Saldo Actual</span>
-                        <span class="text-xl font-bold text-gray-900">{{ formatCurrency(creditInfoData?.balance || 0) }}</span>
-                      </div>
-
-                      <!-- Límite de Crédito -->
-                      <div class="flex justify-between items-center">
-                        <span class="text-sm font-medium text-gray-600">Límite de Crédito</span>
-                        <span class="text-xl font-bold text-gray-900">{{ formatCurrency(creditInfoData?.creditLimit || 0) }}</span>
-                      </div>
-
-                      <!-- Barra de Progreso -->
-                      <div class="space-y-2">
-                        <div class="flex justify-between items-center">
-                          <span class="text-sm font-medium text-gray-600">Utilización</span>
-                          <span class="text-sm font-semibold" :class="getUtilizationColor(creditInfoData?.balance, creditInfoData?.creditLimit)">
-                            {{ getUtilizationPercentage(creditInfoData?.balance, creditInfoData?.creditLimit) }}%
-                          </span>
+                      
+                      <!-- Card Content -->
+                      <div class="relative z-10 h-full flex flex-col justify-between">
+                        <!-- Card Header -->
+                        <div class="flex justify-between items-start">
+                          <div class="flex items-center">
+                            <CreditCardIcon 
+                              :type="getCardType(creditInfoData?.brand)" 
+                              size="medium" 
+                            />
+                          </div>
+                          <div class="text-right">
+                            <div class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium uppercase"
+                                 :class="creditInfoData?.active ? 'bg-green-500/20 text-green-300' : 'bg-gray-500/20 text-gray-300'">
+                              <svg class="w-2 h-2 mr-1" fill="currentColor" viewBox="0 0 20 20">
+                                <path :fill-rule="creditInfoData?.active ? 'evenodd' : 'evenodd'" 
+                                      :d="creditInfoData?.active ? 'M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z' : 'M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z'" 
+                                      clip-rule="evenodd" />
+                              </svg>
+                              {{ creditInfoData?.active ? 'ACTIVA' : 'INACTIVA' }}
+                            </div>
+                          </div>
                         </div>
-                        <div class="h-3 bg-gray-200 rounded-full overflow-hidden">
-                          <div
-                            class="h-full transition-all duration-700 ease-out rounded-full"
-                            :class="getUtilizationBarColor(creditInfoData?.balance, creditInfoData?.creditLimit)"
-                            :style="{ width: getUtilizationPercentage(creditInfoData?.balance, creditInfoData?.creditLimit) + '%' }"
-                          ></div>
+
+                        <!-- Card Number -->
+                        <div class="text-center">
+                          <p class="text-xs text-gray-300 mb-1">Número de Tarjeta</p>
+                          <p class="text-lg font-mono tracking-wider">
+                            {{ creditInfoData?.maskPan ? `•••• •••• •••• ${creditInfoData.maskPan}` : '•••• •••• •••• ••••' }}
+                          </p>
+                        </div>
+
+                        <!-- Bottom Row -->
+                        <div class="flex justify-between items-end gap-2">
+                          <!-- Financial Information -->
+                          <div class="bg-white/10 backdrop-blur-sm rounded-lg p-1.5 sm:p-2 flex-1">
+                            <div class="grid grid-cols-2 gap-1 mb-1 sm:mb-1.5">
+                              <div>
+                                <p class="text-xs text-gray-300 mb-0.5">Saldo</p>
+                                <p class="text-xs font-bold">{{ formatCurrency(creditInfoData?.balance || 0) }}</p>
+                              </div>
+                              <div>
+                                <p class="text-xs text-gray-300 mb-0.5">Límite</p>
+                                <p class="text-xs font-bold">{{ formatCurrency(creditInfoData?.creditLimit || 0) }}</p>
+                              </div>
+                            </div>
+                            
+                            <!-- Credit Utilization -->
+                            <div>
+                              <div class="flex justify-between items-center mb-0.5 sm:mb-1">
+                                <span class="text-xs text-gray-300">Utilización</span>
+                                <span class="text-xs font-bold px-1 py-0.5 rounded-full"
+                                      :class="getUtilizationColor(creditInfoData?.balance, creditInfoData?.creditLimit)">
+                                  {{ getUtilizationPercentage(creditInfoData?.balance, creditInfoData?.creditLimit) }}%
+                                </span>
+                              </div>
+                              <div class="h-1 bg-white/20 rounded-full overflow-hidden">
+                                <div
+                                  class="h-full transition-all duration-1000 ease-out rounded-full"
+                                  :class="getUtilizationBarColor(creditInfoData?.balance, creditInfoData?.creditLimit)"
+                                  :style="{ width: getUtilizationPercentage(creditInfoData?.balance, creditInfoData?.creditLimit) + '%' }"
+                                ></div>
+                              </div>
+                            </div>
+                          </div>
+
+                          <!-- Card Holder and Expiry -->
+                          <div class="text-right flex-shrink-0">
+                            <div class="mb-1">
+                              <p class="text-xs text-gray-300 mb-0.5">Titular</p>
+                              <p class="text-xs font-bold">{{ creditInfoData?.brand || 'TARJETA DE CRÉDITO' }}</p>
+                            </div>
+                            <div>
+                              <p class="text-xs text-gray-300 mb-0.5">Válida hasta</p>
+                              <p class="text-xs font-bold">12/28</p>
+                            </div>
+                          </div>
+                        </div>
+
+                        <!-- Available Credit -->
+                        <div class="text-center mt-1">
+                          <p class="text-xs text-gray-300 mb-0.5">Crédito Disponible</p>
+                          <p class="text-sm font-bold text-green-400">
+                            {{ formatCurrency((creditInfoData?.creditLimit || 0) - (creditInfoData?.balance || 0)) }}
+                          </p>
                         </div>
                       </div>
-
-                      <!-- Saldo Disponible -->
-                      <div class="flex justify-between items-center pt-2 border-t border-gray-200">
-                        <span class="text-sm font-medium text-gray-600">Saldo Disponible</span>
-                        <span class="text-lg font-semibold text-green-600">
-                          {{ formatCurrency((creditInfoData?.creditLimit || 0) - (creditInfoData?.balance || 0)) }}
-                        </span>
-                      </div>
-                    </div>
-                  </div>
-
-                  <!-- Fechas Importantes -->
-                  <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div class="bg-gray-50 rounded-lg p-4">
-                      <div class="flex items-center space-x-2 mb-2">
-                        <svg class="w-5 h-5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                        </svg>
-                        <span class="text-sm font-medium text-gray-700">Día de Corte</span>
-                      </div>
-                      <p class="text-lg font-semibold text-gray-900">
-                        {{ creditInfoData?.cutOffDay || 'No configurado' }}
-                      </p>
                     </div>
 
-                    <div class="bg-gray-50 rounded-lg p-4">
-                      <div class="flex items-center space-x-2 mb-2">
-                        <svg class="w-5 h-5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1" />
-                        </svg>
-                        <span class="text-sm font-medium text-gray-700">Día de Pago</span>
+                    <!-- Card Information Panel -->
+                    <div class="mt-4 bg-gray-50 rounded-lg p-3 border border-gray-200">
+                      <div class="grid grid-cols-2 gap-3">
+                        <!-- Cut-off Date -->
+                        <div class="flex items-center space-x-2">
+                          <div class="w-6 h-6 bg-gray-200 rounded flex items-center justify-center">
+                            <svg class="w-3 h-3 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                            </svg>
+                          </div>
+                          <div>
+                            <p class="text-xs text-gray-500 mb-0.5">Corte</p>
+                            <p class="text-sm font-medium text-gray-700">
+                              {{ creditInfoData?.cutOffDay || 'No configurado' }}
+                            </p>
+                          </div>
+                        </div>
+
+                        <!-- Payment Date -->
+                        <div class="flex items-center space-x-2">
+                          <div class="w-6 h-6 bg-gray-200 rounded flex items-center justify-center">
+                            <svg class="w-3 h-3 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1" />
+                            </svg>
+                          </div>
+                          <div>
+                            <p class="text-xs text-gray-500 mb-0.5">Pago</p>
+                            <p class="text-sm font-medium text-gray-700">
+                              {{ creditInfoData?.dueDay || 'No configurado' }}
+                            </p>
+                          </div>
+                        </div>
                       </div>
-                      <p class="text-lg font-semibold text-gray-900">
-                        {{ creditInfoData?.dueDay || 'No configurado' }}
-                      </p>
                     </div>
                   </div>
                 </div>
 
                 <!-- Footer -->
-                <div class="bg-gray-50 px-6 py-4 flex justify-end space-x-3">
-                  <button
-                    @click="creditInfoData = null"
-                    class="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 transition-colors duration-200"
-                  >
-                    Cerrar
-                  </button>
-                  <button
-                    @click="openEdit(creditInfoData); creditInfoData = null"
-                    class="px-4 py-2 text-sm font-medium text-white bg-blue-600 border border-transparent rounded-md hover:bg-blue-700 transition-colors duration-200"
-                  >
-                    Editar Crédito
-                  </button>
+                <div class="bg-gray-50 px-6 py-5 border-t border-gray-200">
+                  <div class="flex flex-col sm:flex-row justify-between items-center space-y-3 sm:space-y-0 sm:space-x-4">
+                    <div class="flex items-center space-x-2 text-sm text-gray-600">
+                      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                      </svg>
+                      <span>Información actualizada en tiempo real</span>
+                    </div>
+                    <div class="flex space-x-3">
+                      <button
+                        @click="creditInfoData = null"
+                        class="px-6 py-2.5 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 hover:border-gray-400 transition-all duration-200 shadow-sm"
+                      >
+                        Cerrar
+                      </button>
+                      <button
+                        @click="openEdit(creditInfoData); creditInfoData = null"
+                        class="px-6 py-2.5 text-sm font-medium text-white bg-gradient-to-r from-blue-600 to-blue-700 border border-transparent rounded-lg hover:from-blue-700 hover:to-blue-800 transition-all duration-200 shadow-sm hover:shadow-md"
+                      >
+                        <svg class="w-4 h-4 inline mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5h2m-6 14h10a2 2 0 002-2v-5.586a1 1 0 00-.293-.707l-6.414-6.414A1 1 0 0011.586 4H6a2 2 0 00-2 2v10a2 2 0 002 2z"/>
+                        </svg>
+                        Editar Crédito
+                      </button>
+                    </div>
+                  </div>
                 </div>
               </DialogPanel>
             </TransitionChild>
@@ -763,6 +817,7 @@ import { useConfirm } from '../composables/useConfirm'
 import { storeToRefs } from 'pinia'
 import DebtForm from '../components/DebtForm.vue'
 import CreditCard from '../components/CreditCard.vue'
+import CreditCardIcon from '../components/ui/CreditCardIcon.vue'
 import { Dialog, DialogPanel, DialogTitle, TransitionChild, TransitionRoot } from '@headlessui/vue'
 import { PencilSquareIcon, InformationCircleIcon, CalendarDaysIcon, TrashIcon } from '@heroicons/vue/24/outline'
 import LoadingSkeleton from '../components/ui/LoadingSkeleton.vue'
@@ -804,6 +859,31 @@ const getUtilizationWidth = (balance, creditLimit) => {
   const percentage = Math.min(100, Math.max(0, ((balance || 0) / creditLimit) * 100))
   return `${percentage.toFixed(1)}%`
 }
+
+const getCardType = (brand) => {
+  if (!brand) return 'generic'
+  
+  const brandLower = brand.toLowerCase()
+  if (brandLower.includes('visa')) return 'visa'
+  if (brandLower.includes('mastercard') || brandLower.includes('master')) return 'mastercard'
+  if (brandLower.includes('amex') || brandLower.includes('american express')) return 'amex'
+  if (brandLower.includes('discover')) return 'discover'
+  
+  return 'generic'
+}
+
+const getCardGradient = (brand) => {
+  if (!brand) return 'bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900'
+  
+  const brandLower = brand.toLowerCase()
+  if (brandLower.includes('visa')) return 'bg-gradient-to-br from-blue-900 via-blue-800 to-blue-900'
+  if (brandLower.includes('mastercard') || brandLower.includes('master')) return 'bg-gradient-to-br from-red-900 via-orange-800 to-red-900'
+  if (brandLower.includes('amex') || brandLower.includes('american express')) return 'bg-gradient-to-br from-blue-900 via-blue-700 to-blue-900'
+  if (brandLower.includes('discover')) return 'bg-gradient-to-br from-orange-900 via-orange-800 to-orange-900'
+  
+  return 'bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900'
+}
+
 
 const getStatusBadgeClass = (active) => {
   return active 
