@@ -1,39 +1,41 @@
 <template>
   <div class="space-y-6">
-    <div class="flex justify-between items-start">
+    <div class="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-4">
       <div>
-        <h1 class="text-2xl font-bold text-gray-900">Presupuesto</h1>
-        <p class="text-gray-600 mt-1">Configura y gestiona tu presupuesto mensual</p>
+        <h1 class="text-xl sm:text-2xl font-bold text-gray-900">Presupuesto</h1>
+        <p class="text-sm sm:text-base text-gray-600 mt-1">Configura y gestiona tu presupuesto mensual</p>
       </div>
       <button
+        v-if="showAddButton"
         @click="showModal = true"
-        class="btn-primary inline-flex items-center space-x-2"
+        class="btn-primary inline-flex items-center space-x-2 w-full sm:w-auto"
       >
         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
         </svg>
-        <span>Agregar Gasto</span>
+        <span class="sm:hidden">Agregar Gasto</span>
+        <span class="hidden sm:inline">Agregar Gasto</span>
       </button>
     </div>
 
     <div class="card" role="group" aria-label="Selector anual de presupuestos" tabindex="0" @keydown.left.prevent="prevYear" @keydown.right.prevent="nextYear">
-      <div class="flex items-center justify-between mb-4">
+      <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-4">
         <h2 class="text-lg font-semibold text-gray-900">Presupuestos del Año</h2>
         <div class="flex items-center gap-2">
-          <button class="px-2 py-1 text-sm rounded border hover:bg-gray-50" @click="prevYear" aria-label="Año anterior">{{ currentYear - 1 }}</button>
-          <span class="text-sm text-gray-700 font-medium">{{ currentYear }}</span>
-          <button class="px-2 py-1 text-sm rounded border hover:bg-gray-50" @click="nextYear" aria-label="Año siguiente">{{ currentYear + 1 }}</button>
-          <button class="ml-2 px-2 py-1 text-sm rounded border hover:bg-gray-50" @click="goToCurrentYear" aria-label="Volver al año actual">Hoy</button>
+          <button class="px-3 py-1.5 text-sm rounded border hover:bg-gray-50 transition-colors duration-200" @click="prevYear" aria-label="Año anterior">{{ currentYear - 1 }}</button>
+          <span class="text-sm text-gray-700 font-medium px-2">{{ currentYear }}</span>
+          <button class="px-3 py-1.5 text-sm rounded border hover:bg-gray-50 transition-colors duration-200" @click="nextYear" aria-label="Año siguiente">{{ currentYear + 1 }}</button>
+          <button class="ml-2 px-3 py-1.5 text-sm rounded border hover:bg-gray-50 transition-colors duration-200" @click="goToCurrentYear" aria-label="Volver al año actual">Hoy</button>
         </div>
       </div>
       <div v-if="isLoadingBudgets" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
         <div v-for="i in 12" :key="i" class="p-4 rounded-lg border border-gray-200 bg-gray-50 animate-pulse h-16"></div>
       </div>
-      <div v-else class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+      <div v-else class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
         <button
           v-for="(label, idx) in monthLabels"
           :key="label"
-          class="p-4 rounded-lg border text-left transition hover:shadow-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-2"
+          class="p-4 rounded-lg border text-left transition-all duration-200 hover:shadow-md hover:scale-[1.02] focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-2"
           :class="tileClass(idx)"
           @click="openEdit(idx)"
           role="button"
@@ -43,10 +45,15 @@
           :initial="{ opacity: 0, y: 10 }"
           :enter="{ opacity: 1, y: 0, transition: { duration: 0.25, delay: (idx % 4) * 0.05 } }"
         >
-          <div class="flex items-center justify-between">
-            <span class="text-sm font-medium" :class="isCurrentMonth(idx) ? 'text-primary-700' : 'text-gray-900'">{{ label }}</span>
-            <span v-if="getAmountFor(idx) > 0" class="text-xs text-gray-600">${{ getAmountFor(idx).toLocaleString('es-ES', { minimumFractionDigits: 2 }) }}</span>
-            <span v-else class="text-xs text-gray-400">Configurar</span>
+          <div class="flex flex-col justify-between h-full">
+            <div class="flex items-center justify-between mb-2">
+              <span class="text-sm font-medium" :class="isCurrentMonth(idx) ? 'text-primary-700' : 'text-gray-900'">{{ label }}</span>
+              <div v-if="isCurrentMonth(idx)" class="w-2 h-2 bg-primary-500 rounded-full"></div>
+            </div>
+            <div class="text-right">
+              <span v-if="getAmountFor(idx) > 0" class="text-xs font-semibold" :class="isCurrentMonth(idx) ? 'text-primary-600' : 'text-gray-600'">${{ getAmountFor(idx).toLocaleString('es-ES', { minimumFractionDigits: 0 }) }}</span>
+              <span v-else class="text-xs text-gray-400">Configurar</span>
+            </div>
           </div>
         </button>
       </div>
@@ -78,9 +85,9 @@
         leave-to-class="opacity-0 translate-y-8 scale-95"
       >
         <div v-if="isMonthModalOpen" class="fixed inset-0 z-50 overflow-y-auto" @click.self="closeMonthModal" role="dialog" aria-modal="true" :aria-labelledby="modalTitleId">
-          <div class="flex min-h-full items-end justify-center p-4 text-center sm:items-center sm:p-0">
+          <div class="flex min-h-full items-center justify-center p-4 text-center">
             <div 
-              class="relative transform overflow-hidden rounded-lg bg-white text-left shadow-xl transition-all sm:my-8 sm:w-full sm:max-w-md"
+              class="relative transform overflow-hidden bg-white text-left shadow-xl transition-all w-full max-w-md rounded-lg"
             >
               <div class="bg-gradient-to-r from-primary-600 to-primary-700 px-6 py-4">
                 <div class="flex items-center justify-between">
@@ -130,21 +137,24 @@
     />
 
     <!-- Floating Action Button para móvil -->
-    <div class="lg:hidden fixed bottom-6 right-6 z-30">
-      <button
-        @click="showModal = true"
-        class="btn-primary rounded-full w-14 h-14 shadow-lg hover:shadow-xl transition-all duration-200 flex items-center justify-center"
-      >
-        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
-        </svg>
-      </button>
-    </div>
+    <Teleport to="body">
+      <div v-if="!showAddButton" class="fixed bottom-20 right-4 sm:hidden z-40">
+        <button
+          @click="showModal = true"
+          class="w-14 h-14 bg-primary-600 hover:bg-primary-700 text-white rounded-full shadow-lg hover:shadow-xl transition-all duration-200 flex items-center justify-center focus:outline-none focus:ring-4 focus:ring-primary-200"
+          aria-label="Agregar gasto"
+        >
+          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+          </svg>
+        </button>
+      </div>
+    </Teleport>
   </div>
 </template>
 
 <script setup>
-import { ref, computed, onMounted, onUpdated, nextTick } from 'vue'
+import { ref, computed, onMounted, onUpdated, onUnmounted, nextTick, Teleport, Transition } from 'vue'
 import BudgetForm from '../components/BudgetForm.vue'
 import BudgetProgress from '../components/BudgetProgress.vue'
 import ExpenseModal from '../components/ExpenseModal.vue'
@@ -153,10 +163,16 @@ import { format } from 'date-fns'
 import { notify } from '../services/notifications.js'
 
 const showModal = ref(false)
+const showAddButton = ref(true)
 
 const handleExpenseAdded = () => {
   // El modal se cierra automáticamente después de agregar el gasto
   // Aquí podrías agregar lógica adicional si es necesario
+}
+
+// Actualizar visibilidad del botón según el tamaño de pantalla
+const updateScreenSize = () => {
+  showAddButton.value = window.innerWidth >= 640
 }
 
 const expenseStore = useExpenseStore()
@@ -169,6 +185,14 @@ onMounted(async () => {
   isLoadingBudgets.value = true
   await expenseStore.loadBudgets()
   isLoadingBudgets.value = false
+  
+  // Configurar visibilidad del botón
+  updateScreenSize()
+  window.addEventListener('resize', updateScreenSize)
+})
+
+onUnmounted(() => {
+  window.removeEventListener('resize', updateScreenSize)
 })
 
 const ym = (y, mIdx) => `${y}-${String(mIdx + 1).padStart(2,'0')}`
