@@ -118,6 +118,7 @@
             class="md:hidden border-t border-gray-200 bg-white shadow-lg"
             role="menu"
             aria-orientation="vertical"
+            @click.stop
           >
             <div class="px-2 pt-2 pb-3 space-y-1">
               <router-link 
@@ -182,6 +183,22 @@
               </router-link>
             </div>
           </div>
+        </Transition>
+
+        <!-- Overlay invisible para cerrar el menú al hacer clic fuera -->
+        <Transition
+          enter-active-class="transition-opacity ease-out duration-200"
+          enter-from-class="opacity-0"
+          enter-to-class="opacity-100"
+          leave-active-class="transition-opacity ease-in duration-150"
+          leave-from-class="opacity-100"
+          leave-to-class="opacity-0"
+        >
+          <div 
+            v-show="mobileMenuOpen" 
+            class="md:hidden fixed inset-0 z-10 bg-transparent"
+            @click="closeMobileMenu"
+          ></div>
         </Transition>
       </div>
     </nav>
