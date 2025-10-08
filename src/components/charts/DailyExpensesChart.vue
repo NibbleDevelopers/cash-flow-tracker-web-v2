@@ -16,7 +16,7 @@
       <p class="text-sm text-gray-500">No hay gastos registrados este mes</p>
     </div>
     
-    <div v-else class="overflow-x-auto">
+    <div v-else>
       <apexchart
         type="bar"
         :options="chartOptions"
@@ -120,7 +120,7 @@ const chartOptions = computed(() => ({
   xaxis: {
     categories: props.dailyData.map(day => {
       try {
-        return format(parseISO(day.date), 'dd/MM', { locale: es })
+        return format(parseISO(day.date), 'd', { locale: es })
       } catch {
         return day.date
       }
@@ -130,7 +130,7 @@ const chartOptions = computed(() => ({
         fontSize: isMobile.value ? '10px' : '11px',
         colors: '#6B7280'
       },
-      rotate: isMobile.value ? -90 : -45,
+      rotate: 0,
       maxHeight: isMobile.value ? 40 : undefined
     }
   },
@@ -164,7 +164,7 @@ const chartOptions = computed(() => ({
       },
       xaxis: {
         labels: {
-          rotate: -90,
+          rotate: 0,
           style: {
             fontSize: '10px'
           }

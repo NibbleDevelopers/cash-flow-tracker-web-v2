@@ -127,7 +127,8 @@
           v-for="(day, i) in calendarDays"
           :key="day.date"
           :class="[
-            'relative p-2 min-h-[70px] border border-gray-100 rounded-lg transition-colors duration-150 cursor-pointer group',
+            'relative p-2 border border-gray-100 rounded-lg transition-colors duration-150 cursor-pointer group',
+            'min-h-[50px] sm:min-h-[70px]',
             day.isCurrentMonth ? 'bg-white hover:bg-primary-50/30' : 'bg-gray-50',
             day.isToday ? 'ring-1 ring-primary-400 border-primary-300 bg-primary-50/50' : '',
             getDayClass(day)
@@ -140,7 +141,7 @@
           @click="openDayModal(day)"
         >
           <!-- Número del día -->
-          <div class="mb-1">
+          <div :class="['mb-1', day.expenses.length > 0 ? 'sm:mb-1' : '']">
             <span
               :class="[
                 'inline-flex items-center justify-center w-6 h-6 rounded-full text-xs font-semibold',
@@ -157,8 +158,20 @@
             </span>
           </div>
 
-          <!-- Indicadores de gastos -->
-          <div v-if="day.expenses.length > 0" class="space-y-0.5">
+          <!-- Indicador visual para mobile (solo punto de color) -->
+          <div v-if="day.expenses.length > 0" class="flex sm:hidden items-center justify-center space-x-1">
+            <div
+              v-if="day.fixedExpenses.length > 0"
+              class="w-2 h-2 rounded-full bg-red-500"
+            ></div>
+            <div
+              v-if="day.regularExpenses.length > 0"
+              class="w-2 h-2 rounded-full bg-blue-500"
+            ></div>
+          </div>
+
+          <!-- Indicadores de gastos (solo desktop) -->
+          <div v-if="day.expenses.length > 0" class="hidden sm:block space-y-0.5">
             <!-- Gastos fijos -->
             <div
               v-if="day.fixedExpenses.length > 0"
@@ -192,13 +205,13 @@
             v-else-if="day.isCurrentMonth"
             class="flex items-center justify-center h-full"
           >
-            <div class="w-1.5 h-1.5 rounded-full bg-green-400 opacity-50"></div>
+            <div class="w-1.5 h-1.5 rounded-full bg-green-400 opacity-50 hidden sm:block"></div>
           </div>
 
-          <!-- Tooltip con detalles de gastos -->
+          <!-- Tooltip con detalles de gastos (solo desktop) -->
           <div
             v-if="hoveredDay && hoveredDay.date === day.date && day.expenses.length > 0"
-            class="absolute z-50 w-64 p-2 bg-white border border-gray-200 rounded-lg shadow-xl transform -translate-x-1/2 -translate-y-full mb-2 opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none"
+            class="hidden sm:block absolute z-50 w-64 p-2 bg-white border border-gray-200 rounded-lg shadow-xl transform -translate-x-1/2 -translate-y-full mb-2 opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none"
             style="left: 50%; top: -10px;"
           >
             <!-- Flecha del tooltip -->
@@ -224,12 +237,32 @@
                       <p class="text-xs font-medium text-gray-900 truncate">{{ expense.description }}</p>
                       <div class="flex items-center space-x-1">
                         <p class="text-xs text-gray-500">{{ expense.category?.name || 'Sin categoría' }}</p>
-                        <span
-                          v-if="expense.isFixed"
-                          class="inline-flex items-center px-1 py-0.5 rounded text-xs font-medium bg-red-100 text-red-800"
-                        >
-                          Fijo
-                        </span>
+                        <div class="flex items-center space-x-1 flex-wrap">
+                          <span
+                            v-if="expense.isFixed"
+                            class="inline-flex items-center px-1 py-0.5 rounded text-xs font-medium bg-red-100 text-red-800"
+                          >
+                            Fijo
+                          </span>
+                          <span
+                            v-if="expense.entryType === 'charge'"
+                            class="inline-flex items-center px-1 py-0.5 rounded text-xs font-medium bg-orange-100 text-orange-800"
+                          >
+                            Cargo
+                          </span>
+                          <span
+                            v-else-if="expense.entryType === 'payment'"
+                            class="inline-flex items-center px-1 py-0.5 rounded text-xs font-medium bg-green-100 text-green-800"
+                          >
+                            Abono
+                          </span>
+                          <span
+                            v-else-if="!expense.debtId"
+                            class="inline-flex items-center px-1 py-0.5 rounded text-xs font-medium bg-blue-100 text-blue-800"
+                          >
+                            Efectivo
+                          </span>
+                        </div>
                       </div>
                     </div>
                   </div>
@@ -267,12 +300,12 @@
     <!-- Modal de detalles del día -->
     <div
       v-if="selectedDay"
-      class="fixed inset-0 z-50 overflow-y-auto"
+      class="fixed inset-0 z-50"
       @click="closeDayModal"
     >
-      <div class="flex items-center justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
+      <div class="flex items-center justify-center min-h-screen p-4 text-center sm:block sm:p-0">
         <!-- Overlay -->
-        <div class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" @click="closeDayModal"></div>
+        <div class="fixed inset-0 bg-gray-500 bg-opacity-40 transition-opacity" @click="closeDayModal"></div>
 
         <!-- Modal -->
         <div
@@ -305,7 +338,7 @@
                   <p class="text-gray-500">No hay gastos registrados este día</p>
                 </div>
 
-                <div v-else class="space-y-3 max-h-96 overflow-y-auto">
+                <div v-else class="space-y-3 max-h-[60vh] overflow-y-auto">
                   <div
                     v-for="expense in selectedDay.expenses"
                     :key="expense.id"
@@ -322,9 +355,27 @@
                           <p class="text-xs text-gray-500">{{ expense.category?.name || 'Sin categoría' }}</p>
                           <span
                             v-if="expense.isFixed"
-                            class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-red-100 text-red-800"
+                            class="inline-flex items-center px-1.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800"
                           >
                             Fijo
+                          </span>
+                          <span
+                            v-if="expense.entryType === 'charge'"
+                            class="inline-flex items-center px-1.5 py-0.5 rounded-full text-xs font-medium bg-orange-100 text-orange-800"
+                          >
+                            Cargo
+                          </span>
+                          <span
+                            v-else-if="expense.entryType === 'payment'"
+                            class="inline-flex items-center px-1.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800"
+                          >
+                            Abono
+                          </span>
+                          <span
+                            v-else-if="!expense.debtId"
+                            class="inline-flex items-center px-1.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800"
+                          >
+                            Efectivo
                           </span>
                         </div>
                       </div>
@@ -358,7 +409,7 @@
 </template>
 
 <script setup>
-import { ref, computed, watch } from 'vue'
+import { ref, computed, watch, onUnmounted } from 'vue'
 import { format, startOfMonth, endOfMonth, addMonths, subMonths, isSameDay, isSameMonth } from 'date-fns'
 import { es } from 'date-fns/locale'
 import { parseLocalDate } from '../../utils/date'
@@ -516,7 +567,11 @@ const navigateMonth = (direction) => {
 
 // Funciones de eventos
 const openDayModal = (day) => {
-  if (day?.expenses?.length > 0) {
+  if (!day?.isCurrentMonth) return
+  
+  // En mobile, abrir modal siempre; en desktop, solo si hay gastos
+  const isMobile = window.innerWidth < 640 // sm breakpoint
+  if (isMobile || day?.expenses?.length > 0) {
     selectedDay.value = day
     emit('day-selected', day)
   }
@@ -539,6 +594,11 @@ watch(() => props.month, (m) => {
     const [y, mm] = val.split('-').map(Number)
     currentDate.value = new Date(y, mm - 1, 1)
   }
+})
+
+// Cleanup al desmontar
+onUnmounted(() => {
+  // No es necesario limpiar estilos globales ya que no los modificamos
 })
 </script>
 
