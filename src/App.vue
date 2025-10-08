@@ -115,7 +115,7 @@
           <div 
             v-show="mobileMenuOpen" 
             id="mobile-menu"
-            class="md:hidden border-t border-gray-200 bg-white shadow-lg"
+            class="md:hidden border-t border-gray-200 bg-white shadow-lg relative z-20"
             role="menu"
             aria-orientation="vertical"
             @click.stop
