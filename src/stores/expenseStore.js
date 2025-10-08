@@ -102,7 +102,17 @@ export const useExpenseStore = defineStore('expense', () => {
 
   // Nuevas propiedades computadas para gastos fijos del mes
   const fixedExpensesThisMonth = computed(() => {
-    return currentMonthExpenses.value.filter(expense => expense.isFixed === true)
+    return currentMonthExpenses.value.filter(expense => {
+      // Incluir gastos que están marcados como fijos
+      if (expense.isFixed === true || expense.isFixed === 'true' || expense.isFixed === 1) {
+        return true
+      }
+      // También incluir gastos que tienen fixedExpenseId (gastos generados automáticamente)
+      if (expense.fixedExpenseId) {
+        return true
+      }
+      return false
+    })
   })
 
   const totalFixedExpenses = computed(() => {

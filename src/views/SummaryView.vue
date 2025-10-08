@@ -1,45 +1,60 @@
 <template>
-  <div class="space-y-6 cf-surface">
-    <div class="flex items-start justify-between flex-wrap gap-3 cf-header">
-      <div>
-        <h1 class="cf-title">Dashboard de Análisis</h1>
-        <p class="cf-subtitle">Vista general y análisis detallado de tus finanzas</p>
-        <div class="flex items-center gap-2 mt-2">
-          <span
-            class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-primary-50 text-primary-700"
-            v-motion
-            :initial="{ opacity: 0, y: -4 }"
-            :enter="{ opacity: 1, y: 0, transition: { duration: 0.2 } }"
-          >
-            {{ formattedMonthLabel }}
-          </span>
-          <span
-            class="inline-flex items-center px-2 py-1 rounded-full text-[10px] font-semibold bg-gray-100 text-gray-700"
-            v-motion
-            :initial="{ opacity: 0, y: -4 }"
-            :enter="{ opacity: 1, y: 0, transition: { duration: 0.2, delay: 0.03 } }"
-          >
-            {{ currentMonthExpenses.length }} gastos
-          </span>
-          <span
-            class="inline-flex items-center px-2 py-1 rounded-full text-[10px] font-semibold"
-            :class="budgetProgressBadgeClass"
-            v-motion
-            :initial="{ opacity: 0, y: -4 }"
-            :enter="{ opacity: 1, y: 0, transition: { duration: 0.2, delay: 0.06 } }"
-          >
-            {{ Math.round(budgetProgress) }}%
-          </span>
+  <div class="space-y-4 sm:space-y-6 cf-surface">
+    <!-- Header Responsivo -->
+    <div class="cf-header">
+      <div class="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
+        <div class="flex-1 min-w-0">
+          <h1 class="cf-title text-xl sm:text-2xl">Dashboard de Análisis</h1>
+          <p class="cf-subtitle text-sm sm:text-base">Vista general y análisis detallado de tus finanzas</p>
+          
+          <!-- Badges responsivos -->
+          <div class="flex flex-wrap items-center gap-2 mt-3">
+            <span
+              class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-primary-50 text-primary-700"
+              v-motion
+              :initial="{ opacity: 0, y: -4 }"
+              :enter="{ opacity: 1, y: 0, transition: { duration: 0.2 } }"
+            >
+              {{ formattedMonthLabel }}
+            </span>
+            <span
+              class="inline-flex items-center px-2 py-1 rounded-full text-[10px] font-semibold bg-gray-100 text-gray-700"
+              v-motion
+              :initial="{ opacity: 0, y: -4 }"
+              :enter="{ opacity: 1, y: 0, transition: { duration: 0.2, delay: 0.03 } }"
+            >
+              {{ currentMonthExpenses.length }} gastos
+            </span>
+            <span
+              class="inline-flex items-center px-2 py-1 rounded-full text-[10px] font-semibold"
+              :class="budgetProgressBadgeClass"
+              v-motion
+              :initial="{ opacity: 0, y: -4 }"
+              :enter="{ opacity: 1, y: 0, transition: { duration: 0.2, delay: 0.06 } }"
+            >
+              {{ Math.round(budgetProgress) }}%
+            </span>
+          </div>
         </div>
-      </div>
-      <div class="flex items-center gap-2">
-        <AppDatePicker v-model="selectedMonth" mode="month" aria-label="Seleccionar mes" />
+        
+        <!-- Selector de mes -->
+        <div class="flex items-center gap-2 sm:flex-shrink-0">
+          <AppDatePicker v-model="selectedMonth" mode="month" aria-label="Seleccionar mes" />
+        </div>
       </div>
     </div>
 
     <!-- Métricas clave -->
-    <div v-motion :initial="{opacity:0,y:8}" :enter="{opacity:1,y:0,transition:{duration:0.25}}">
-      <KeyMetricsCards
+    <Transition
+      enter-active-class="transition-all duration-500 ease-out"
+      enter-from-class="opacity-0 translate-y-4 scale-95"
+      enter-to-class="opacity-100 translate-y-0 scale-100"
+      leave-active-class="transition-all duration-300 ease-in"
+      leave-from-class="opacity-100 translate-y-0 scale-100"
+      leave-to-class="opacity-0 translate-y-4 scale-95"
+    >
+      <div v-if="!isLoading" v-motion :initial="{opacity:0,y:8}" :enter="{opacity:1,y:0,transition:{duration:0.4, ease:'easeOut'}}">
+    <KeyMetricsCards
       :total-spent="totalSpent"
       :remaining-budget="remainingBudget"
       :budget-progress="budgetProgress"
@@ -47,254 +62,309 @@
       :total-fixed-expenses="totalFixedExpenses"
       :expenses-count="currentMonthExpenses.length"
       :fixed-expenses-count="fixedExpensesThisMonth.length"
-      />
-    </div>
+    />
+      </div>
+      <LoadingSkeleton v-else type="metrics" />
+    </Transition>
 
     <!-- Progreso del presupuesto -->
-    <div v-motion :initial="{opacity:0,y:8}" :enter="{opacity:1,y:0,transition:{duration:0.25, delay:0.05}}">
+    <div v-motion :initial="{opacity:0,y:8}" :enter="{opacity:1,y:0,transition:{duration:0.4, delay:0.05, ease:'easeOut'}}">
       <BudgetProgress :show-credits="true" :month="selectedMonth" />
     </div>
 
+    <!-- Sección: Análisis Visual -->
+    <div class="space-y-6">
+      <div class="flex items-center space-x-3">
+        <div class="w-1 h-6 bg-gradient-to-b from-blue-500 to-blue-600 rounded-full"></div>
+        <h2 class="text-lg sm:text-xl font-bold text-gray-900">Análisis Visual</h2>
+      </div>
+
     <!-- Gráfico de gastos por categoría -->
-    <div v-motion :initial="{opacity:0,y:8}" :enter="{opacity:1,y:0,transition:{duration:0.25, delay:0.1}}">
-      <ExpensesByCategoryChart :expenses-by-category="expensesByCategoryForMonth" />
-    </div>
+      <Transition
+        enter-active-class="transition-all duration-600 ease-out"
+        enter-from-class="opacity-0 translate-y-6 scale-95"
+        enter-to-class="opacity-100 translate-y-0 scale-100"
+        leave-active-class="transition-all duration-300 ease-in"
+        leave-from-class="opacity-100 translate-y-0 scale-100"
+        leave-to-class="opacity-0 translate-y-6 scale-95"
+      >
+        <div v-if="!isLoading" v-motion :initial="{opacity:0,y:8}" :enter="{opacity:1,y:0,transition:{duration:0.5, delay:0.1, ease:'easeOut'}}">
+          <ExpensesByCategoryChart :expenses-by-category="expensesByCategoryForMonth" />
+        </div>
+        <LoadingSkeleton v-else type="chart" />
+      </Transition>
 
     <!-- Gráfico de gastos diarios -->
-    <div v-motion :initial="{opacity:0,y:8}" :enter="{opacity:1,y:0,transition:{duration:0.25, delay:0.15}}">
-      <DailyExpensesChart 
-      :daily-data="dailyExpensesDataForMonth" 
-      :current-month="selectedMonth || currentMonth"
-      />
-    </div>
-
-    <!-- Gráfico de progreso mensual -->
-    <div v-motion :initial="{opacity:0,y:8}" :enter="{opacity:1,y:0,transition:{duration:0.25, delay:0.2}}">
-      <MonthlyProgressChart 
-      :daily-data="dailyExpensesDataForMonth" 
-      :budget="budgetAmountForMonth"
-      :current-month="selectedMonth || currentMonth"
-      />
-    </div>
+      <Transition
+        enter-active-class="transition-all duration-600 ease-out"
+        enter-from-class="opacity-0 translate-y-6 scale-95"
+        enter-to-class="opacity-100 translate-y-0 scale-100"
+        leave-active-class="transition-all duration-300 ease-in"
+        leave-from-class="opacity-100 translate-y-0 scale-100"
+        leave-to-class="opacity-0 translate-y-6 scale-95"
+      >
+        <div v-if="!isLoading" v-motion :initial="{opacity:0,y:8}" :enter="{opacity:1,y:0,transition:{duration:0.5, delay:0.15, ease:'easeOut'}}">
+    <DailyExpensesChart 
+            :daily-data="dailyExpensesDataForMonth" 
+            :current-month="selectedMonth || currentMonth"
+          />
+        </div>
+        <LoadingSkeleton v-else type="chart" />
+      </Transition>
 
     <!-- Calendario de gastos -->
-    <div v-motion :initial="{opacity:0,y:8}" :enter="{opacity:1,y:0,transition:{duration:0.25, delay:0.25}}">
-      <ExpensesCalendar 
-      :daily-data="dailyExpensesDataForMonth"
-      :expenses="expensesForMonth"
-      :fixed-expenses="fixedExpensesForMonth"
-      :monthly-budget="budgetAmountForMonth"
-      :month="selectedMonth"
-      @month-changed="onCalendarMonthChanged"
-      />
+      <Transition
+        enter-active-class="transition-all duration-600 ease-out"
+        enter-from-class="opacity-0 translate-y-6 scale-95"
+        enter-to-class="opacity-100 translate-y-0 scale-100"
+        leave-active-class="transition-all duration-300 ease-in"
+        leave-from-class="opacity-100 translate-y-0 scale-100"
+        leave-to-class="opacity-0 translate-y-6 scale-95"
+      >
+        <div v-if="!isLoading" v-motion :initial="{opacity:0,y:8}" :enter="{opacity:1,y:0,transition:{duration:0.5, delay:0.2, ease:'easeOut'}}">
+    <ExpensesCalendar 
+            :daily-data="dailyExpensesDataForMonth"
+            :expenses="expensesForMonth"
+            :fixed-expenses="fixedExpensesForMonth"
+            :monthly-budget="budgetAmountForMonth"
+            :month="selectedMonth"
+            @month-changed="onCalendarMonthChanged"
+          />
+        </div>
+        <LoadingSkeleton v-else type="calendar" />
+      </Transition>
     </div>
 
+    <!-- Sección: Detalles por Categoría -->
+    <div class="space-y-6">
+      <div class="flex items-center space-x-3">
+        <div class="w-1 h-6 bg-gradient-to-b from-green-500 to-green-600 rounded-full"></div>
+        <h2 class="text-lg sm:text-xl font-bold text-gray-900">Detalles por Categoría</h2>
+      </div>
+
     <!-- Categorías de gastos -->
-    <div class="cf-card">
-      <div class="cf-card-head">
-        <h2 class="cf-card-title">Gastos por Categoría</h2>
+      <div class="cf-card" v-motion :initial="{opacity:0,y:8}" :enter="{opacity:1,y:0,transition:{duration:0.4, delay:0.25, ease:'easeOut'}}">
+        <div class="cf-card-head px-4 sm:px-5 py-3 sm:py-4">
+          <h3 class="cf-card-title text-sm sm:text-base">Gastos por Categoría</h3>
+        </div>
+      
+      <div v-if="expensesByCategory.length === 0" class="text-center py-6 sm:py-8 px-4">
+        <p class="cf-muted text-sm">No hay gastos registrados este mes</p>
       </div>
       
-      <div v-if="expensesByCategory.length === 0" class="text-center py-8">
-        <p class="cf-muted">No hay gastos registrados este mes</p>
-      </div>
-      
-      <div v-else class="space-y-2">
-        <div
-          v-for="(category, i) in expensesByCategory"
-          :key="category.category.id"
-          class="cf-row"
-          v-motion
-          :initial="{ opacity: 0, y: 6 }"
-          :enter="{ opacity: 1, y: 0, transition: { duration: 0.2, delay: i * 0.015 } }"
+      <div v-else class="space-y-2 p-3 sm:p-4">
+        <TransitionGroup
+          enter-active-class="transition-all duration-300 ease-out"
+          enter-from-class="opacity-0 translate-x-4 scale-95"
+          enter-to-class="opacity-100 translate-x-0 scale-100"
+          leave-active-class="transition-all duration-200 ease-in"
+          leave-from-class="opacity-100 translate-x-0 scale-100"
+          leave-to-class="opacity-0 translate-x-4 scale-95"
         >
-          <div class="flex items-center space-x-3">
-            <div class="w-3 h-3 rounded-full" :style="{ backgroundColor: category.category.color }"></div>
-            <span class="cf-row-title">{{ category.category.name }}</span>
+          <div
+            v-for="(category, i) in expensesByCategory"
+            :key="category.category.id"
+            class="cf-row p-2 sm:p-3"
+            :style="{ transitionDelay: `${i * 50}ms` }"
+          >
+          <div class="flex items-center space-x-2 sm:space-x-3 min-w-0">
+            <div class="w-3 h-3 rounded-full flex-shrink-0" :style="{ backgroundColor: category.category.color }"></div>
+            <span class="cf-row-title text-xs sm:text-sm truncate">{{ category.category.name }}</span>
           </div>
-          <div class="text-right">
-            <p class="cf-row-amount">
+            <div class="text-right flex-shrink-0">
+              <p class="cf-row-amount text-xs sm:text-sm">
               ${{ category.amount.toLocaleString('es-ES', { minimumFractionDigits: 2 }) }}
             </p>
-            <p class="cf-row-secondary">{{ category.percentage.toFixed(1) }}%</p>
+              <p class="cf-row-secondary text-[10px] sm:text-xs">{{ category.percentage.toFixed(1) }}%</p>
+            </div>
           </div>
-        </div>
+        </TransitionGroup>
       </div>
     </div>
 
     <!-- Estadísticas de gastos fijos -->
-    <div class="cf-card">
-      <div class="cf-card-head">
-        <h2 class="cf-card-title">Gastos Fijos del Mes</h2>
+    <div class="cf-card" v-motion :initial="{opacity:0,y:8}" :enter="{opacity:1,y:0,transition:{duration:0.4, delay:0.3, ease:'easeOut'}}">
+      <div class="cf-card-head px-4 sm:px-5 py-3 sm:py-4">
+        <h3 class="cf-card-title text-sm sm:text-base">Gastos Fijos del Mes</h3>
       </div>
       
-      <div v-if="fixedExpensesThisMonth.length === 0" class="text-center py-8">
-        <p class="cf-muted">No hay gastos fijos este mes</p>
-      </div>
-      
-      <div v-else class="space-y-2">
-        <div
-          v-for="(expense, i) in fixedExpensesThisMonth"
+    <div v-if="fixedExpensesThisMonth.length === 0" class="text-center py-6 sm:py-8 px-4">
+      <p class="cf-muted text-sm">No hay gastos fijos este mes</p>
+    </div>
+    
+    <div v-else class="p-4">
+      <div
+        v-for="(expense, i) in fixedExpensesThisMonth"
           :key="expense.id"
-          class="cf-row cf-row-fixed"
-          v-motion
-          :initial="{ opacity: 0, y: 6 }"
-          :enter="{ opacity: 1, y: 0, transition: { duration: 0.2, delay: i * 0.02 } }"
+        class="flex items-center justify-between p-3 bg-blue-50 rounded-lg border border-blue-100 mb-2"
         >
           <div class="flex items-center space-x-3">
-            <div class="flex-shrink-0">
-              <svg class="h-5 w-5 text-blue-600" fill="currentColor" viewBox="0 0 20 20">
-                <path fill-rule="evenodd" d="M6.267 3.455a3.066 3.066 0 001.745-.723 3.066 3.066 0 013.976 0 3.066 3.066 0 001.745.723 3.066 3.066 0 012.812 2.812c.051.643.304 1.254.723 1.745a3.066 3.066 0 010 3.976 3.066 3.066 0 00-.723 1.745 3.066 3.066 0 01-2.812 2.812 3.066 3.066 0 00-1.745.723 3.066 3.066 0 01-3.976 0 3.066 3.066 0 00-1.745-.723 3.066 3.066 0 01-2.812-2.812 3.066 3.066 0 00-.723-1.745 3.066 3.066 0 010-3.976 3.066 3.066 0 00.723-1.745 3.066 3.066 0 012.812-2.812zm7.44 5.252a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" />
+          <div class="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
+            <svg class="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
               </svg>
             </div>
             <div>
-              <p class="cf-row-title">{{ expense.description }}</p>
-              <div class="flex items-center space-x-2 mt-1">
-                <span class="cf-chip cf-chip-blue">Fijo</span>
-                <span class="cf-row-secondary">•</span>
-                <span class="cf-row-secondary">Paga el día {{ getDayOfMonth(expense.fixedExpenseId) }}</span>
-              </div>
-            </div>
+            <div class="font-medium text-gray-900">{{ expense.description }}</div>
+            <div class="text-xs text-gray-500">Fijo • Día {{ getDayOfMonth(expense.fixedExpenseId) }}</div>
           </div>
-          <span class="cf-row-amount">
+        </div>
+        <div class="text-right">
+          <div class="font-semibold text-gray-900">
             ${{ expense.amount.toLocaleString('es-ES', { minimumFractionDigits: 2 }) }}
-          </span>
+          </div>
+        </div>
         </div>
         
-        <div class="mt-4 pt-3 border-t border-blue-200">
-          <div class="flex justify-between items-center">
-            <span class="cf-row-secondary font-medium">Total gastos fijos:</span>
-            <span class="cf-row-amount text-blue-700">
+      <div class="flex items-center justify-between pt-3 mt-3 border-t border-gray-200">
+        <span class="font-medium text-gray-700">Total gastos fijos:</span>
+        <span class="font-bold text-lg text-gray-900">
               ${{ totalFixedExpenses.toLocaleString('es-ES', { minimumFractionDigits: 2 }) }}
             </span>
-          </div>
         </div>
       </div>
     </div>
 
     <!-- Resumen de gastos de crédito -->
-    <div class="cf-card">
-      <div class="cf-card-head">
-        <h2 class="cf-card-title">Gastos de Crédito del Mes</h2>
+    <div class="cf-card" v-motion :initial="{opacity:0,y:8}" :enter="{opacity:1,y:0,transition:{duration:0.4, delay:0.35, ease:'easeOut'}}">
+      <div class="cf-card-head px-4 sm:px-5 py-3 sm:py-4">
+        <h3 class="cf-card-title text-sm sm:text-base">Gastos de Crédito del Mes</h3>
+      </div>
+    
+    <div v-if="creditExpensesThisMonth.length === 0" class="text-center py-6 sm:py-8 px-4">
+      <div class="text-gray-400 mb-2">
+        <svg class="mx-auto h-8 w-8 sm:h-12 sm:w-12" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
+        </svg>
+      </div>
+      <p class="cf-muted text-sm">No hay gastos de crédito este mes</p>
+      <p class="text-xs text-gray-400 mt-1">Los pagos de tarjetas de crédito aparecerán aquí</p>
+    </div>
+    
+    <div v-else class="p-4">
+      <div
+        v-for="(expense, i) in creditExpensesThisMonth"
+        :key="expense.id"
+        class="flex items-center justify-between p-3 bg-red-50 rounded-lg border border-red-100 mb-2"
+      >
+        <div class="flex items-center space-x-3">
+          <div class="w-8 h-8 bg-red-100 rounded-full flex items-center justify-center">
+            <svg class="w-4 h-4 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
+            </svg>
+          </div>
+          <div>
+            <div class="font-medium text-gray-900">{{ expense.description }}</div>
+            <div class="text-xs text-gray-500">Crédito • {{ format(parseLocalDate(expense.date), 'dd/MM/yyyy') }}</div>
+          </div>
+        </div>
+        <div class="text-right">
+          <div class="font-semibold text-gray-900">
+            ${{ expense.amount.toLocaleString('es-ES', { minimumFractionDigits: 2 }) }}
+          </div>
+          <div class="text-xs text-gray-500">{{ expense.category.name }}</div>
+        </div>
       </div>
       
-      <div v-if="creditExpensesThisMonth.length === 0" class="text-center py-8">
-        <div class="text-gray-400 mb-2">
-          <svg class="mx-auto h-12 w-12" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
-          </svg>
-        </div>
-        <p class="cf-muted">No hay gastos de crédito este mes</p>
-        <p class="text-xs text-gray-400 mt-1">Los pagos de tarjetas de crédito aparecerán aquí</p>
+      <div class="flex items-center justify-between pt-3 mt-3 border-t border-gray-200">
+        <span class="font-medium text-gray-700">Total gastos de crédito:</span>
+        <span class="font-bold text-lg text-gray-900">
+          ${{ totalCreditExpenses.toLocaleString('es-ES', { minimumFractionDigits: 2 }) }}
+        </span>
       </div>
-      
-      <div v-else class="space-y-2">
-        <div
-          v-for="(expense, i) in creditExpensesThisMonth"
-          :key="expense.id"
-          class="cf-row cf-row-credit"
-          v-motion
-          :initial="{ opacity: 0, y: 6 }"
-          :enter="{ opacity: 1, y: 0, transition: { duration: 0.2, delay: i * 0.02 } }"
-        >
-          <div class="flex items-center space-x-3">
-            <div class="flex-shrink-0">
-              <svg class="h-5 w-5 text-red-600" fill="currentColor" viewBox="0 0 20 20">
-                <path fill-rule="evenodd" d="M4 4a2 2 0 00-2 2v4a2 2 0 002 2V6h10a2 2 0 00-2-2H4zm2 6a2 2 0 012-2h8a2 2 0 012 2v4a2 2 0 01-2 2H8a2 2 0 01-2-2v-4zm6 4a2 2 0 100-4 2 2 0 000 4z" clip-rule="evenodd" />
-              </svg>
-            </div>
-            <div>
-              <p class="cf-row-title">{{ expense.description }}</p>
-              <div class="flex items-center space-x-2 mt-1">
-                <span class="cf-chip cf-chip-red">Crédito</span>
-                <span class="cf-row-secondary">{{ format(parseLocalDate(expense.date), 'dd/MM/yyyy') }}</span>
-              </div>
-            </div>
-          </div>
-          <div class="text-right">
-            <p class="cf-row-amount">
-              ${{ expense.amount.toLocaleString('es-ES', { minimumFractionDigits: 2 }) }}
-            </p>
-            <p class="cf-row-secondary">{{ expense.category.name }}</p>
-          </div>
-        </div>
-        
-        <!-- Total de gastos de crédito -->
-        <div class="mt-4 pt-3 border-t border-red-200">
-          <div class="flex justify-between items-center">
-            <span class="cf-row-secondary font-medium">Total gastos de crédito:</span>
-            <span class="cf-row-amount text-red-600">
-              ${{ totalCreditExpenses.toLocaleString('es-ES', { minimumFractionDigits: 2 }) }}
-            </span>
-          </div>
-          <p class="text-xs text-gray-500 mt-1">
-            {{ creditExpensesThisMonth.length }} {{ creditExpensesThisMonth.length === 1 ? 'pago' : 'pagos' }} de crédito este mes
-          </p>
-        </div>
-      </div>
+    </div>
+    </div>
+
+    <!-- Sección: Actividad Reciente -->
+    <div class="space-y-6">
+      <div class="flex items-center space-x-3">
+        <div class="w-1 h-6 bg-gradient-to-b from-purple-500 to-purple-600 rounded-full"></div>
+        <h2 class="text-lg sm:text-xl font-bold text-gray-900">Actividad Reciente</h2>
     </div>
 
     <!-- Lista de gastos recientes -->
-    <div class="cf-card">
-      <div class="cf-card-head">
-        <h2 class="cf-card-title">Gastos Recientes</h2>
+      <div class="cf-card" v-motion :initial="{opacity:0,y:8}" :enter="{opacity:1,y:0,transition:{duration:0.4, delay:0.4, ease:'easeOut'}}">
+        <div class="cf-card-head px-4 sm:px-5 py-3 sm:py-4">
+          <h3 class="cf-card-title text-sm sm:text-base">Gastos Recientes</h3>
+        </div>
+      
+      <div v-if="recentExpenses.length === 0" class="text-center py-6 sm:py-8 px-4">
+        <p class="cf-muted text-sm">No hay gastos registrados</p>
       </div>
       
-      <div v-if="recentExpenses.length === 0" class="text-center py-8">
-        <p class="cf-muted">No hay gastos registrados</p>
-      </div>
-      
-      <div v-else class="space-y-2">
+      <div v-else class="space-y-2 p-3 sm:p-4">
         <div
           v-for="(expense, i) in recentExpenses.slice(0, 5)"
           :key="expense.id"
           :class="[
-            'cf-row',
+            'cf-row p-2 sm:p-3',
             expense.isFixed ? 'cf-row-fixed' : ''
           ]"
           v-motion
           :initial="{ opacity: 0, y: 6 }"
           :enter="{ opacity: 1, y: 0, transition: { duration: 0.2, delay: i * 0.02 } }"
         >
-          <div class="flex items-center space-x-3">
-            <span class="cf-chip">
+          <div class="flex items-center space-x-2 sm:space-x-3 min-w-0">
+            <span class="cf-chip text-[10px] flex-shrink-0">
               {{ expense.category.name }}
             </span>
-            <div>
-              <div class="flex items-center space-x-2">
-                <p class="cf-row-title">{{ expense.description }}</p>
-                <span v-if="expense.isFixed" class="cf-chip cf-chip-blue">
+            <div class="min-w-0 flex-1">
+              <div class="flex items-center space-x-1 sm:space-x-2">
+                <p class="cf-row-title text-xs sm:text-sm truncate">{{ expense.description }}</p>
+                <span v-if="expense.isFixed" class="cf-chip cf-chip-blue text-[10px] flex-shrink-0">
                   Fijo
                 </span>
               </div>
-              <p class="cf-row-secondary">{{ format(parseLocalDate(expense.date), 'dd/MM/yyyy') }}</p>
+              <p class="cf-row-secondary text-[10px] sm:text-xs">{{ format(parseLocalDate(expense.date), 'dd/MM/yyyy') }}</p>
             </div>
           </div>
-          <span class="cf-row-amount">
+          <span class="cf-row-amount text-xs sm:text-sm flex-shrink-0">
             ${{ expense.amount.toLocaleString('es-ES', { minimumFractionDigits: 2 }) }}
           </span>
+        </div>
         </div>
       </div>
     </div>
 
+    <!-- Botón flotante para mobile -->
+    <div class="fixed bottom-6 right-6 z-40 sm:hidden">
+      <button
+        @click="navigateToExpenses"
+        class="cf-fab w-14 h-14 rounded-full flex items-center justify-center shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105 active:scale-95"
+        v-motion
+        :initial="{ opacity: 0, scale: 0.8 }"
+        :enter="{ opacity: 1, scale: 1, transition: { duration: 0.3, delay: 0.5 } }"
+      >
+        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+        </svg>
+      </button>
+    </div>
     
+  </div>
   </div>
 </template>
 
 <script setup>
-import { ref, computed } from 'vue'
+import { ref, computed, watch } from 'vue'
 import { format } from 'date-fns'
+import { useRouter } from 'vue-router'
 import { useExpenseStore } from '../stores/expenseStore'
 import BudgetProgress from '../components/BudgetProgress.vue'
 import KeyMetricsCards from '../components/charts/KeyMetricsCards.vue'
 import ExpensesByCategoryChart from '../components/charts/ExpensesByCategoryChart.vue'
 import DailyExpensesChart from '../components/charts/DailyExpensesChart.vue'
-import MonthlyProgressChart from '../components/charts/MonthlyProgressChart.vue'
 import ExpensesCalendar from '../components/charts/ExpensesCalendar.vue'
 import { parseLocalDate } from '../utils/date'
 import AppDatePicker from '../components/ui/AppDatePicker.vue'
+import LoadingSkeleton from '../components/ui/LoadingSkeleton.vue'
+
+const router = useRouter()
 
 const expenseStore = useExpenseStore()
+
+// Estado de loading
+const isLoading = ref(false)
 
 const budget = computed(() => expenseStore.budget)
 const totalSpent = computed(() => expenseStore.totalSpent)
@@ -379,6 +449,19 @@ const onCalendarMonthChanged = (newMonth) => {
   }
 }
 
+// Simular loading cuando cambie el mes
+const handleMonthChange = async () => {
+  isLoading.value = true
+  // Simular tiempo de carga
+  await new Promise(resolve => setTimeout(resolve, 800))
+  isLoading.value = false
+}
+
+// Watcher para el mes seleccionado
+watch(selectedMonth, () => {
+  handleMonthChange()
+})
+
 // Etiquetas del header
 const formattedMonthLabel = computed(() => {
   try {
@@ -425,6 +508,8 @@ const totalCreditExpenses = computed(() => {
 
 // Función para obtener el día del mes de un gasto fijo
 const getDayOfMonth = (fixedExpenseId) => {
+  if (!fixedExpenseId) return 'N/A'
+  
   const fixedExpense = expenseStore.fixedExpenses.find(fe => fe.id === fixedExpenseId)
   if (fixedExpense && fixedExpense.dayOfMonth) {
     return fixedExpense.dayOfMonth
@@ -432,39 +517,118 @@ const getDayOfMonth = (fixedExpenseId) => {
   return 'N/A'
 }
 
-//
+// Función para navegar a gastos desde el botón flotante
+const navigateToExpenses = () => {
+  router.push('/gastos')
+}
 
 </script>
 
 <style scoped>
 /* Card Finance pilot styles (scoped) */
-.cf-surface { background: radial-gradient(1200px 600px at 100% -20%, rgba(60, 99, 255, 0.06), transparent 60%), radial-gradient(1200px 600px at -10% 110%, rgba(60, 99, 255, 0.05), transparent 60%); }
-.cf-header { padding-bottom: 4px; }
-.cf-title { @apply text-2xl font-bold text-gray-900; letter-spacing: -0.01em; }
+.cf-surface { 
+  background: radial-gradient(1200px 600px at 100% -20%, rgba(60, 99, 255, 0.06), transparent 60%), 
+              radial-gradient(1200px 600px at -10% 110%, rgba(60, 99, 255, 0.05), transparent 60%); 
+  padding: 1rem;
+}
+
+@media (min-width: 640px) {
+  .cf-surface { padding: 1.5rem; }
+}
+
+@media (min-width: 1024px) {
+  .cf-surface { padding: 2rem; }
+}
+
+.cf-header { padding-bottom: 0.5rem; }
+.cf-title { @apply font-bold text-gray-900; letter-spacing: -0.01em; }
 .cf-subtitle { @apply text-gray-600 mt-1; }
 
-.cf-card { @apply bg-white rounded-xl border border-gray-100 shadow-sm; box-shadow: 0 8px 24px rgba(15,23,42,0.06); overflow: hidden; }
-.cf-card + .cf-card { margin-top: 1rem; }
-.cf-card-head { @apply px-5 py-4 border-b border-gray-100 bg-gradient-to-r from-gray-50 to-white; }
-.cf-card-title { @apply text-base font-semibold text-gray-900; }
+.cf-card { 
+  @apply bg-white rounded-xl border border-gray-100 shadow-sm; 
+  box-shadow: 0 4px 12px rgba(15,23,42,0.04);
+  overflow: hidden; 
+  margin-bottom: 1rem;
+}
 
-.cf-row { @apply flex items-center justify-between p-3 border border-gray-100 rounded-lg bg-white; transition: transform 160ms cubic-bezier(0.22,1,0.36,1), box-shadow 160ms; box-shadow: 0 2px 10px rgba(15,23,42,0.04); }
-.cf-row:hover { transform: translateY(-1px); box-shadow: 0 6px 18px rgba(15,23,42,0.08); }
+@media (min-width: 640px) {
+  .cf-card { 
+    box-shadow: 0 8px 24px rgba(15,23,42,0.06);
+    margin-bottom: 1.5rem;
+  }
+}
+
+.cf-card-head { 
+  @apply border-b border-gray-100 bg-gradient-to-r from-gray-50 to-white; 
+  padding: 0.75rem 1rem;
+}
+
+@media (min-width: 640px) {
+  .cf-card-head { padding: 1rem 1.25rem; }
+}
+
+.cf-card-title { @apply font-semibold text-gray-900; }
+
+.cf-row { 
+  @apply flex items-center justify-between border border-gray-100 rounded-lg bg-white; 
+  transition: transform 160ms cubic-bezier(0.22,1,0.36,1), box-shadow 160ms; 
+  box-shadow: 0 1px 4px rgba(15,23,42,0.04);
+  padding: 0.5rem;
+}
+
+@media (min-width: 640px) {
+  .cf-row { 
+    padding: 0.75rem;
+    box-shadow: 0 2px 10px rgba(15,23,42,0.04);
+  }
+}
+
+.cf-row:hover { 
+  transform: translateY(-1px); 
+  box-shadow: 0 4px 12px rgba(15,23,42,0.08);
+}
+
+@media (min-width: 640px) {
+  .cf-row:hover { 
+    box-shadow: 0 6px 18px rgba(15,23,42,0.08);
+  }
+}
+
 .cf-row-fixed { @apply bg-blue-50 border-blue-200; }
 .cf-row-credit { @apply bg-red-50 border-red-200; }
-.cf-row-title { @apply text-sm font-medium text-gray-900; }
-.cf-row-secondary { @apply text-xs text-gray-500; }
-.cf-row-amount { @apply text-sm font-semibold text-gray-900; }
+.cf-row-title { @apply font-medium text-gray-900; }
+.cf-row-secondary { @apply text-gray-500; }
+.cf-row-amount { @apply font-semibold text-gray-900; }
 
-.cf-chip { @apply inline-flex items-center px-2 py-1 rounded-full text-[10px] font-medium bg-gray-100 text-gray-800; }
+.cf-chip { @apply inline-flex items-center rounded-full font-medium bg-gray-100 text-gray-800; }
 .cf-chip-blue { @apply bg-blue-100 text-blue-800; }
 .cf-chip-red { @apply bg-red-100 text-red-800; }
 
 .cf-muted { @apply text-gray-500; }
 
-.cf-btn-primary { @apply inline-flex justify-center items-center px-4 py-2 border border-transparent text-sm font-medium rounded-lg text-white bg-gray-900 hover:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-800; box-shadow: 0 10px 22px rgba(15,23,42,0.18); transition: transform 140ms cubic-bezier(0.22,1,0.36,1); }
+.cf-btn-primary { 
+  @apply inline-flex justify-center items-center border border-transparent font-medium rounded-lg text-white bg-gray-900 hover:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-800; 
+  box-shadow: 0 6px 16px rgba(15,23,42,0.15);
+  transition: transform 140ms cubic-bezier(0.22,1,0.36,1);
+  padding: 0.5rem 1rem;
+  font-size: 0.875rem;
+}
+
+@media (min-width: 640px) {
+  .cf-btn-primary { 
+    box-shadow: 0 10px 22px rgba(15,23,42,0.18);
+    padding: 0.5rem 1rem;
+  }
+}
+
 .cf-btn-primary:active { transform: translateY(1px) scale(0.99); }
 
-.cf-fab { @apply bg-gray-900 text-white; box-shadow: 0 16px 40px rgba(15,23,42,0.2); }
-.cf-fab:hover { box-shadow: 0 20px 50px rgba(15,23,42,0.28); }
+.cf-fab { 
+  @apply bg-gray-900 text-white; 
+  box-shadow: 0 12px 32px rgba(15,23,42,0.18);
+}
+
+.cf-fab:hover { 
+  box-shadow: 0 16px 40px rgba(15,23,42,0.25);
+}
 </style>

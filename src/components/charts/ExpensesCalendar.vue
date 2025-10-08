@@ -1,40 +1,40 @@
 <template>
-  <div class="card">
-    <div class="flex justify-between items-center mb-6">
-      <h3 class="text-lg font-semibold text-gray-900">Calendario de Gastos</h3>
-      <div class="flex items-center space-x-4">
+  <div class="card p-3 sm:p-4">
+    <div class="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4 mb-4 sm:mb-6">
+      <h3 class="text-base sm:text-lg font-semibold text-gray-900">Calendario de Gastos</h3>
+      <div class="flex flex-wrap items-center gap-3 sm:gap-4">
         <div class="flex items-center space-x-2">
           <div class="w-3 h-3 rounded-full bg-blue-500"></div>
-          <span class="text-sm text-gray-600">Gastos del día</span>
+          <span class="text-xs sm:text-sm text-gray-600">Gastos del día</span>
         </div>
         <div class="flex items-center space-x-2">
           <div class="w-3 h-3 rounded-full bg-red-500"></div>
-          <span class="text-sm text-gray-600">Gastos fijos</span>
+          <span class="text-xs sm:text-sm text-gray-600">Gastos fijos</span>
         </div>
         <div class="flex items-center space-x-2">
           <div class="w-3 h-3 rounded-full bg-green-500"></div>
-          <span class="text-sm text-gray-600">Sin gastos</span>
+          <span class="text-xs sm:text-sm text-gray-600">Sin gastos</span>
         </div>
       </div>
     </div>
 
-    <div v-if="calendarDays.length === 0" class="text-center py-8">
+    <div v-if="calendarDays.length === 0" class="text-center py-6 sm:py-8">
       <div class="text-gray-400 mb-2">
-        <svg class="mx-auto h-12 w-12" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <svg class="mx-auto h-8 w-8 sm:h-12 sm:w-12" fill="none" viewBox="0 0 24 24" stroke="currentColor">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
         </svg>
       </div>
-      <p class="text-gray-500">No hay gastos registrados este mes</p>
+      <p class="text-sm text-gray-500">No hay gastos registrados este mes</p>
     </div>
 
     <div v-else>
       <!-- Navegación del mes -->
-      <div class="flex justify-between items-center mb-4">
+      <div class="flex justify-between items-center mb-3 sm:mb-4">
         <button
           @click="previousMonth"
-          class="p-1.5 rounded-md border border-transparent text-primary-700 hover:bg-primary-50 hover:border-primary-200 transition-colors"
+          class="p-2 sm:p-1.5 rounded-md border border-transparent text-primary-700 hover:bg-primary-50 hover:border-primary-200 transition-colors"
         >
-          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <svg class="w-5 h-5 sm:w-4 sm:h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
           </svg>
         </button>
@@ -51,59 +51,59 @@
         
         <button
           @click="nextMonth"
-          class="p-1.5 rounded-md border border-transparent text-primary-700 hover:bg-primary-50 hover:border-primary-200 transition-colors"
+          class="p-2 sm:p-1.5 rounded-md border border-transparent text-primary-700 hover:bg-primary-50 hover:border-primary-200 transition-colors"
         >
-          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <svg class="w-5 h-5 sm:w-4 sm:h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
           </svg>
         </button>
       </div>
 
       <!-- Resumen por quincenas -->
-      <div class="grid grid-cols-2 gap-3 mb-4">
-        <div class="bg-gradient-to-r from-blue-50 to-blue-100 p-3 rounded-lg border border-blue-200">
+      <div class="grid grid-cols-2 gap-2 sm:gap-3 mb-3 sm:mb-4">
+        <div class="bg-gradient-to-r from-blue-50 to-blue-100 p-2 sm:p-3 rounded-lg border border-blue-200">
           <div class="flex items-center justify-between">
             <div>
-              <h5 class="text-xs font-semibold text-blue-800">Primera Quincena</h5>
-              <p class="text-xs text-blue-600">1-15</p>
+              <h5 class="text-[10px] sm:text-xs font-semibold text-blue-800">Primera Quincena</h5>
+              <p class="text-[9px] sm:text-xs text-blue-600">1-15</p>
             </div>
             <div class="text-right">
-              <p class="text-sm font-bold text-blue-900">
+              <p class="text-xs sm:text-sm font-bold text-blue-900">
                 ${{ formatCurrency(firstFortnightTotal) }}
               </p>
-              <p class="text-xs text-blue-600">{{ firstFortnightCount }} gastos</p>
+              <p class="text-[9px] sm:text-xs text-blue-600">{{ firstFortnightCount }} gastos</p>
             </div>
           </div>
-          <div v-if="firstFortnightBudget > 0" class="mt-2">
-            <div class="flex justify-between text-[10px] text-blue-700 mb-1">
+          <div v-if="firstFortnightBudget > 0" class="mt-1 sm:mt-2">
+            <div class="flex justify-between text-[9px] sm:text-[10px] text-blue-700 mb-1">
               <span>Presupuesto: ${{ formatCurrency(firstFortnightBudget, true) }}</span>
               <span>{{ firstFortnightProgress.toFixed(0) }}%</span>
             </div>
-            <div class="w-full h-1.5 bg-blue-200 rounded-full overflow-hidden">
+            <div class="w-full h-1 sm:h-1.5 bg-blue-200 rounded-full overflow-hidden">
               <div class="h-full bg-blue-600" :style="{ width: Math.min(100, firstFortnightProgress) + '%' }"></div>
             </div>
           </div>
         </div>
         
-        <div class="bg-gradient-to-r from-green-50 to-green-100 p-3 rounded-lg border border-green-200">
+        <div class="bg-gradient-to-r from-green-50 to-green-100 p-2 sm:p-3 rounded-lg border border-green-200">
           <div class="flex items-center justify-between">
             <div>
-              <h5 class="text-xs font-semibold text-green-800">Segunda Quincena</h5>
-              <p class="text-xs text-green-600">16-31</p>
+              <h5 class="text-[10px] sm:text-xs font-semibold text-green-800">Segunda Quincena</h5>
+              <p class="text-[9px] sm:text-xs text-green-600">16-31</p>
             </div>
             <div class="text-right">
-              <p class="text-sm font-bold text-green-900">
+              <p class="text-xs sm:text-sm font-bold text-green-900">
                 ${{ formatCurrency(secondFortnightTotal) }}
               </p>
-              <p class="text-xs text-green-600">{{ secondFortnightCount }} gastos</p>
+              <p class="text-[9px] sm:text-xs text-green-600">{{ secondFortnightCount }} gastos</p>
             </div>
           </div>
-          <div v-if="secondFortnightBudget > 0" class="mt-2">
-            <div class="flex justify-between text-[10px] text-green-700 mb-1">
+          <div v-if="secondFortnightBudget > 0" class="mt-1 sm:mt-2">
+            <div class="flex justify-between text-[9px] sm:text-[10px] text-green-700 mb-1">
               <span>Presupuesto: ${{ formatCurrency(secondFortnightBudget, true) }}</span>
               <span>{{ secondFortnightProgress.toFixed(0) }}%</span>
             </div>
-            <div class="w-full h-1.5 bg-green-200 rounded-full overflow-hidden">
+            <div class="w-full h-1 sm:h-1.5 bg-green-200 rounded-full overflow-hidden">
               <div class="h-full bg-green-600" :style="{ width: Math.min(100, secondFortnightProgress) + '%' }"></div>
             </div>
           </div>

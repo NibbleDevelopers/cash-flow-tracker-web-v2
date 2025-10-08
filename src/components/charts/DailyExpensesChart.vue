@@ -1,37 +1,53 @@
 <template>
-  <div class="card">
-    <div class="flex justify-between items-center mb-4">
-      <h3 class="text-lg font-semibold text-gray-900">Gastos Diarios - {{ currentMonthName }}</h3>
+  <div class="card p-3 sm:p-4">
+    <div class="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-2 sm:gap-0 mb-4">
+      <h3 class="text-base sm:text-lg font-semibold text-gray-900">Gastos Diarios - {{ currentMonthName }}</h3>
       <div class="flex items-center space-x-2">
-        <span class="text-sm text-gray-500">Promedio diario: ${{ averageDaily.toLocaleString('es-ES', { minimumFractionDigits: 2 }) }}</span>
+        <span class="text-xs sm:text-sm text-gray-500">Promedio diario: ${{ averageDaily.toFixed(2) }}</span>
       </div>
     </div>
     
-    <div v-if="dailyData.length === 0" class="text-center py-8">
+    <div v-if="dailyData.length === 0" class="text-center py-6 sm:py-8">
       <div class="text-gray-400 mb-2">
-        <svg class="mx-auto h-12 w-12" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <svg class="mx-auto h-8 w-8 sm:h-12 sm:w-12" fill="none" viewBox="0 0 24 24" stroke="currentColor">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
         </svg>
       </div>
-      <p class="text-gray-500">No hay gastos registrados este mes</p>
+      <p class="text-sm text-gray-500">No hay gastos registrados este mes</p>
     </div>
     
-    <div v-else>
+    <div v-else class="overflow-x-auto">
       <apexchart
         type="bar"
         :options="chartOptions"
         :series="chartSeries"
-        height="300"
+        :height="isMobile ? 250 : 300"
       />
     </div>
   </div>
 </template>
 
 <script setup>
-import { computed } from 'vue'
+import { computed, ref, onMounted, onUnmounted } from 'vue'
 import VueApexCharts from 'vue3-apexcharts'
 import { format, parseISO } from 'date-fns'
 import { es } from 'date-fns/locale'
+
+// Detectar si es mobile
+const isMobile = ref(false)
+
+const updateScreenSize = () => {
+  isMobile.value = window.innerWidth < 640
+}
+
+onMounted(() => {
+  updateScreenSize()
+  window.addEventListener('resize', updateScreenSize)
+})
+
+onUnmounted(() => {
+  window.removeEventListener('resize', updateScreenSize)
+})
 
 const props = defineProps({
   dailyData: {
@@ -71,7 +87,7 @@ const chartOptions = computed(() => ({
     type: 'bar',
     fontFamily: 'Inter, system-ui, sans-serif',
     toolbar: {
-      show: true,
+      show: !isMobile.value,
       tools: {
         download: true,
         selection: true,
@@ -92,7 +108,7 @@ const chartOptions = computed(() => ({
   plotOptions: {
     bar: {
       borderRadius: 4,
-      columnWidth: '60%',
+      columnWidth: isMobile.value ? '80%' : '60%',
       dataLabels: {
         position: 'top'
       }
@@ -111,10 +127,11 @@ const chartOptions = computed(() => ({
     }),
     labels: {
       style: {
-        fontSize: '11px',
+        fontSize: isMobile.value ? '10px' : '11px',
         colors: '#6B7280'
       },
-      rotate: -45
+      rotate: isMobile.value ? -90 : -45,
+      maxHeight: isMobile.value ? 40 : undefined
     }
   },
   yaxis: {
@@ -123,7 +140,7 @@ const chartOptions = computed(() => ({
         return '$' + val.toLocaleString('es-ES', { minimumFractionDigits: 0 })
       },
       style: {
-        fontSize: '12px',
+        fontSize: isMobile.value ? '10px' : '12px',
         colors: '#6B7280'
       }
     }
