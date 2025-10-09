@@ -220,10 +220,13 @@ const cardRef = ref(null)
 const swipeOffset = ref(0)
 const isDragging = ref(false)
 const startX = ref(0)
+const startY = ref(0)
 const currentX = ref(0)
+const currentY = ref(0)
 const isMouseDown = ref(false)
 const isTouching = ref(false)
 const isMobile = ref(false)
+const isHorizontalSwipe = ref(false)
 
 // Computed for mobile animations
 const shouldShowMobileAnimations = computed(() => isMobile.value && isTouching.value)
@@ -245,34 +248,56 @@ const onTouchStart = (e) => {
   checkIfMobile() // Check screen size on each touch
   if (!isMobile.value) return // Only on mobile
   startX.value = e.touches[0].clientX
+  startY.value = e.touches[0].clientY
   currentX.value = e.touches[0].clientX
+  currentY.value = e.touches[0].clientY
   isDragging.value = true
   isTouching.value = true
+  isHorizontalSwipe.value = false
 }
 
 const onTouchMove = (e) => {
   if (!isDragging.value || !isMobile.value) return
-  e.preventDefault()
+  
   currentX.value = e.touches[0].clientX
-  const deltaX = currentX.value - startX.value
-  swipeOffset.value = Math.max(-100, Math.min(100, deltaX))
+  currentY.value = e.touches[0].clientY
+  
+  const deltaX = Math.abs(currentX.value - startX.value)
+  const deltaY = Math.abs(currentY.value - startY.value)
+  
+  // Detectar dirección del movimiento solo la primera vez
+  if (!isHorizontalSwipe.value && (deltaX > 5 || deltaY > 5)) {
+    // Si el movimiento horizontal es mayor que el vertical, es un swipe
+    isHorizontalSwipe.value = deltaX > deltaY
+  }
+  
+  // Solo prevenir scroll si es un swipe horizontal
+  if (isHorizontalSwipe.value) {
+    e.preventDefault()
+    const swipeDelta = currentX.value - startX.value
+    swipeOffset.value = Math.max(-100, Math.min(100, swipeDelta))
+  }
 }
 
 const onTouchEnd = () => {
   if (!isDragging.value || !isMobile.value) return
   isDragging.value = false
   
-  const threshold = 50
-  if (swipeOffset.value > threshold) {
-    // Swipe right - Edit
-    emit('edit', props.expense)
-  } else if (swipeOffset.value < -threshold) {
-    // Swipe left - Delete
-    emit('delete', props.expense)
+  // Solo procesar acciones si fue un swipe horizontal
+  if (isHorizontalSwipe.value) {
+    const threshold = 50
+    if (swipeOffset.value > threshold) {
+      // Swipe right - Edit
+      emit('edit', props.expense)
+    } else if (swipeOffset.value < -threshold) {
+      // Swipe left - Delete
+      emit('delete', props.expense)
+    }
   }
   
   // Reset position
   swipeOffset.value = 0
+  isHorizontalSwipe.value = false
   
   // Delay to show animation before removing touch state
   setTimeout(() => {
