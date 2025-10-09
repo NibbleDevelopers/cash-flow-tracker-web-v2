@@ -293,74 +293,74 @@
         class="relative bg-white rounded-lg text-left overflow-hidden shadow-2xl transform transition-all w-full max-w-lg max-h-[80vh] flex flex-col"
         @click.stop
       >
-        <div class="bg-white px-4 pt-5 pb-4 sm:p-6 overflow-y-auto">
+        <div class="bg-white px-3 pt-4 pb-3 sm:px-5 sm:pt-5 sm:pb-4 overflow-y-auto">
           <div class="w-full">
-            <div class="flex items-center justify-between mb-4">
-              <h3 class="text-base sm:text-lg font-semibold text-gray-900">
+            <div class="flex items-center justify-between mb-3">
+              <h3 class="text-sm sm:text-base font-semibold text-gray-900">
                 Gastos del {{ format(parseLocalDate(selectedDay.date), 'dd \'de\' MMMM yyyy', { locale: es }) }}
               </h3>
               <button
                 @click="closeDayModal"
                 class="text-gray-400 hover:text-gray-600 transition-colors"
               >
-                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
                 </svg>
               </button>
             </div>
 
-            <div v-if="selectedDay.expenses.length === 0" class="text-center py-8">
+            <div v-if="selectedDay.expenses.length === 0" class="text-center py-6">
               <div class="text-gray-400 mb-2">
-                <svg class="mx-auto h-12 w-12" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <svg class="mx-auto h-10 w-10" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                 </svg>
               </div>
-              <p class="text-gray-500">No hay gastos registrados este día</p>
+              <p class="text-sm text-gray-500">No hay gastos registrados este día</p>
             </div>
 
-            <div v-else class="space-y-3">
+            <div v-else class="space-y-2">
               <div
                 v-for="expense in selectedDay.expenses"
                 :key="expense.id"
-                class="flex items-center justify-between p-3 bg-gray-50 rounded-lg border border-gray-200"
+                class="flex items-center justify-between p-2.5 bg-gray-50 rounded-lg border border-gray-200"
               >
-                <div class="flex items-center space-x-3 min-w-0 flex-1">
+                <div class="flex items-center space-x-2.5 min-w-0 flex-1">
                   <div
-                    class="w-4 h-4 rounded-full flex-shrink-0"
+                    class="w-3.5 h-3.5 rounded-full flex-shrink-0"
                     :style="{ backgroundColor: expense.category?.color || '#6B7280' }"
                   ></div>
                   <div class="min-w-0 flex-1">
                     <p class="text-sm font-medium text-gray-900">{{ expense.description }}</p>
-                    <div class="flex items-center space-x-2 mt-1 flex-wrap">
+                    <div class="flex items-center space-x-1.5 mt-0.5 flex-wrap gap-y-1">
                       <p class="text-xs text-gray-500">{{ expense.category?.name || 'Sin categoría' }}</p>
                       <span
                         v-if="expense.isFixed"
-                        class="inline-flex items-center px-1.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800"
+                        class="inline-flex items-center px-1.5 py-0.5 rounded-full text-[10px] font-medium bg-red-100 text-red-800"
                       >
                         Fijo
                       </span>
                       <span
                         v-if="expense.entryType === 'charge'"
-                        class="inline-flex items-center px-1.5 py-0.5 rounded-full text-xs font-medium bg-orange-100 text-orange-800"
+                        class="inline-flex items-center px-1.5 py-0.5 rounded-full text-[10px] font-medium bg-orange-100 text-orange-800"
                       >
                         Cargo
                       </span>
                       <span
                         v-else-if="expense.entryType === 'payment'"
-                        class="inline-flex items-center px-1.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800"
+                        class="inline-flex items-center px-1.5 py-0.5 rounded-full text-[10px] font-medium bg-green-100 text-green-800"
                       >
                         Abono
                       </span>
                       <span
                         v-else-if="!expense.debtId"
-                        class="inline-flex items-center px-1.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800"
+                        class="inline-flex items-center px-1.5 py-0.5 rounded-full text-[10px] font-medium bg-blue-100 text-blue-800"
                       >
                         Efectivo
                       </span>
                     </div>
                   </div>
                 </div>
-                <div class="text-right flex-shrink-0 ml-3">
+                <div class="text-right flex-shrink-0 ml-2.5">
                   <p class="text-sm font-semibold text-gray-900">
                     ${{ formatCurrency(expense.amount, true) }}
                   </p>
@@ -368,14 +368,14 @@
               </div>
             </div>
 
-            <div v-if="selectedDay.expenses.length > 0" class="mt-4 pt-4 border-t border-gray-200">
+            <div v-if="selectedDay.expenses.length > 0" class="mt-3 pt-3 border-t border-gray-200">
               <div class="flex justify-between items-center">
-                <span class="text-base font-medium text-gray-700">Total del día:</span>
-                <span class="text-xl font-bold text-gray-900">
+                <span class="text-sm font-medium text-gray-700">Total del día:</span>
+                <span class="text-lg font-bold text-gray-900">
                   ${{ formatCurrency(selectedDay.totalAmount, true) }}
                 </span>
               </div>
-              <div class="mt-2 text-sm text-gray-500">
+              <div class="mt-1.5 text-xs text-gray-500">
                 {{ selectedDay.expenses.length }} {{ selectedDay.expenses.length === 1 ? 'gasto' : 'gastos' }} registrado{{ selectedDay.expenses.length === 1 ? '' : 's' }}
               </div>
             </div>
