@@ -18,6 +18,7 @@
     
     <div v-else>
       <apexchart
+        ref="chartRef"
         type="bar"
         :options="chartOptions"
         :series="chartSeries"
@@ -28,13 +29,14 @@
 </template>
 
 <script setup>
-import { computed, ref, onMounted, onUnmounted } from 'vue'
+import { computed, ref, onMounted, onUnmounted, watch } from 'vue'
 import VueApexCharts from 'vue3-apexcharts'
 import { format, parseISO } from 'date-fns'
 import { es } from 'date-fns/locale'
 
 // Detectar si es mobile
 const isMobile = ref(false)
+const chartRef = ref(null)
 
 const updateScreenSize = () => {
   isMobile.value = window.innerWidth < 640
@@ -47,6 +49,16 @@ onMounted(() => {
 
 onUnmounted(() => {
   window.removeEventListener('resize', updateScreenSize)
+  // Limpiar referencia del gráfico de manera más segura
+  if (chartRef.value && chartRef.value.destroy) {
+    try {
+      chartRef.value.destroy()
+    } catch (error) {
+      // Ignorar errores de destrucción
+      console.warn('Error al destruir gráfico:', error)
+    }
+  }
+  chartRef.value = null
 })
 
 const props = defineProps({
@@ -173,6 +185,21 @@ const chartOptions = computed(() => ({
     }
   }]
 }))
+
+// Watcher para manejar cambios en los datos de manera segura
+watch(() => props.dailyData, (newData) => {
+  if (chartRef.value && chartRef.value.updateSeries && newData && newData.length > 0) {
+    try {
+      chartRef.value.updateSeries([{
+        name: 'Gastos',
+        data: newData.map(day => day.amount)
+      }])
+    } catch (error) {
+      // Ignorar errores de actualización
+      console.warn('Error al actualizar series del gráfico:', error)
+    }
+  }
+}, { deep: true })
 </script>
 
 

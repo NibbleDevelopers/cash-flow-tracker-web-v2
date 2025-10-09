@@ -46,31 +46,41 @@
 
     <!-- Métricas clave -->
     <Transition
-      enter-active-class="transition-all duration-500 ease-out"
-      enter-from-class="opacity-0 translate-y-4 scale-95"
-      enter-to-class="opacity-100 translate-y-0 scale-100"
-      leave-active-class="transition-all duration-300 ease-in"
-      leave-from-class="opacity-100 translate-y-0 scale-100"
-      leave-to-class="opacity-0 translate-y-4 scale-95"
+      enter-active-class="transition-all duration-300 ease-out"
+      enter-from-class="opacity-0 translate-y-2"
+      enter-to-class="opacity-100 translate-y-0"
+      leave-active-class="transition-all duration-200 ease-in"
+      leave-from-class="opacity-100 translate-y-0"
+      leave-to-class="opacity-0 translate-y-2"
     >
-      <div v-if="!isLoading" v-motion :initial="{opacity:0,y:8}" :enter="{opacity:1,y:0,transition:{duration:0.4, ease:'easeOut'}}">
-    <KeyMetricsCards
-      :total-spent="totalSpent"
-      :remaining-budget="remainingBudget"
-      :budget-progress="budgetProgress"
-      :average-daily="averageDailyExpense"
-      :total-fixed-expenses="totalFixedExpenses"
-      :expenses-count="currentMonthExpenses.length"
-      :fixed-expenses-count="fixedExpensesThisMonth.length"
-    />
+      <div v-if="!isLoading">
+        <KeyMetricsCards
+          :total-spent="totalSpent"
+          :remaining-budget="remainingBudget"
+          :budget-progress="budgetProgress"
+          :average-daily="averageDailyExpense"
+          :total-fixed-expenses="totalFixedExpenses"
+          :expenses-count="currentMonthExpenses.length"
+          :fixed-expenses-count="fixedExpensesThisMonth.length"
+        />
       </div>
       <LoadingSkeleton v-else type="metrics" />
     </Transition>
 
     <!-- Progreso del presupuesto -->
-    <div v-motion :initial="{opacity:0,y:8}" :enter="{opacity:1,y:0,transition:{duration:0.4, delay:0.05, ease:'easeOut'}}">
-      <BudgetProgress :show-credits="true" :month="selectedMonth" />
-    </div>
+    <Transition
+      enter-active-class="transition-all duration-300 ease-out"
+      enter-from-class="opacity-0 translate-y-2"
+      enter-to-class="opacity-100 translate-y-0"
+      leave-active-class="transition-all duration-200 ease-in"
+      leave-from-class="opacity-100 translate-y-0"
+      leave-to-class="opacity-0 translate-y-2"
+    >
+      <div v-if="!isLoading">
+        <BudgetProgress :show-credits="true" :month="selectedMonth" />
+      </div>
+      <div v-else class="h-24 bg-gray-100 rounded-lg animate-pulse"></div>
+    </Transition>
 
     <!-- Sección: Análisis Visual -->
     <div class="space-y-6">
@@ -81,30 +91,34 @@
 
     <!-- Gráfico de gastos por categoría -->
       <Transition
-        enter-active-class="transition-all duration-600 ease-out"
-        enter-from-class="opacity-0 translate-y-6 scale-95"
-        enter-to-class="opacity-100 translate-y-0 scale-100"
-        leave-active-class="transition-all duration-300 ease-in"
-        leave-from-class="opacity-100 translate-y-0 scale-100"
-        leave-to-class="opacity-0 translate-y-6 scale-95"
+        enter-active-class="transition-all duration-400 ease-out"
+        enter-from-class="opacity-0 translate-y-3"
+        enter-to-class="opacity-100 translate-y-0"
+        leave-active-class="transition-all duration-200 ease-in"
+        leave-from-class="opacity-100 translate-y-0"
+        leave-to-class="opacity-0 translate-y-3"
       >
-        <div v-if="!isLoading" v-motion :initial="{opacity:0,y:8}" :enter="{opacity:1,y:0,transition:{duration:0.5, delay:0.1, ease:'easeOut'}}">
-          <ExpensesByCategoryChart :expenses-by-category="expensesByCategoryForMonth" />
+        <div v-if="!isLoading">
+          <ExpensesByCategoryChart 
+            :key="`category-chart-${selectedMonth}`"
+            :expenses-by-category="expensesByCategoryForMonth" 
+          />
         </div>
         <LoadingSkeleton v-else type="chart" />
       </Transition>
 
     <!-- Gráfico de gastos diarios -->
       <Transition
-        enter-active-class="transition-all duration-600 ease-out"
-        enter-from-class="opacity-0 translate-y-6 scale-95"
-        enter-to-class="opacity-100 translate-y-0 scale-100"
-        leave-active-class="transition-all duration-300 ease-in"
-        leave-from-class="opacity-100 translate-y-0 scale-100"
-        leave-to-class="opacity-0 translate-y-6 scale-95"
+        enter-active-class="transition-all duration-400 ease-out"
+        enter-from-class="opacity-0 translate-y-3"
+        enter-to-class="opacity-100 translate-y-0"
+        leave-active-class="transition-all duration-200 ease-in"
+        leave-from-class="opacity-100 translate-y-0"
+        leave-to-class="opacity-0 translate-y-3"
       >
-        <div v-if="!isLoading" v-motion :initial="{opacity:0,y:8}" :enter="{opacity:1,y:0,transition:{duration:0.5, delay:0.15, ease:'easeOut'}}">
-    <DailyExpensesChart 
+        <div v-if="!isLoading">
+          <DailyExpensesChart 
+            :key="`daily-chart-${selectedMonth}`"
             :daily-data="dailyExpensesDataForMonth" 
             :current-month="selectedMonth || currentMonth"
           />
@@ -114,15 +128,16 @@
 
     <!-- Calendario de gastos -->
       <Transition
-        enter-active-class="transition-all duration-600 ease-out"
-        enter-from-class="opacity-0 translate-y-6 scale-95"
-        enter-to-class="opacity-100 translate-y-0 scale-100"
-        leave-active-class="transition-all duration-300 ease-in"
-        leave-from-class="opacity-100 translate-y-0 scale-100"
-        leave-to-class="opacity-0 translate-y-6 scale-95"
+        enter-active-class="transition-all duration-400 ease-out"
+        enter-from-class="opacity-0 translate-y-3"
+        enter-to-class="opacity-100 translate-y-0"
+        leave-active-class="transition-all duration-200 ease-in"
+        leave-from-class="opacity-100 translate-y-0"
+        leave-to-class="opacity-0 translate-y-3"
       >
-        <div v-if="!isLoading" v-motion :initial="{opacity:0,y:8}" :enter="{opacity:1,y:0,transition:{duration:0.5, delay:0.2, ease:'easeOut'}}">
-    <ExpensesCalendar 
+        <div v-if="!isLoading">
+          <ExpensesCalendar 
+            :key="`calendar-${selectedMonth}`"
             :daily-data="dailyExpensesDataForMonth"
             :expenses="expensesForMonth"
             :fixed-expenses="fixedExpensesForMonth"
@@ -143,16 +158,24 @@
       </div>
 
     <!-- Categorías de gastos -->
-      <div class="cf-card" v-motion :initial="{opacity:0,y:8}" :enter="{opacity:1,y:0,transition:{duration:0.4, delay:0.25, ease:'easeOut'}}">
-        <div class="cf-card-head px-4 sm:px-5 py-3 sm:py-4">
-          <h3 class="cf-card-title text-sm sm:text-base">Gastos por Categoría</h3>
-        </div>
+      <Transition
+        enter-active-class="transition-all duration-300 ease-out"
+        enter-from-class="opacity-0 translate-y-2"
+        enter-to-class="opacity-100 translate-y-0"
+        leave-active-class="transition-all duration-200 ease-in"
+        leave-from-class="opacity-100 translate-y-0"
+        leave-to-class="opacity-0 translate-y-2"
+      >
+        <div v-if="!isLoading" class="cf-card">
+          <div class="cf-card-head px-4 sm:px-5 py-3 sm:py-4">
+            <h3 class="cf-card-title text-sm sm:text-base">Gastos por Categoría</h3>
+          </div>
       
-      <div v-if="expensesByCategory.length === 0" class="text-center py-6 sm:py-8 px-4">
-        <p class="cf-muted text-sm">No hay gastos registrados este mes</p>
-      </div>
-      
-      <div v-else class="space-y-2 p-3 sm:p-4">
+          <div v-if="expensesByCategory.length === 0" class="text-center py-6 sm:py-8 px-4">
+            <p class="cf-muted text-sm">No hay gastos registrados este mes</p>
+          </div>
+          
+          <div v-else class="space-y-2 p-3 sm:p-4">
         <TransitionGroup
           enter-active-class="transition-all duration-300 ease-out"
           enter-from-class="opacity-0 translate-x-4 scale-95"
@@ -178,21 +201,31 @@
               <p class="cf-row-secondary text-[10px] sm:text-xs">{{ category.percentage.toFixed(1) }}%</p>
             </div>
           </div>
-        </TransitionGroup>
-      </div>
-    </div>
+          </TransitionGroup>
+          </div>
+        </div>
+        <div v-else class="cf-card h-32 bg-gray-100 animate-pulse rounded-xl"></div>
+      </Transition>
 
     <!-- Estadísticas de gastos fijos -->
-    <div class="cf-card" v-motion :initial="{opacity:0,y:8}" :enter="{opacity:1,y:0,transition:{duration:0.4, delay:0.3, ease:'easeOut'}}">
-      <div class="cf-card-head px-4 sm:px-5 py-3 sm:py-4">
-        <h3 class="cf-card-title text-sm sm:text-base">Gastos Fijos del Mes</h3>
-      </div>
+    <Transition
+      enter-active-class="transition-all duration-300 ease-out"
+      enter-from-class="opacity-0 translate-y-2"
+      enter-to-class="opacity-100 translate-y-0"
+      leave-active-class="transition-all duration-200 ease-in"
+      leave-from-class="opacity-100 translate-y-0"
+      leave-to-class="opacity-0 translate-y-2"
+    >
+      <div v-if="!isLoading" class="cf-card">
+        <div class="cf-card-head px-4 sm:px-5 py-3 sm:py-4">
+          <h3 class="cf-card-title text-sm sm:text-base">Gastos Fijos del Mes</h3>
+        </div>
       
-    <div v-if="fixedExpensesThisMonth.length === 0" class="text-center py-6 sm:py-8 px-4">
-      <p class="cf-muted text-sm">No hay gastos fijos este mes</p>
-    </div>
-    
-    <div v-else class="p-4">
+        <div v-if="fixedExpensesThisMonth.length === 0" class="text-center py-6 sm:py-8 px-4">
+          <p class="cf-muted text-sm">No hay gastos fijos este mes</p>
+        </div>
+        
+        <div v-else class="p-4">
       <div
         v-for="(expense, i) in fixedExpensesThisMonth"
           :key="expense.id"
@@ -222,26 +255,36 @@
               ${{ totalFixedExpenses.toLocaleString('es-ES', { minimumFractionDigits: 2 }) }}
             </span>
         </div>
+        </div>
       </div>
-    </div>
+      <div v-else class="cf-card h-32 bg-gray-100 animate-pulse rounded-xl"></div>
+    </Transition>
 
     <!-- Resumen de gastos de crédito -->
-    <div class="cf-card" v-motion :initial="{opacity:0,y:8}" :enter="{opacity:1,y:0,transition:{duration:0.4, delay:0.35, ease:'easeOut'}}">
-      <div class="cf-card-head px-4 sm:px-5 py-3 sm:py-4">
-        <h3 class="cf-card-title text-sm sm:text-base">Gastos de Crédito del Mes</h3>
-      </div>
+    <Transition
+      enter-active-class="transition-all duration-300 ease-out"
+      enter-from-class="opacity-0 translate-y-2"
+      enter-to-class="opacity-100 translate-y-0"
+      leave-active-class="transition-all duration-200 ease-in"
+      leave-from-class="opacity-100 translate-y-0"
+      leave-to-class="opacity-0 translate-y-2"
+    >
+      <div v-if="!isLoading" class="cf-card">
+        <div class="cf-card-head px-4 sm:px-5 py-3 sm:py-4">
+          <h3 class="cf-card-title text-sm sm:text-base">Gastos de Crédito del Mes</h3>
+        </div>
     
-    <div v-if="creditExpensesThisMonth.length === 0" class="text-center py-6 sm:py-8 px-4">
-      <div class="text-gray-400 mb-2">
-        <svg class="mx-auto h-8 w-8 sm:h-12 sm:w-12" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
-        </svg>
-      </div>
-      <p class="cf-muted text-sm">No hay gastos de crédito este mes</p>
-      <p class="text-xs text-gray-400 mt-1">Los pagos de tarjetas de crédito aparecerán aquí</p>
-    </div>
-    
-    <div v-else class="p-4">
+        <div v-if="creditExpensesThisMonth.length === 0" class="text-center py-6 sm:py-8 px-4">
+          <div class="text-gray-400 mb-2">
+            <svg class="mx-auto h-8 w-8 sm:h-12 sm:w-12" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
+            </svg>
+          </div>
+          <p class="cf-muted text-sm">No hay gastos de crédito este mes</p>
+          <p class="text-xs text-gray-400 mt-1">Los pagos de tarjetas de crédito aparecerán aquí</p>
+        </div>
+        
+        <div v-else class="p-4">
       <div
         v-for="(expense, i) in creditExpensesThisMonth"
         :key="expense.id"
@@ -272,8 +315,10 @@
           ${{ totalCreditExpenses.toLocaleString('es-ES', { minimumFractionDigits: 2 }) }}
         </span>
       </div>
-    </div>
-    </div>
+        </div>
+      </div>
+      <div v-else class="cf-card h-32 bg-gray-100 animate-pulse rounded-xl"></div>
+    </Transition>
 
     <!-- Sección: Actividad Reciente -->
     <div class="space-y-6">
@@ -283,16 +328,24 @@
     </div>
 
     <!-- Lista de gastos recientes -->
-      <div class="cf-card" v-motion :initial="{opacity:0,y:8}" :enter="{opacity:1,y:0,transition:{duration:0.4, delay:0.4, ease:'easeOut'}}">
-        <div class="cf-card-head px-4 sm:px-5 py-3 sm:py-4">
-          <h3 class="cf-card-title text-sm sm:text-base">Gastos Recientes</h3>
-        </div>
+      <Transition
+        enter-active-class="transition-all duration-300 ease-out"
+        enter-from-class="opacity-0 translate-y-2"
+        enter-to-class="opacity-100 translate-y-0"
+        leave-active-class="transition-all duration-200 ease-in"
+        leave-from-class="opacity-100 translate-y-0"
+        leave-to-class="opacity-0 translate-y-2"
+      >
+        <div v-if="!isLoading" class="cf-card">
+          <div class="cf-card-head px-4 sm:px-5 py-3 sm:py-4">
+            <h3 class="cf-card-title text-sm sm:text-base">Gastos Recientes</h3>
+          </div>
       
-      <div v-if="recentExpenses.length === 0" class="text-center py-6 sm:py-8 px-4">
-        <p class="cf-muted text-sm">No hay gastos registrados</p>
-      </div>
-      
-      <div v-else class="space-y-2 p-3 sm:p-4">
+          <div v-if="recentExpenses.length === 0" class="text-center py-6 sm:py-8 px-4">
+            <p class="cf-muted text-sm">No hay gastos registrados</p>
+          </div>
+          
+          <div v-else class="space-y-2 p-3 sm:p-4">
         <div
           v-for="(expense, i) in recentExpenses.slice(0, 5)"
           :key="expense.id"
@@ -321,27 +374,15 @@
           <span class="cf-row-amount text-xs sm:text-sm flex-shrink-0">
             ${{ expense.amount.toLocaleString('es-ES', { minimumFractionDigits: 2 }) }}
           </span>
+          </div>
+          </div>
         </div>
-        </div>
-      </div>
+        <div v-else class="cf-card h-32 bg-gray-100 animate-pulse rounded-xl"></div>
+      </Transition>
+    </div>
     </div>
 
-    <!-- Botón flotante para mobile -->
-    <div class="fixed bottom-6 right-6 z-40 sm:hidden">
-      <button
-        @click="navigateToExpenses"
-        class="cf-fab w-14 h-14 rounded-full flex items-center justify-center shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105 active:scale-95"
-        v-motion
-        :initial="{ opacity: 0, scale: 0.8 }"
-        :enter="{ opacity: 1, scale: 1, transition: { duration: 0.3, delay: 0.5 } }"
-      >
-        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
-        </svg>
-      </button>
-    </div>
     
-  </div>
   </div>
 </template>
 
@@ -449,11 +490,11 @@ const onCalendarMonthChanged = (newMonth) => {
   }
 }
 
-// Simular loading cuando cambie el mes
+// Manejar cambio de mes con animación suave
 const handleMonthChange = async () => {
   isLoading.value = true
-  // Simular tiempo de carga
-  await new Promise(resolve => setTimeout(resolve, 800))
+  // Tiempo de transición más corto y suave
+  await new Promise(resolve => setTimeout(resolve, 400))
   isLoading.value = false
 }
 
@@ -517,10 +558,6 @@ const getDayOfMonth = (fixedExpenseId) => {
   return 'N/A'
 }
 
-// Función para navegar a gastos desde el botón flotante
-const navigateToExpenses = () => {
-  router.push('/gastos')
-}
 
 </script>
 
@@ -623,12 +660,4 @@ const navigateToExpenses = () => {
 
 .cf-btn-primary:active { transform: translateY(1px) scale(0.99); }
 
-.cf-fab { 
-  @apply bg-gray-900 text-white; 
-  box-shadow: 0 12px 32px rgba(15,23,42,0.18);
-}
-
-.cf-fab:hover { 
-  box-shadow: 0 16px 40px rgba(15,23,42,0.25);
-}
 </style>

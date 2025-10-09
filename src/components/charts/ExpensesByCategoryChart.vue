@@ -20,6 +20,7 @@
       <!-- Gráfico Donut - Centrado arriba -->
       <div class="flex justify-center relative">
         <apexchart
+          ref="chartRef"
           type="donut"
           :options="chartOptions"
           :series="chartSeries"
@@ -66,8 +67,23 @@
 </template>
 
 <script setup>
-import { computed, ref } from 'vue'
+import { computed, ref, onUnmounted, watch } from 'vue'
 import VueApexCharts from 'vue3-apexcharts'
+
+const chartRef = ref(null)
+
+onUnmounted(() => {
+  // Limpiar referencia del gráfico de manera más segura
+  if (chartRef.value && chartRef.value.destroy) {
+    try {
+      chartRef.value.destroy()
+    } catch (error) {
+      // Ignorar errores de destrucción
+      console.warn('Error al destruir gráfico de categorías:', error)
+    }
+  }
+  chartRef.value = null
+})
 
 const props = defineProps({
   expensesByCategory: {
@@ -162,6 +178,18 @@ const selectCategory = (index) => {
     selectedCategoryIndex.value = index
   }
 }
+
+// Watcher para manejar cambios en los datos de manera segura
+watch(() => props.expensesByCategory, (newData) => {
+  if (chartRef.value && chartRef.value.updateSeries && newData && newData.length > 0) {
+    try {
+      chartRef.value.updateSeries(newData.map(category => category.amount))
+    } catch (error) {
+      // Ignorar errores de actualización
+      console.warn('Error al actualizar series del gráfico de categorías:', error)
+    }
+  }
+}, { deep: true })
 </script>
 
 

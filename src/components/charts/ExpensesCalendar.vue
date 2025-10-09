@@ -1,5 +1,5 @@
 <template>
-  <div class="card p-3 sm:p-4">
+  <div class="card p-3 sm:p-4 relative">
     <div class="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4 mb-4 sm:mb-6">
       <h3 class="text-base sm:text-lg font-semibold text-gray-900">Calendario de Gastos</h3>
       <div class="flex flex-wrap items-center gap-3 sm:gap-4">
@@ -28,17 +28,8 @@
     </div>
 
     <div v-else>
-      <!-- Navegación del mes -->
-      <div class="flex justify-between items-center mb-3 sm:mb-4">
-        <button
-          @click="previousMonth"
-          class="p-2 sm:p-1.5 rounded-md border border-transparent text-primary-700 hover:bg-primary-50 hover:border-primary-200 transition-colors"
-        >
-          <svg class="w-5 h-5 sm:w-4 sm:h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
-          </svg>
-        </button>
-        
+      <!-- Título del mes (solo informativo) -->
+      <div class="flex justify-center items-center mb-3 sm:mb-4">
         <h4
           class="text-sm sm:text-base font-semibold text-gray-900"
           :key="format(currentDate, 'yyyy-MM')"
@@ -48,15 +39,6 @@
         >
           {{ format(currentDate, 'MMMM yyyy', { locale: es }) }}
         </h4>
-        
-        <button
-          @click="nextMonth"
-          class="p-2 sm:p-1.5 rounded-md border border-transparent text-primary-700 hover:bg-primary-50 hover:border-primary-200 transition-colors"
-        >
-          <svg class="w-5 h-5 sm:w-4 sm:h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
-          </svg>
-        </button>
       </div>
 
       <!-- Resumen por quincenas -->
@@ -300,105 +282,101 @@
     <!-- Modal de detalles del día -->
     <div
       v-if="selectedDay"
-      class="fixed inset-0 z-50"
+      class="absolute inset-0 z-50 flex items-center justify-center p-4"
       @click="closeDayModal"
     >
-      <div class="flex items-center justify-center min-h-screen p-4 text-center sm:block sm:p-0">
-        <!-- Overlay -->
-        <div class="fixed inset-0 bg-gray-500 bg-opacity-40 transition-opacity" @click="closeDayModal"></div>
+      <!-- Overlay que solo cubre el calendario -->
+      <div class="absolute inset-0 bg-gray-900 bg-opacity-50 transition-opacity rounded-lg" @click="closeDayModal"></div>
 
-        <!-- Modal -->
-        <div
-          class="inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full"
-          @click.stop
-        >
-          <div class="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
-            <div class="sm:flex sm:items-start">
-              <div class="w-full">
-                <div class="flex items-center justify-between mb-4">
-                  <h3 class="text-lg font-semibold text-gray-900">
-                    Gastos del {{ format(parseLocalDate(selectedDay.date), 'dd \'de\' MMMM yyyy', { locale: es }) }}
-                  </h3>
-                  <button
-                    @click="closeDayModal"
-                    class="text-gray-400 hover:text-gray-600 transition-colors"
-                  >
-                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-                    </svg>
-                  </button>
-                </div>
+      <!-- Modal -->
+      <div
+        class="relative bg-white rounded-lg text-left overflow-hidden shadow-2xl transform transition-all w-full max-w-lg max-h-[80vh] flex flex-col"
+        @click.stop
+      >
+        <div class="bg-white px-4 pt-5 pb-4 sm:p-6 overflow-y-auto">
+          <div class="w-full">
+            <div class="flex items-center justify-between mb-4">
+              <h3 class="text-base sm:text-lg font-semibold text-gray-900">
+                Gastos del {{ format(parseLocalDate(selectedDay.date), 'dd \'de\' MMMM yyyy', { locale: es }) }}
+              </h3>
+              <button
+                @click="closeDayModal"
+                class="text-gray-400 hover:text-gray-600 transition-colors"
+              >
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
 
-                <div v-if="selectedDay.expenses.length === 0" class="text-center py-8">
-                  <div class="text-gray-400 mb-2">
-                    <svg class="mx-auto h-12 w-12" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                    </svg>
-                  </div>
-                  <p class="text-gray-500">No hay gastos registrados este día</p>
-                </div>
+            <div v-if="selectedDay.expenses.length === 0" class="text-center py-8">
+              <div class="text-gray-400 mb-2">
+                <svg class="mx-auto h-12 w-12" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                </svg>
+              </div>
+              <p class="text-gray-500">No hay gastos registrados este día</p>
+            </div>
 
-                <div v-else class="space-y-3 max-h-[60vh] overflow-y-auto">
+            <div v-else class="space-y-3">
+              <div
+                v-for="expense in selectedDay.expenses"
+                :key="expense.id"
+                class="flex items-center justify-between p-3 bg-gray-50 rounded-lg border border-gray-200"
+              >
+                <div class="flex items-center space-x-3 min-w-0 flex-1">
                   <div
-                    v-for="expense in selectedDay.expenses"
-                    :key="expense.id"
-                    class="flex items-center justify-between p-3 bg-gray-50 rounded-lg border border-gray-200"
-                  >
-                    <div class="flex items-center space-x-3 min-w-0 flex-1">
-                      <div
-                        class="w-4 h-4 rounded-full flex-shrink-0"
-                        :style="{ backgroundColor: expense.category?.color || '#6B7280' }"
-                      ></div>
-                      <div class="min-w-0 flex-1">
-                        <p class="text-sm font-medium text-gray-900">{{ expense.description }}</p>
-                        <div class="flex items-center space-x-2 mt-1">
-                          <p class="text-xs text-gray-500">{{ expense.category?.name || 'Sin categoría' }}</p>
-                          <span
-                            v-if="expense.isFixed"
-                            class="inline-flex items-center px-1.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800"
-                          >
-                            Fijo
-                          </span>
-                          <span
-                            v-if="expense.entryType === 'charge'"
-                            class="inline-flex items-center px-1.5 py-0.5 rounded-full text-xs font-medium bg-orange-100 text-orange-800"
-                          >
-                            Cargo
-                          </span>
-                          <span
-                            v-else-if="expense.entryType === 'payment'"
-                            class="inline-flex items-center px-1.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800"
-                          >
-                            Abono
-                          </span>
-                          <span
-                            v-else-if="!expense.debtId"
-                            class="inline-flex items-center px-1.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800"
-                          >
-                            Efectivo
-                          </span>
-                        </div>
-                      </div>
-                    </div>
-                    <div class="text-right flex-shrink-0 ml-3">
-                      <p class="text-sm font-semibold text-gray-900">
-                        ${{ formatCurrency(expense.amount, true) }}
-                      </p>
+                    class="w-4 h-4 rounded-full flex-shrink-0"
+                    :style="{ backgroundColor: expense.category?.color || '#6B7280' }"
+                  ></div>
+                  <div class="min-w-0 flex-1">
+                    <p class="text-sm font-medium text-gray-900">{{ expense.description }}</p>
+                    <div class="flex items-center space-x-2 mt-1 flex-wrap">
+                      <p class="text-xs text-gray-500">{{ expense.category?.name || 'Sin categoría' }}</p>
+                      <span
+                        v-if="expense.isFixed"
+                        class="inline-flex items-center px-1.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800"
+                      >
+                        Fijo
+                      </span>
+                      <span
+                        v-if="expense.entryType === 'charge'"
+                        class="inline-flex items-center px-1.5 py-0.5 rounded-full text-xs font-medium bg-orange-100 text-orange-800"
+                      >
+                        Cargo
+                      </span>
+                      <span
+                        v-else-if="expense.entryType === 'payment'"
+                        class="inline-flex items-center px-1.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800"
+                      >
+                        Abono
+                      </span>
+                      <span
+                        v-else-if="!expense.debtId"
+                        class="inline-flex items-center px-1.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800"
+                      >
+                        Efectivo
+                      </span>
                     </div>
                   </div>
                 </div>
+                <div class="text-right flex-shrink-0 ml-3">
+                  <p class="text-sm font-semibold text-gray-900">
+                    ${{ formatCurrency(expense.amount, true) }}
+                  </p>
+                </div>
+              </div>
+            </div>
 
-                <div v-if="selectedDay.expenses.length > 0" class="mt-4 pt-4 border-t border-gray-200">
-                  <div class="flex justify-between items-center">
-                    <span class="text-base font-medium text-gray-700">Total del día:</span>
-                    <span class="text-xl font-bold text-gray-900">
-                      ${{ formatCurrency(selectedDay.totalAmount, true) }}
-                    </span>
-                  </div>
-                  <div class="mt-2 text-sm text-gray-500">
-                    {{ selectedDay.expenses.length }} {{ selectedDay.expenses.length === 1 ? 'gasto' : 'gastos' }} registrado{{ selectedDay.expenses.length === 1 ? '' : 's' }}
-                  </div>
-                </div>
+            <div v-if="selectedDay.expenses.length > 0" class="mt-4 pt-4 border-t border-gray-200">
+              <div class="flex justify-between items-center">
+                <span class="text-base font-medium text-gray-700">Total del día:</span>
+                <span class="text-xl font-bold text-gray-900">
+                  ${{ formatCurrency(selectedDay.totalAmount, true) }}
+                </span>
+              </div>
+              <div class="mt-2 text-sm text-gray-500">
+                {{ selectedDay.expenses.length }} {{ selectedDay.expenses.length === 1 ? 'gasto' : 'gastos' }} registrado{{ selectedDay.expenses.length === 1 ? '' : 's' }}
               </div>
             </div>
           </div>
@@ -409,8 +387,8 @@
 </template>
 
 <script setup>
-import { ref, computed, watch, onUnmounted } from 'vue'
-import { format, startOfMonth, endOfMonth, addMonths, subMonths, isSameDay, isSameMonth } from 'date-fns'
+import { ref, computed, watch, onMounted, onUnmounted } from 'vue'
+import { format, startOfMonth, endOfMonth, isSameDay, isSameMonth } from 'date-fns'
 import { es } from 'date-fns/locale'
 import { parseLocalDate } from '../../utils/date'
 
@@ -453,6 +431,19 @@ const emit = defineEmits(['day-selected', 'month-changed'])
 const currentDate = ref(new Date())
 const hoveredDay = ref(null)
 const selectedDay = ref(null)
+
+// Inicializar con el mes de las props si está disponible
+const initializeDate = () => {
+  if (props.month) {
+    try {
+      const [year, month] = props.month.split('-').map(Number)
+      currentDate.value = new Date(year, month - 1, 1)
+    } catch (error) {
+      // Usar fecha actual si hay error
+      currentDate.value = new Date()
+    }
+  }
+}
 
 // Funciones auxiliares
 const getFortnightData = (isFirstFortnight) => {
@@ -553,18 +544,6 @@ const clearModalState = () => {
   selectedDay.value = null
 }
 
-const navigateMonth = (direction) => {
-  const newDate = direction === 'next' 
-    ? addMonths(currentDate.value, 1)
-    : subMonths(currentDate.value, 1)
-  
-  currentDate.value = newDate
-  clearModalState()
-  try {
-    emit('month-changed', format(newDate, 'yyyy-MM'))
-  } catch {}
-}
-
 // Funciones de eventos
 const openDayModal = (day) => {
   if (!day?.isCurrentMonth) return
@@ -581,19 +560,23 @@ const closeDayModal = () => {
   selectedDay.value = null
 }
 
-const previousMonth = () => navigateMonth('previous')
-const nextMonth = () => navigateMonth('next')
-
-// Watchers
-watch(currentDate, clearModalState)
-
-// Sincronizar mes externo (yyyy-MM)
-watch(() => props.month, (m) => {
-  const val = (m || '').trim()
-  if (/^\d{4}-\d{2}$/.test(val)) {
-    const [y, mm] = val.split('-').map(Number)
-    currentDate.value = new Date(y, mm - 1, 1)
+// Watcher para sincronizar con el mes externo
+watch(() => props.month, (newMonth) => {
+  if (newMonth && newMonth !== format(currentDate.value, 'yyyy-MM')) {
+    try {
+      const [year, month] = newMonth.split('-').map(Number)
+      currentDate.value = new Date(year, month - 1, 1)
+      clearModalState()
+    } catch (error) {
+      // Ignorar errores de parsing
+    }
   }
+}, { immediate: true })
+
+
+// Inicialización al montar
+onMounted(() => {
+  initializeDate()
 })
 
 // Cleanup al desmontar
