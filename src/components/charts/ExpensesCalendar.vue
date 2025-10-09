@@ -161,7 +161,7 @@
             >
               <div class="w-1.5 h-1.5 rounded-full bg-red-500"></div>
               <span class="text-xs text-red-600 font-medium">
-                ${{ formatCurrency(day.fixedExpenses.reduce((sum, exp) => sum + exp.amount, 0)) }}
+                ${{ formatCurrency(day.fixedExpenses.filter(exp => exp.entryType !== 'payment').reduce((sum, exp) => sum + exp.amount, 0)) }}
               </span>
             </div>
 
@@ -172,7 +172,7 @@
             >
               <div class="w-1.5 h-1.5 rounded-full bg-blue-500"></div>
               <span class="text-xs text-blue-600 font-medium">
-                ${{ formatCurrency(day.regularExpenses.reduce((sum, exp) => sum + exp.amount, 0)) }}
+                ${{ formatCurrency(day.regularExpenses.filter(exp => exp.entryType !== 'payment').reduce((sum, exp) => sum + exp.amount, 0)) }}
               </span>
             </div>
 
@@ -376,7 +376,7 @@
                 </span>
               </div>
               <div class="mt-1.5 text-xs text-gray-500">
-                {{ selectedDay.expenses.length }} {{ selectedDay.expenses.length === 1 ? 'gasto' : 'gastos' }} registrado{{ selectedDay.expenses.length === 1 ? '' : 's' }}
+                {{ selectedDay.expenses.filter(exp => exp.entryType !== 'payment').length }} {{ selectedDay.expenses.filter(exp => exp.entryType !== 'payment').length === 1 ? 'gasto' : 'gastos' }} registrado{{ selectedDay.expenses.filter(exp => exp.entryType !== 'payment').length === 1 ? '' : 's' }}
               </div>
             </div>
           </div>
@@ -456,7 +456,7 @@ const getFortnightData = (isFirstFortnight) => {
   
   return {
     total: days.reduce((sum, day) => sum + day.totalAmount, 0),
-    count: days.reduce((sum, day) => sum + day.expenses.length, 0)
+    count: days.reduce((sum, day) => sum + day.expenses.filter(exp => exp.entryType !== 'payment').length, 0)
   }
 }
 
@@ -512,7 +512,10 @@ const calendarDays = computed(() => {
     // Obtener gastos para este día
     const dayExpenses = getExpensesForDay(dayDate)
     const { fixed: fixedExpenses, regular: regularExpenses } = categorizeExpenses(dayExpenses)
-    const totalAmount = dayExpenses.reduce((sum, expense) => sum + expense.amount, 0)
+    // Calcular total excluyendo abonos (entryType === 'payment')
+    const totalAmount = dayExpenses
+      .filter(expense => expense.entryType !== 'payment')
+      .reduce((sum, expense) => sum + expense.amount, 0)
     
     days.push({
       date: dateStr,
