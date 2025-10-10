@@ -174,7 +174,7 @@
                           </svg>
                         </div>
                         <div>
-                          <p class="text-xs text-gray-500 mb-0.5">Corte</p>
+                          <p class="text-xs text-gray-500 mb-0.5">Día de corte</p>
                           <p class="text-sm font-medium text-gray-700">
                             {{ creditData?.cutOffDay || 'No configurado' }}
                           </p>
@@ -189,7 +189,7 @@
                           </svg>
                         </div>
                         <div>
-                          <p class="text-xs text-gray-500 mb-0.5">Pago</p>
+                          <p class="text-xs text-gray-500 mb-0.5">Día de pago</p>
                           <p class="text-sm font-medium text-gray-700">
                             {{ creditData?.dueDay || 'No configurado' }}
                           </p>
