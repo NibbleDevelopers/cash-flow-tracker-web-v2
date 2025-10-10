@@ -161,7 +161,7 @@
             >
               <div class="w-1.5 h-1.5 rounded-full bg-red-500"></div>
               <span class="text-xs text-red-600 font-medium">
-                ${{ formatCurrency(day.fixedExpenses.filter(exp => exp.entryType !== 'payment').reduce((sum, exp) => sum + exp.amount, 0)) }}
+                ${{ formatCurrency(calculateExpensesTotal(day.fixedExpenses)) }}
               </span>
             </div>
 
@@ -172,7 +172,7 @@
             >
               <div class="w-1.5 h-1.5 rounded-full bg-blue-500"></div>
               <span class="text-xs text-blue-600 font-medium">
-                ${{ formatCurrency(day.regularExpenses.filter(exp => exp.entryType !== 'payment').reduce((sum, exp) => sum + exp.amount, 0)) }}
+                ${{ formatCurrency(calculateExpensesTotal(day.regularExpenses)) }}
               </span>
             </div>
 
@@ -376,7 +376,7 @@
                 </span>
               </div>
               <div class="mt-1.5 text-xs text-gray-500">
-                {{ selectedDay.expenses.filter(exp => exp.entryType !== 'payment').length }} {{ selectedDay.expenses.filter(exp => exp.entryType !== 'payment').length === 1 ? 'gasto' : 'gastos' }} registrado{{ selectedDay.expenses.filter(exp => exp.entryType !== 'payment').length === 1 ? '' : 's' }}
+                {{ countActualExpenses(selectedDay.expenses) }} {{ countActualExpenses(selectedDay.expenses) === 1 ? 'gasto' : 'gastos' }} registrado{{ countActualExpenses(selectedDay.expenses) === 1 ? '' : 's' }}
               </div>
             </div>
           </div>
@@ -391,6 +391,12 @@ import { ref, computed, watch, onMounted, onUnmounted } from 'vue'
 import { format, startOfMonth, endOfMonth, isSameDay, isSameMonth } from 'date-fns'
 import { es } from 'date-fns/locale'
 import { parseLocalDate } from '../../utils/date'
+import { 
+  calculateExpensesTotal, 
+  countActualExpenses,
+  getActualExpenses,
+  categorizeExpenses as categorizeExpensesByType
+} from '../../utils/expenseCalculations'
 
 // Constantes
 const WEEK_DAYS = ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb']
@@ -456,7 +462,7 @@ const getFortnightData = (isFirstFortnight) => {
   
   return {
     total: days.reduce((sum, day) => sum + day.totalAmount, 0),
-    count: days.reduce((sum, day) => sum + day.expenses.filter(exp => exp.entryType !== 'payment').length, 0)
+    count: days.reduce((sum, day) => sum + countActualExpenses(day.expenses), 0)
   }
 }
 
@@ -471,13 +477,6 @@ const getExpensesForDay = (dayDate) => {
     const expenseDate = parseLocalDate(expense.date)
     return isSameDay(expenseDate, dayDate)
   })
-}
-
-const categorizeExpenses = (expenses) => {
-  return {
-    fixed: expenses.filter(expense => expense.isFixed),
-    regular: expenses.filter(expense => !expense.isFixed)
-  }
 }
 
 // Computed properties optimizadas
@@ -511,11 +510,9 @@ const calendarDays = computed(() => {
     
     // Obtener gastos para este día
     const dayExpenses = getExpensesForDay(dayDate)
-    const { fixed: fixedExpenses, regular: regularExpenses } = categorizeExpenses(dayExpenses)
-    // Calcular total excluyendo abonos (entryType === 'payment')
-    const totalAmount = dayExpenses
-      .filter(expense => expense.entryType !== 'payment')
-      .reduce((sum, expense) => sum + expense.amount, 0)
+    const { fixed: fixedExpenses, regular: regularExpenses } = categorizeExpensesByType(dayExpenses)
+    // Calcular total excluyendo abonos usando la función centralizada
+    const totalAmount = calculateExpensesTotal(dayExpenses)
     
     days.push({
       date: dateStr,

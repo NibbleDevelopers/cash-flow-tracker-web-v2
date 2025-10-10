@@ -4,6 +4,11 @@ import { format, startOfMonth, endOfMonth, isWithinInterval } from 'date-fns'
 import { parseLocalDate } from '../utils/date.js'
 import googleSheetsService from '../services/googleSheetsBackend.js'
 import { useDebtStore } from './debtStore.js'
+import { 
+  calculateExpensesTotal, 
+  getActualExpenses,
+  calculateExpensesByCategory as calculateExpensesByCategoryUtil 
+} from '../utils/expenseCalculations.js'
 
 export const useExpenseStore = defineStore('expense', () => {
   // State
@@ -36,23 +41,10 @@ export const useExpenseStore = defineStore('expense', () => {
     })
   })
 
-  // Total gastado del mes que impacta el presupuesto:
-  // - Incluye gastos normales (sin debtId)
-  // - Incluye pagos de crédito (payment) que no estén 'pending'
-  // - Excluye cargos de crédito (charge)
+  // Total gastado del mes que impacta el presupuesto usando función centralizada
+  // Excluye automáticamente abonos (entryType === 'payment')
   const totalSpent = computed(() => {
-    return currentMonthExpenses.value
-      .filter(expense => {
-        const isCredit = !!expense?.debtId
-        if (!isCredit) return true
-        const type = String(expense?.entryType || '').toLowerCase()
-        const status = String(expense?.status || '').toLowerCase()
-        if (type === 'payment') {
-          return status !== 'pending'
-        }
-        return false
-      })
-      .reduce((sum, expense) => sum + expense.amount, 0)
+    return calculateExpensesTotal(currentMonthExpenses.value)
   })
 
   const budgetProgress = computed(() => {
@@ -77,25 +69,17 @@ export const useExpenseStore = defineStore('expense', () => {
   })
 
   const expensesByCategory = computed(() => {
-    const categoryTotals = {}
+    // Usar función centralizada que excluye abonos automáticamente
+    const actualExpenses = getActualExpenses(currentMonthExpenses.value)
+    const categoryData = calculateExpensesByCategoryUtil(actualExpenses)
+    const total = calculateExpensesTotal(actualExpenses)
     
-    currentMonthExpenses.value.forEach(expense => {
-      const categoryId = expense.categoryId
-      if (!categoryTotals[categoryId]) {
-        categoryTotals[categoryId] = {
-          category: expense.category,
-          amount: 0,
-          count: 0
-        }
-      }
-      categoryTotals[categoryId].amount += expense.amount
-      categoryTotals[categoryId].count += 1
-    })
-    
-    return Object.values(categoryTotals)
-      .map(categoryData => ({
-        ...categoryData,
-        percentage: totalSpent.value > 0 ? (categoryData.amount / totalSpent.value) * 100 : 0
+    return Object.values(categoryData)
+      .map(c => ({
+        category: { id: c.id, name: c.name, color: c.color },
+        amount: c.total,
+        count: c.count,
+        percentage: total > 0 ? (c.total / total) * 100 : 0
       }))
       .sort((a, b) => b.amount - a.amount)
   })
@@ -116,7 +100,8 @@ export const useExpenseStore = defineStore('expense', () => {
   })
 
   const totalFixedExpenses = computed(() => {
-    return fixedExpensesThisMonth.value.reduce((total, expense) => total + expense.amount, 0)
+    // Usar función centralizada (excluye abonos automáticamente)
+    return calculateExpensesTotal(fixedExpensesThisMonth.value)
   })
 
   // Nuevas propiedades computadas para gráficos
@@ -145,7 +130,8 @@ export const useExpenseStore = defineStore('expense', () => {
         return format(expenseDate, 'yyyy-MM-dd') === dateStr
       })
       
-      const dayTotal = dayExpenses.reduce((sum, expense) => sum + expense.amount, 0)
+      // Usar función centralizada (excluye abonos automáticamente)
+      const dayTotal = calculateExpensesTotal(dayExpenses)
       
       dailyData.push({
         date: dateStr,
@@ -173,7 +159,8 @@ export const useExpenseStore = defineStore('expense', () => {
         return isWithinInterval(expenseDate, { start: monthStart, end: monthEnd })
       })
       
-      const monthTotal = monthExpenses.reduce((sum, expense) => sum + expense.amount, 0)
+      // Usar función centralizada (excluye abonos automáticamente)
+      const monthTotal = calculateExpensesTotal(monthExpenses)
       const monthBudget = budgetsByMonth.value[monthStr] || 0
       
       trends.push({

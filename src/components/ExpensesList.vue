@@ -836,6 +836,7 @@ import AppSelect from './ui/AppSelect.vue'
 import { useConfirm } from '../composables/useConfirm'
 import { parseLocalDate } from '../utils/date'
 import ExpenseCard from './ExpenseCard.vue'
+import { calculateExpensesTotal } from '../utils/expenseCalculations'
 
 const expenseStore = useExpenseStore()
 const confirm = useConfirm()
@@ -843,20 +844,9 @@ const emit = defineEmits(['edit-expense', 'delete-expense'])
 
 const currentMonthExpenses = computed(() => expenseStore.currentMonthExpenses)
 const totalSpent = computed(() => expenseStore.totalSpent)
+// Total de gastos filtrados usando función centralizada (excluye abonos automáticamente)
 const filteredTotalAmount = computed(() => {
-  return filteredExpenses.value
-    .filter(e => {
-      const credit = isCreditPayment(e)
-      if (!credit) return true
-      const type = String(e?.entryType || '').toLowerCase()
-      const status = String(e?.status || '').toLowerCase()
-      if (type === 'payment') {
-        return status !== 'pending'
-      }
-      // Si es crédito sin entryType o es 'charge', no impacta presupuesto
-      return false
-    })
-    .reduce((sum, e) => sum + (Number(e.amount) || 0), 0)
+  return calculateExpensesTotal(filteredExpenses.value)
 })
 
 // Totales desglosados del conjunto filtrado (sin excluir nada para el total general)

@@ -399,6 +399,11 @@ import ExpensesCalendar from '../components/charts/ExpensesCalendar.vue'
 import { parseLocalDate } from '../utils/date'
 import AppDatePicker from '../components/ui/AppDatePicker.vue'
 import LoadingSkeleton from '../components/ui/LoadingSkeleton.vue'
+import { 
+  calculateExpensesTotal, 
+  getActualExpenses,
+  calculateExpensesByCategory as calculateExpensesByCategoryUtil
+} from '../utils/expenseCalculations'
 
 const router = useRouter()
 
@@ -444,39 +449,34 @@ const dailyExpensesDataForMonth = computed(() => {
   const byDay = Array.from({ length: daysInMonth }, (_, i) => {
     const day = i + 1
     const dateStr = `${y}-${String(m).padStart(2,'0')}-${String(day).padStart(2,'0')}`
-    const dayTotal = expensesForMonth.value
+    const expensesForDay = expensesForMonth.value
       .filter(e => {
         const d = e?.date
         if (typeof d === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(d)) return d === dateStr
         const ld = parseLocalDate(d)
         return format(ld, 'yyyy-MM-dd') === dateStr
       })
-      .reduce((s, e) => s + (Number(e.amount) || 0), 0)
+    // Usar función centralizada para calcular total (excluye abonos automáticamente)
+    const dayTotal = calculateExpensesTotal(expensesForDay)
     return { date: dateStr, amount: dayTotal }
   })
   return byDay
 })
 
 const expensesByCategoryForMonth = computed(() => {
-  const totals = {}
-  const outflowList = expensesForMonth.value.filter(e => {
-    const isCredit = !!e?.debtId
-    if (!isCredit) return true
-    const type = String(e?.entryType || '').toLowerCase()
-    const status = String(e?.status || '').toLowerCase()
-    if (type === 'payment') return status !== 'pending'
-    return false
-  })
-  outflowList.forEach(e => {
-    const id = e.categoryId
-    if (!totals[id]) totals[id] = { category: e.category, amount: 0, count: 0 }
-    totals[id].amount += Number(e.amount) || 0
-    totals[id].count += 1
-  })
-  const totalSpentMonth = outflowList.reduce((s, e) => s + (Number(e.amount) || 0), 0)
-  return Object.values(totals)
-    .map(c => ({ ...c, percentage: totalSpentMonth > 0 ? (c.amount / totalSpentMonth) * 100 : 0 }))
-    .sort((a,b) => b.amount - a.amount)
+  // Usar función centralizada para obtener solo gastos reales (excluye abonos)
+  const actualExpenses = getActualExpenses(expensesForMonth.value)
+  const categoryData = calculateExpensesByCategoryUtil(actualExpenses)
+  const totalSpentMonth = calculateExpensesTotal(actualExpenses)
+  
+  return Object.values(categoryData)
+    .map(c => ({ 
+      category: { id: c.id, name: c.name, color: c.color },
+      amount: c.total, 
+      count: c.count,
+      percentage: totalSpentMonth > 0 ? (c.total / totalSpentMonth) * 100 : 0 
+    }))
+    .sort((a, b) => b.amount - a.amount)
 })
 
 const budgetAmountForMonth = computed(() => {
@@ -544,7 +544,8 @@ const creditExpensesThisMonth = computed(() => {
 })
 
 const totalCreditExpenses = computed(() => {
-  return creditExpensesThisMonth.value.reduce((total, expense) => total + expense.amount, 0)
+  // Usar función centralizada (excluye abonos automáticamente)
+  return calculateExpensesTotal(creditExpensesThisMonth.value)
 })
 
 // Función para obtener el día del mes de un gasto fijo

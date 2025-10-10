@@ -98,6 +98,7 @@
 import { computed } from 'vue'
 import { useExpenseStore } from '../stores/expenseStore'
 import { parseLocalDate } from '../utils/date'
+import { calculateExpensesTotal, getActualExpenses } from '../utils/expenseCalculations'
 
 const props = defineProps({
   amountSize: {
@@ -142,26 +143,10 @@ const expensesForPeriod = computed(() => {
   })
 })
 
-// Filtrar solo egresos que impactan presupuesto:
-// - Gastos normales (sin debtId)
-// - Pagos de crédito (entryType==='payment') y no 'pending'
-const outflowExpenses = computed(() => {
-  return (expensesForPeriod.value || []).filter(e => {
-    const isCredit = !!e?.debtId
-    if (!isCredit) return true
-    const type = String(e?.entryType || '').toLowerCase()
-    const status = String(e?.status || '').toLowerCase()
-    if (type === 'payment') {
-      return status !== 'pending'
-    }
-    // Excluir cargos de crédito (compras) del presupuesto
-    return false
-  })
-})
-
-// Total gastado para el periodo (solo egresos reales)
+// Total gastado para el periodo usando función centralizada
+// Excluye automáticamente abonos (entryType === 'payment')
 const totalSpent = computed(() => {
-  return outflowExpenses.value.reduce((sum, e) => sum + (Number(e.amount) || 0), 0)
+  return calculateExpensesTotal(expensesForPeriod.value)
 })
 
 // Presupuesto del periodo
