@@ -567,17 +567,13 @@ export const useExpenseStore = defineStore('expense', () => {
     error.value = null
     
     try {
-      console.log('Store: Generando gastos fijos para el mes:', month)
-      
       // Intentar usar el endpoint batch primero, si falla usar el original
       let result
       try {
         result = await googleSheetsService.generateFixedExpensesForMonthBatch(month)
-        console.log('Store: Resultado de la generación batch:', result)
       } catch (batchError) {
         console.warn('Store: Endpoint batch falló, usando endpoint original:', batchError)
         result = await googleSheetsService.generateFixedExpensesForMonth(month)
-        console.log('Store: Resultado de la generación original:', result)
       }
       
       // Recargar gastos para reflejar lo generado por el backend

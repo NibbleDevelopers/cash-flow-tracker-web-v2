@@ -1,5 +1,5 @@
 <template>
-  <div id="app" class="min-h-screen bg-gray-50">
+  <div class="min-h-screen bg-gray-50">
     <Notivue v-slot="item">
       <Notification :item="item" />
     </Notivue>

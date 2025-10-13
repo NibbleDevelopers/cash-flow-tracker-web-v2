@@ -22,7 +22,8 @@ export function useExpenseFilters(expenseStore) {
   
   // Rango de fechas
   const showRange = ref(false)
-  const rangeBtnRef = ref(null)
+  const rangeBtnRef = ref(null) // Botón desktop
+  const rangeBtnRefMobile = ref(null) // Botón mobile
   const rangePopoverRef = ref(null)
   const rangeStart = ref(null)
   const rangeEnd = ref(null)
@@ -31,6 +32,16 @@ export function useExpenseFilters(expenseStore) {
   const rangeCursor = ref(new Date())
   const autoSingleDay = ref(false)
   
+  // Computed que devuelve la ref correcta según el tamaño de pantalla
+  const activeRangeBtnRef = computed(() => {
+    // En mobile, usar mobile si existe, si no usar desktop
+    // En desktop, usar desktop
+    if (window.innerWidth < 640) {
+      return rangeBtnRefMobile.value || rangeBtnRef.value
+    }
+    return rangeBtnRef.value
+  })
+  
   // Paginación
   const pageSize = ref(10)
   const shownCount = ref(pageSize.value)
@@ -38,7 +49,6 @@ export function useExpenseFilters(expenseStore) {
   // Búsqueda con sugerencias
   const showSuggestions = ref(false)
   const searchSuggestions = ref([])
-  const quickFilters = ref([])
   const searchInputRef = ref(null)
   
   // Computeds del calendario
@@ -202,10 +212,20 @@ export function useExpenseFilters(expenseStore) {
   const hasActiveFilters = computed(() => activeChips.value.length > 0)
   
   // Watches
-  watch([searchQuery, selectedCategoryId, selectedEntryType, selectedStatus, period, sortOrder], () => {
+  watch([searchQuery, selectedCategoryId, selectedEntryType, selectedStatus, period, sortOrder], (newVals, oldVals) => {
     shownCount.value = pageSize.value
+    
     // Cerrar acordeón en mobile cuando se aplica un filtro
+    // EXCEPTO cuando solo cambia period a 'custom' (filtro de rango)
     if (window.innerWidth < 640) {
+      const oldPeriod = oldVals ? oldVals[4] : null
+      const newPeriod = newVals[4]
+      
+      // NO cerrar si solo cambió period a 'custom'
+      if (newPeriod === 'custom' && oldPeriod !== 'custom') {
+        return
+      }
+      
       filtersExpanded.value = false
     }
   })
@@ -320,12 +340,8 @@ export function useExpenseFilters(expenseStore) {
   }
   
   const onPickWithAuto = (date) => {
-    const picked = new Date(date)
-    if (autoSingleDay.value && tempStart.value && !tempEnd.value && picked.toDateString() === tempStart.value.toDateString()) {
-      applyRange()
-      autoSingleDay.value = false
-      return
-    }
+    // Simplemente usar onPick normal, sin auto-aplicación
+    // El usuario debe hacer clic en "Aplicar" explícitamente
     onPick(date)
     autoSingleDay.value = false
   }
@@ -390,11 +406,24 @@ export function useExpenseFilters(expenseStore) {
   })
   
   const rangePickerStyle = computed(() => {
-    if (!rangeBtnRef.value || !showRange.value) return {}
-    const rect = rangeBtnRef.value.getBoundingClientRect()
+    if (!showRange.value) return {}
+    
+    const btnRef = activeRangeBtnRef.value
     const calendarWidth = window.innerWidth < 640 ? 320 : 300
     const calendarHeight = window.innerWidth < 640 ? 400 : 280
     
+    // Si no hay botón de referencia (ej: abierto desde botón +), centrar en pantalla
+    if (!btnRef) {
+      const left = (window.innerWidth - calendarWidth) / 2
+      const top = (window.innerHeight - calendarHeight) / 2
+      return {
+        top: `${Math.max(16, top)}px`,
+        left: `${Math.max(16, left)}px`
+      }
+    }
+    
+    // Si hay botón de referencia, posicionar relativo a él
+    const rect = btnRef.getBoundingClientRect()
     const left = Math.max(16, Math.min(rect.left, window.innerWidth - calendarWidth - 16))
     
     let top
@@ -437,52 +466,6 @@ export function useExpenseFilters(expenseStore) {
     try { searchInputRef.value?.focus() } catch {}
   }
   
-  // Funciones para expandir filtros (atajos desde botón +)
-  const expandFiltersAndFocusCategory = async () => {
-    const isMobileView = window.innerWidth < 640
-    
-    if (isMobileView) {
-      filtersExpanded.value = true
-      await nextTick()
-      await new Promise(resolve => setTimeout(resolve, 300))
-    }
-    
-    await nextTick()
-    const filtersSection = document.getElementById('filters-section')
-    if (filtersSection) {
-      filtersSection.scrollIntoView({ 
-        behavior: 'smooth', 
-        block: 'start',
-        inline: 'nearest'
-      })
-    }
-  }
-  
-  const expandFiltersAndOpenDateRange = async () => {
-    const isMobileView = window.innerWidth < 640
-    
-    if (isMobileView) {
-      filtersExpanded.value = true
-      await nextTick()
-      await new Promise(resolve => setTimeout(resolve, 300))
-    }
-    
-    await nextTick()
-    const filtersSection = document.getElementById('filters-section')
-    if (filtersSection) {
-      filtersSection.scrollIntoView({ 
-        behavior: 'smooth', 
-        block: 'start',
-        inline: 'nearest'
-      })
-    }
-    
-    await new Promise(resolve => setTimeout(resolve, isMobileView ? 600 : 400))
-    
-    if (!showRange.value) {
-      toggleRange()
-    }
-  }
   
   return {
     // Estado
@@ -497,6 +480,7 @@ export function useExpenseFilters(expenseStore) {
     isFiltering,
     showRange,
     rangeBtnRef,
+    rangeBtnRefMobile,
     rangePopoverRef,
     rangeStart,
     rangeEnd,
@@ -508,7 +492,6 @@ export function useExpenseFilters(expenseStore) {
     shownCount,
     showSuggestions,
     searchSuggestions,
-    quickFilters,
     searchInputRef,
     
     // Computeds
@@ -543,9 +526,7 @@ export function useExpenseFilters(expenseStore) {
     onPickWithAuto,
     applyPreset,
     applySearchNow,
-    clearSearch,
-    expandFiltersAndFocusCategory,
-    expandFiltersAndOpenDateRange
+    clearSearch
   }
 }
 

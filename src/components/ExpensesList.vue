@@ -98,7 +98,7 @@
             leave-to-class="transform opacity-0 scale-95"
           >
             <div 
-              v-if="showSuggestions && (searchSuggestions.length > 0 || quickFilters.length > 0)" 
+              v-if="showSuggestions && searchSuggestions.length > 0" 
               class="absolute top-full left-0 right-0 mt-1 bg-white border border-gray-200 rounded-lg shadow-lg z-50 max-h-80 overflow-y-auto"
             >
               <!-- Sugerencias de búsqueda -->
@@ -117,21 +117,33 @@
                 </button>
               </div>
 
-              <!-- Filtros rápidos -->
-              <div v-if="quickFilters.length > 0" class="p-2 border-t border-gray-100">
+              <!-- Filtros rápidos (solo visual, sin funcionalidad) -->
+              <div class="p-2 border-t border-gray-100">
                 <div class="text-xs font-medium text-gray-500 mb-2 px-2">Filtros rápidos</div>
                 <div class="flex flex-wrap gap-2">
                   <button
-                    v-for="filter in quickFilters"
-                    :key="filter.key"
-                    @click="applyQuickFilter(filter)"
-                    class="inline-flex items-center px-3 py-1.5 text-xs font-medium rounded-full transition-colors duration-150"
-                    :class="filter.active ? 'bg-primary-100 text-primary-800' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'"
+                    class="inline-flex items-center px-3 py-1.5 text-xs font-medium rounded-full transition-colors duration-150 bg-gray-100 text-gray-700"
                   >
-                    <svg v-if="filter.icon" class="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" :d="filter.icon" />
+                    <svg class="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
                     </svg>
-                    {{ filter.label }}
+                    Este mes
+                  </button>
+                  <button
+                    class="inline-flex items-center px-3 py-1.5 text-xs font-medium rounded-full transition-colors duration-150 bg-gray-100 text-gray-700"
+                  >
+                    <svg class="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                    </svg>
+                    Última semana
+                  </button>
+                  <button
+                    class="inline-flex items-center px-3 py-1.5 text-xs font-medium rounded-full transition-colors duration-150 bg-gray-100 text-gray-700"
+                  >
+                    <svg class="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                    Gastos fijos
                   </button>
                 </div>
               </div>
@@ -173,51 +185,51 @@
           leave-to-class="opacity-0 -translate-y-2"
         >
           <div v-if="filtersExpanded" class="mt-3 space-y-3">
-            <!-- Filtros dentro del acordeón -->
+            <!-- Filtros dentro del acordeón (mobile) - IDs únicos para mobile -->
             <div class="space-y-3">
               <!-- Categoría y Tipo -->
               <div class="grid grid-cols-1 gap-3">
-        <div class="flex flex-col">
-                  <label for="category-filter" class="block text-sm font-medium text-gray-700 mb-2">Categoría</label>
-          <AppSelect
-                    id="category-filter"
-            v-model="selectedCategoryId"
-            :options="categoryFilterOptions"
-            placeholder="Todas las categorías"
-            data-category-select
-            class="h-10"
-          />
-        </div>
-        <div class="flex flex-col">
-                  <label for="type-filter" class="block text-sm font-medium text-gray-700 mb-2">Tipo</label>
-          <AppSelect
-                    id="type-filter"
-            v-model="selectedEntryType"
-            :options="typeOptions"
-            placeholder="Todos"
-            class="h-10"
-          />
-        </div>
+                <div class="flex flex-col">
+                  <label for="category-filter-mobile" class="block text-sm font-medium text-gray-700 mb-2">Categoría</label>
+                  <AppSelect
+                    id="category-filter-mobile"
+                    v-model="selectedCategoryId"
+                    :options="categoryFilterOptions"
+                    placeholder="Todas las categorías"
+                    data-category-select
+                    class="h-10"
+                  />
+                </div>
+                <div class="flex flex-col">
+                  <label for="type-filter-mobile" class="block text-sm font-medium text-gray-700 mb-2">Tipo</label>
+                  <AppSelect
+                    id="type-filter-mobile"
+                    v-model="selectedEntryType"
+                    :options="typeOptions"
+                    placeholder="Todos"
+                    class="h-10"
+                  />
+                </div>
               </div>
 
               <!-- Estado (cuando aplique) -->
               <div v-if="selectedEntryType === 'payment'" class="flex flex-col">
-                <label for="status-filter" class="block text-sm font-medium text-gray-700 mb-2">Estado</label>
-          <AppSelect
-                  id="status-filter"
-            v-model="selectedStatus"
-            :options="statusFilterOptions"
-            placeholder="Todos los estados"
-            class="h-10"
-          />
-        </div>
+                <label for="status-filter-mobile" class="block text-sm font-medium text-gray-700 mb-2">Estado</label>
+                <AppSelect
+                  id="status-filter-mobile"
+                  v-model="selectedStatus"
+                  :options="statusFilterOptions"
+                  placeholder="Todos los estados"
+                  class="h-10"
+                />
+              </div>
               
               <!-- Periodo, Orden y Rango -->
               <div class="space-y-3">
                 <div class="flex flex-col">
-                  <label for="period-filter" class="block text-sm font-medium text-gray-700 mb-2">Periodo</label>
+                  <label for="period-filter-mobile" class="block text-sm font-medium text-gray-700 mb-2">Periodo</label>
                   <AppSelect
-                    id="period-filter"
+                    id="period-filter-mobile"
                     v-model="period"
                     :options="periodOptions"
                     placeholder="Mes actual"
@@ -225,9 +237,9 @@
                   />
                 </div>
                 <div class="flex flex-col">
-                  <label for="sort-filter" class="block text-sm font-medium text-gray-700 mb-2">Ordenar por</label>
+                  <label for="sort-filter-mobile" class="block text-sm font-medium text-gray-700 mb-2">Ordenar por</label>
                   <AppSelect
-                    id="sort-filter"
+                    id="sort-filter-mobile"
                     v-model="sortOrder"
                     :options="sortOptions"
                     placeholder="Más recientes primero"
@@ -235,9 +247,10 @@
                   />
                 </div>
                 <div class="flex flex-col">
-                  <label class="block text-sm font-medium text-gray-700 mb-2">Rango personalizado</label>
+                  <label for="range-button-mobile" class="block text-sm font-medium text-gray-700 mb-2">Rango personalizado</label>
                   <button
-                    ref="rangeBtnRef"
+                    id="range-button-mobile"
+                    :ref="el => { if (el) rangeBtnRefMobile = el }"
                     type="button"
                     class="input-field flex items-center justify-between h-10"
                     @click="toggleRange"
@@ -254,7 +267,7 @@
         </Transition>
       </div>
 
-      <!-- Filtros normales (solo desktop) -->
+      <!-- Filtros normales (solo desktop) - IDs únicos para desktop -->
       <div class="hidden sm:block space-y-3 sm:space-y-4">
         <!-- Fila 2: Categoría y Tipo -->
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
@@ -297,198 +310,59 @@
         
         <!-- Fila 4: Periodo, Orden y Rango de fechas -->
         <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
-        <div class="flex flex-col">
+          <div class="flex flex-col">
             <label for="period-filter-desktop" class="block text-sm font-medium text-gray-700 mb-2">Periodo</label>
-          <AppSelect
+            <AppSelect
               id="period-filter-desktop"
-            v-model="period"
-            :options="periodOptions"
-            placeholder="Mes actual"
-            class="h-10"
-          />
-        </div>
-        <div class="flex flex-col">
+              v-model="period"
+              :options="periodOptions"
+              placeholder="Mes actual"
+              class="h-10"
+            />
+          </div>
+          <div class="flex flex-col">
             <label for="sort-filter-desktop" class="block text-sm font-medium text-gray-700 mb-2">Ordenar por</label>
-          <AppSelect
+            <AppSelect
               id="sort-filter-desktop"
-            v-model="sortOrder"
-            :options="sortOptions"
-            placeholder="Más recientes primero"
-            class="h-10"
-          />
-        </div>
-        <div class="flex flex-col">
-          <label class="block text-sm font-medium text-gray-700 mb-2">Rango personalizado</label>
-          <button
-            ref="rangeBtnRef"
-            type="button"
-            class="input-field flex items-center justify-between h-10"
-            @click="toggleRange"
-          >
-            <span class="truncate text-left">{{ rangeLabel }}</span>
-            <svg class="h-4 w-4 text-gray-400 ml-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-            </svg>
-          </button>
+              v-model="sortOrder"
+              :options="sortOptions"
+              placeholder="Más recientes primero"
+              class="h-10"
+            />
+          </div>
+          <div class="flex flex-col">
+            <label for="range-button-desktop" class="block text-sm font-medium text-gray-700 mb-2">Rango personalizado</label>
+            <button
+              id="range-button-desktop"
+              :ref="el => { if (el) rangeBtnRef = el }"
+              type="button"
+              class="input-field flex items-center justify-between h-10"
+              @click="toggleRange"
+            >
+              <span class="truncate text-left">{{ rangeLabel }}</span>
+              <svg class="h-4 w-4 text-gray-400 ml-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+              </svg>
+            </button>
           </div>
         </div>
       </div>
     </div>
 
-    <!-- Calendario de rango personalizado mejorado -->
-    <Teleport to="body">
-      <!-- Overlay solo en mobile -->
-      <Transition
-        enter-active-class="ease-out duration-200"
-        enter-from-class="opacity-0"
-        enter-to-class="opacity-100"
-        leave-active-class="ease-in duration-150"
-        leave-from-class="opacity-100"
-        leave-to-class="opacity-0"
-      >
-        <div
-          v-if="showRange"
-          class="fixed inset-0 z-[60] bg-black/20 backdrop-blur-sm sm:hidden"
-          @click="showRange = false"
-        ></div>
-      </Transition>
-      
-      <Transition
-        enter-active-class="ease-out duration-200"
-        enter-from-class="opacity-0 scale-95"
-        enter-to-class="opacity-100 scale-100"
-        leave-active-class="ease-in duration-150"
-        leave-from-class="opacity-100 scale-100"
-        leave-to-class="opacity-0 scale-95"
-      >
-        <div
-          v-if="showRange"
-          class="fixed z-[70] bg-white rounded-xl shadow-2xl border border-gray-100 w-[320px] sm:w-[300px] sm:shadow-lg sm:border-gray-200"
-          :style="rangePickerStyle"
-          ref="rangePopoverRef"
-          @click.stop
-        >
-          <!-- Header elegante -->
-          <div class="bg-white border-b border-gray-100 px-3 py-2 sm:px-4 sm:py-3 rounded-t-xl">
-            <div class="flex items-center justify-between">
-              <h3 class="text-xs sm:text-sm font-semibold text-gray-900">Seleccionar rango de fechas</h3>
-              <!-- Botón de cerrar solo en mobile -->
-              <button
-                @click="showRange = false"
-                class="p-1 rounded-md text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-colors duration-200 sm:hidden"
-              >
-                <svg class="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-                </svg>
-              </button>
-          </div>
-          </div>
-
-          <!-- Contenido del calendario -->
-          <div class="p-3 sm:p-3">
-            <!-- Presets mejorados -->
-            <div class="mb-2 sm:mb-3">
-              <div class="text-xs font-medium text-gray-500 mb-1.5 sm:mb-2">Rangos rápidos</div>
-              <div class="flex flex-wrap gap-1.5 sm:gap-1.5">
-                <button 
-                  class="px-2 py-1 sm:px-2 sm:py-1 text-xs rounded-lg bg-gray-100 hover:bg-gray-200 text-gray-700 transition-colors duration-200" 
-                  @click="applyPreset('today')"
-                >
-                  Hoy
-            </button>
-                <button 
-                  class="px-2 py-1 sm:px-2 sm:py-1 text-xs rounded-lg bg-gray-100 hover:bg-gray-200 text-gray-700 transition-colors duration-200" 
-                  @click="applyPreset('7')"
-                >
-                  7 días
-                </button>
-                <button 
-                  class="px-2 py-1 sm:px-2 sm:py-1 text-xs rounded-lg bg-gray-100 hover:bg-gray-200 text-gray-700 transition-colors duration-200" 
-                  @click="applyPreset('30')"
-                >
-                  30 días
-                </button>
-                <button 
-                  class="px-2 py-1 sm:px-2 sm:py-1 text-xs rounded-lg bg-gray-100 hover:bg-gray-200 text-gray-700 transition-colors duration-200" 
-                  @click="applyPreset('thisMonth')"
-                >
-                  Este mes
-                </button>
-                <button 
-                  class="px-2 py-1 sm:px-2 sm:py-1 text-xs rounded-lg bg-gray-100 hover:bg-gray-200 text-gray-700 transition-colors duration-200" 
-                  @click="applyPreset('lastMonth')"
-                >
-                  Mes anterior
-            </button>
-          </div>
-          </div>
-
-            <!-- Header del calendario -->
-            <div class="flex items-center justify-between mb-1.5 sm:mb-2">
-              <button 
-                class="p-1.5 sm:p-1.5 rounded-md text-primary-700 hover:bg-primary-100 transition-colors duration-200" 
-                @click="rangePrevMonth"
-              >
-                <svg class="h-3 w-3 sm:h-3 sm:w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
-                </svg>
-              </button>
-              <div class="text-xs sm:text-xs font-semibold text-gray-900">{{ rangeMonthName }} {{ rangeYear }}</div>
-              <button 
-                class="p-1.5 sm:p-1.5 rounded-md text-primary-700 hover:bg-primary-100 transition-colors duration-200" 
-                @click="rangeNextMonth"
-              >
-                <svg class="h-3 w-3 sm:h-3 sm:w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
-                </svg>
-              </button>
-            </div>
-
-            <!-- Días de la semana -->
-            <div class="grid grid-cols-7 gap-1 mb-1 sm:mb-1">
-              <div v-for="d in ['D','L','M','M','J','V','S']" :key="d" class="text-center py-1 sm:py-1 text-xs font-medium text-gray-500">
-                {{ d }}
-              </div>
-            </div>
-
-            <!-- Días del calendario -->
-          <div class="grid grid-cols-7 gap-1">
-            <button
-              v-for="day in rangeCalendarDays"
-              :key="day.date"
-              @click="onPickWithAuto(day.date)"
-              :class="[
-                  'h-7 w-7 sm:h-7 sm:w-7 rounded-full text-xs font-semibold transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-primary-500/40',
-                  !day.isCurrentMonth ? 'text-gray-300' : 'text-gray-700 hover:bg-primary-100',
-                day.isInRange ? 'bg-primary-100 text-primary-900' : '',
-                  day.isStart || day.isEnd ? 'bg-primary-600 text-white hover:bg-primary-700 shadow-sm' : ''
-              ]"
-            >
-              {{ day.day }}
-            </button>
-          </div>
-          </div>
-
-          <!-- Footer con botones mejorados -->
-          <div class="px-3 py-2 sm:px-3 sm:py-2 border-t border-gray-100 rounded-b-xl bg-gray-50">
-            <div class="flex justify-between items-center">
-              <button 
-                class="px-3 py-1.5 sm:px-3 sm:py-1.5 text-xs sm:text-xs text-gray-600 hover:text-gray-800 transition-colors duration-200" 
-                @click="clearRange"
-              >
-                Limpiar
-              </button>
-              <button 
-                class="px-4 py-1.5 sm:px-4 sm:py-1.5 text-xs sm:text-xs font-medium text-white bg-primary-600 hover:bg-primary-700 rounded-lg transition-colors duration-200" 
-                @click="applyRange"
-              >
-                Aplicar
-              </button>
-            </div>
-          </div>
-        </div>
-      </Transition>
-    </Teleport>
+    <!-- Componente de calendario de rango -->
+    <DateRangePicker
+      v-model="showRange"
+      :picker-style="rangePickerStyle"
+      :year="rangeYear"
+      :month-name="rangeMonthName"
+      :calendar-days="rangeCalendarDays"
+      @apply-preset="applyPreset"
+      @prev-month="rangePrevMonth"
+      @next-month="rangeNextMonth"
+      @pick-date="onPickWithAuto"
+      @clear="clearRange"
+      @apply="applyRange"
+    />
 
     <div v-if="loading" class="space-y-4">
       <!-- Skeleton para el header -->
@@ -582,7 +456,7 @@
       </div>
     </div>
 
-    <div v-else>
+    <div v-else :key="`expenses-list-${windowWidthTrigger}-${totalFiltered}`">
       <!-- Skeletons cuando se filtra -->
       <div v-if="isFiltering" class="space-y-3">
         <div v-for="i in 4" :key="i" class="p-3 sm:p-4 rounded-xl border border-gray-200 bg-gray-50 animate-pulse">
@@ -837,6 +711,7 @@ import { useConfirm } from '../composables/useConfirm'
 import { parseLocalDate } from '../utils/date'
 import ExpenseCard from './ExpenseCard.vue'
 import { calculateExpensesTotal } from '../utils/expenseCalculations'
+import DateRangePicker from './ui/DateRangePicker.vue'
 import { useExpenseFilters } from '../composables/useExpenseFilters'
 
 const expenseStore = useExpenseStore()
@@ -857,6 +732,7 @@ const {
   isFiltering,
   showRange,
   rangeBtnRef,
+  rangeBtnRefMobile,
   rangePopoverRef,
   rangeStart,
   rangeEnd,
@@ -868,7 +744,6 @@ const {
   shownCount,
   showSuggestions,
   searchSuggestions,
-  quickFilters,
   searchInputRef,
   
   // Computeds
@@ -903,9 +778,7 @@ const {
   onPickWithAuto,
   applyPreset,
   applySearchNow,
-  clearSearch,
-  expandFiltersAndFocusCategory,
-  expandFiltersAndOpenDateRange
+  clearSearch
 } = useExpenseFilters(expenseStore)
 
 const currentMonthExpenses = computed(() => expenseStore.currentMonthExpenses)
@@ -1000,8 +873,6 @@ onMounted(async () => {
   isMobile.value = window.innerWidth < 640
   
   await expenseStore.loadFixedExpenses()
-  // Inicializar filtros rápidos
-  generateQuickFilters()
   // Setup infinite scroll después de que el DOM esté listo
   nextTick(() => {
     setupInfiniteScroll()
@@ -1011,11 +882,9 @@ onMounted(async () => {
   window.addEventListener('resize', () => {
     isMobile.value = window.innerWidth < 640
     setupInfiniteScroll()
+    // Incrementar trigger para forzar re-render de la lista cuando cambia el tamaño
+    windowWidthTrigger.value++
   })
-  
-  // Listeners globales para el calendario
-  document.addEventListener('mousedown', onGlobalPointerDown)
-  document.addEventListener('keydown', onGlobalKeyDown)
 })
 
 // Limpiar scroll del body al desmontar
@@ -1023,8 +892,6 @@ onUnmounted(() => {
   document.body.style.overflow = ''
   cleanupInfiniteScroll()
   window.removeEventListener('resize', setupInfiniteScroll)
-  document.removeEventListener('mousedown', onGlobalPointerDown)
-  document.removeEventListener('keydown', onGlobalKeyDown)
 })
 
 // Variables específicas del componente (no están en el composable)
@@ -1042,6 +909,9 @@ const pullThreshold = 80
 const maxPullDistance = 120
 const pullStartY = ref(0)
 const isMobile = ref(false)
+
+// Trigger para forzar re-render cuando cambia el tamaño de pantalla
+const windowWidthTrigger = ref(0)
 
 
 
@@ -1163,7 +1033,6 @@ const onSearchInput = () => {
   } else {
     searchSuggestions.value = []
   }
-  generateQuickFilters()
 }
 
 const generateSuggestions = () => {
@@ -1188,70 +1057,10 @@ const generateSuggestions = () => {
   searchSuggestions.value = Array.from(suggestions).slice(0, 5)
 }
 
-const generateQuickFilters = () => {
-  const filters = [
-    {
-      key: 'this-month',
-      label: 'Este mes',
-      icon: 'M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z',
-      active: period.value === 'month'
-    },
-    {
-      key: 'last-week',
-      label: 'Última semana',
-      icon: 'M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z',
-      active: period.value === '7'
-    },
-    {
-      key: 'fixed',
-      label: 'Gastos fijos',
-      icon: 'M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z',
-      active: false
-    }
-  ]
-  
-  // Agregar categorías populares
-  const popularCategories = expenseStore.activeCategories.slice(0, 3)
-  popularCategories.forEach(category => {
-    filters.push({
-      key: `category-${category.id}`,
-      label: category.name,
-      icon: 'M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z',
-      active: selectedCategoryId.value === category.id.toString()
-    })
-  })
-  
-  quickFilters.value = filters
-}
-
 const selectSuggestion = (suggestion) => {
   searchInput.value = suggestion
   applySearchNow()
   showSuggestions.value = false
-}
-
-const applyQuickFilter = (filter) => {
-  showSuggestions.value = false
-  
-  switch (filter.key) {
-    case 'this-month':
-      period.value = 'month'
-      break
-    case 'last-week':
-      period.value = '7'
-      break
-    case 'fixed':
-      // Filtrar solo gastos fijos
-      searchInput.value = 'fijo'
-      applySearchNow()
-      break
-    default:
-      if (filter.key.startsWith('category-')) {
-        const categoryId = filter.key.replace('category-', '')
-        selectedCategoryId.value = categoryId
-      }
-      break
-  }
 }
 
 const hideSuggestions = () => {
@@ -1262,25 +1071,6 @@ const hideSuggestions = () => {
 }
 
 
-
-// Listeners globales para cerrar el calendario al hacer clic fuera o con Escape
-const onGlobalPointerDown = (event) => {
-  if (!showRange.value) return
-  const target = event.target
-  const pop = rangePopoverRef.value
-  const btn = rangeBtnRef.value
-  if ((pop && pop.contains(target)) || (btn && btn.contains(target))) return
-  showRange.value = false
-  document.body.style.overflow = ''
-}
-
-const onGlobalKeyDown = (event) => {
-  if (!showRange.value) return
-  if (event.key === 'Escape') {
-    showRange.value = false
-    document.body.style.overflow = ''
-  }
-}
 
 // Handlers
 const onEdit = (expense) => emit('edit-expense', expense)
@@ -1309,9 +1099,4 @@ watch([shownCount, totalFiltered], () => {
   })
 }, { flush: 'post' })
 
-// Exponer funciones al componente padre
-defineExpose({
-  expandFiltersAndFocusCategory,
-  expandFiltersAndOpenDateRange
-})
 </script>

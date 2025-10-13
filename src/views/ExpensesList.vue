@@ -14,63 +14,38 @@
       </button>
     </div>
 
-    <!-- Layout Desktop: Grid tradicional -->
-    <div class="hidden lg:grid lg:grid-cols-3 gap-6">
+    <!-- Layout Container -->
+    <div class="lg:grid lg:grid-cols-3 lg:gap-6">
+      <!-- UNA SOLA instancia del componente de gastos -->
       <div class="lg:col-span-2">
-        <ExpensesListComponent ref="expensesListRef" @edit-expense="openEdit" @delete-expense="confirmDelete" />
+        <ExpensesListComponent 
+          ref="expensesListRef" 
+          @edit-expense="openEdit" 
+          @delete-expense="confirmDelete"
+          :class="{
+            // Mobile: ocultar si no está en tab de gastos
+            'hidden lg:block': activeTab !== 'expenses'
+          }"
+        />
       </div>
-      
-      <div class="lg:col-span-1 space-y-6">
+
+      <!-- Sidebar Desktop -->
+      <div class="hidden lg:block lg:col-span-1 space-y-6">
         <BudgetProgress amount-size="sm" />
         <FixedExpensesManager />
       </div>
     </div>
 
-    <!-- Layout Mobile: Tabs -->
+    <!-- Mobile: Contenido de otros tabs -->
     <div class="lg:hidden">
-      <!-- Tab Content -->
-      <div class="min-h-[calc(100vh-200px)] pb-20">
-        <!-- Tab: Gastos -->
-        <Transition
-          enter-active-class="transition ease-out duration-300"
-          enter-from-class="transform opacity-0 translate-x-4"
-          enter-to-class="transform opacity-100 translate-x-0"
-          leave-active-class="transition ease-in duration-200"
-          leave-from-class="transform opacity-100 translate-x-0"
-          leave-to-class="transform opacity-0 -translate-x-4"
-        >
-          <div v-if="activeTab === 'expenses'" class="space-y-4">
-            <ExpensesListComponent ref="expensesListRef" @edit-expense="openEdit" @delete-expense="confirmDelete" />
-          </div>
-        </Transition>
+      <!-- Tab: Gastos Fijos -->
+      <div v-show="activeTab === 'fixed'" class="space-y-4 min-h-[calc(100vh-200px)] pb-20">
+        <FixedExpensesManager />
+      </div>
 
-        <!-- Tab: Gastos Fijos -->
-        <Transition
-          enter-active-class="transition ease-out duration-300"
-          enter-from-class="transform opacity-0 translate-x-4"
-          enter-to-class="transform opacity-100 translate-x-0"
-          leave-active-class="transition ease-in duration-200"
-          leave-from-class="transform opacity-100 translate-x-0"
-          leave-to-class="transform opacity-0 -translate-x-4"
-        >
-          <div v-if="activeTab === 'fixed'" class="space-y-4">
-            <FixedExpensesManager />
-          </div>
-        </Transition>
-
-        <!-- Tab: Resumen -->
-        <Transition
-          enter-active-class="transition ease-out duration-300"
-          enter-from-class="transform opacity-0 translate-x-4"
-          enter-to-class="transform opacity-100 translate-x-0"
-          leave-active-class="transition ease-in duration-200"
-          leave-from-class="transform opacity-100 translate-x-0"
-          leave-to-class="transform opacity-0 -translate-x-4"
-        >
-          <div v-if="activeTab === 'summary'" class="space-y-4">
-            <BudgetProgress amount-size="sm" />
-          </div>
-        </Transition>
+      <!-- Tab: Resumen -->
+      <div v-show="activeTab === 'summary'" class="space-y-4 min-h-[calc(100vh-200px)] pb-20">
+        <BudgetProgress amount-size="sm" />
       </div>
     </div>
 
@@ -181,9 +156,8 @@
               </div>
             </button>
 
-            <!-- Filtrar por Categoría -->
+            <!-- Filtrar por Categoría (sin funcionalidad) -->
             <button
-              @click="openCategoryFilter"
               class="w-full flex items-center px-4 py-3 text-left text-gray-700 hover:bg-primary-50 hover:text-primary-700 transition-colors duration-200 group"
             >
               <div class="flex-shrink-0 w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center mr-3 group-hover:bg-blue-200 transition-colors duration-200">
@@ -197,9 +171,8 @@
               </div>
             </button>
 
-            <!-- Filtrar por Fecha -->
+            <!-- Filtrar por Fecha (sin funcionalidad) -->
             <button
-              @click="openDateFilter"
               class="w-full flex items-center px-4 py-3 text-left text-gray-700 hover:bg-primary-50 hover:text-primary-700 transition-colors duration-200 group"
             >
               <div class="flex-shrink-0 w-8 h-8 bg-green-100 rounded-lg flex items-center justify-center mr-3 group-hover:bg-green-200 transition-colors duration-200">
@@ -241,6 +214,7 @@ const showQuickActions = ref(false)
 const expensesListRef = ref(null)
 const activeTab = ref('expenses') // 'expenses' | 'fixed' | 'summary'
 const showAddButton = ref(false) // Solo mostrar en desktop
+const isDesktop = ref(window.innerWidth >= 1024) // lg breakpoint
 
 const openEdit = (expense) => {
   editingExpense.value = expense
@@ -255,28 +229,6 @@ const openAddExpense = () => {
 
 const toggleQuickActions = () => {
   showQuickActions.value = !showQuickActions.value
-}
-
-const openCategoryFilter = () => {
-  showQuickActions.value = false
-  // Solo funciona en mobile
-  if (window.innerWidth >= 640) return
-  
-  // Expandir filtros en mobile si están colapsados
-  if (expensesListRef.value) {
-    expensesListRef.value.expandFiltersAndFocusCategory()
-  }
-}
-
-const openDateFilter = () => {
-  showQuickActions.value = false
-  // Solo funciona en mobile
-  if (window.innerWidth >= 640) return
-  
-  // Abrir el calendario de rango
-  if (expensesListRef.value) {
-    expensesListRef.value.expandFiltersAndOpenDateRange()
-  }
 }
 
 const confirmDelete = async (expense) => {
@@ -299,6 +251,7 @@ const afterChange = () => { closeModal(); notify.success('Cambios guardados') }
 // Detectar tamaño de pantalla para mostrar/ocultar botón
 const updateScreenSize = () => {
   showAddButton.value = window.innerWidth >= 640
+  isDesktop.value = window.innerWidth >= 1024
 }
 
 // Inicializar y escuchar cambios de tamaño
