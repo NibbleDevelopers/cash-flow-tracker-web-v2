@@ -1098,4 +1098,8 @@ watch([shownCount, totalFiltered], () => {
   })
 }, { flush: 'post' })
 
+// Exponer métodos al componente padre
+defineExpose({
+  toggleRange
+})
 </script>

@@ -79,11 +79,24 @@ export function useDateRangePicker(options = {}) {
   const rangePickerStyle = computed(() => {
     if (!showRange.value) return {}
     
-    const btnRef = activeRangeBtnRef.value
-    const calendarWidth = window.innerWidth < 640 ? 320 : 300
-    const calendarHeight = window.innerWidth < 640 ? 400 : 280
+    const isMobile = window.innerWidth < 640
+    const calendarWidth = isMobile ? 320 : 300
+    const calendarHeight = isMobile ? 400 : 280
     
-    // Si no hay botón de referencia, centrar en pantalla
+    // En mobile: SIEMPRE centrar para mejor UX
+    if (isMobile) {
+      const left = (window.innerWidth - calendarWidth) / 2
+      const top = (window.innerHeight - calendarHeight) / 2
+      return {
+        top: `${Math.max(16, top)}px`,
+        left: `${Math.max(16, left)}px`
+      }
+    }
+    
+    // En desktop: posicionar relativo al botón
+    const btnRef = activeRangeBtnRef.value
+    
+    // Si no hay botón de referencia en desktop, centrar
     if (!btnRef) {
       const left = (window.innerWidth - calendarWidth) / 2
       const top = (window.innerHeight - calendarHeight) / 2
@@ -93,20 +106,10 @@ export function useDateRangePicker(options = {}) {
       }
     }
     
-    // Si hay botón de referencia, posicionar relativo a él
+    // Posicionar relativo al botón en desktop
     const rect = btnRef.getBoundingClientRect()
     const left = Math.max(16, Math.min(rect.left, window.innerWidth - calendarWidth - 16))
-    
-    let top
-    if (window.innerWidth < 640) {
-      const spaceAbove = rect.top
-      const spaceBelow = window.innerHeight - rect.bottom
-      top = spaceAbove > calendarHeight + 16 
-        ? rect.top - calendarHeight - 8
-        : rect.bottom + 8
-    } else {
-      top = rect.bottom + 4
-    }
+    const top = rect.bottom + 4
     
     return { 
       top: `${Math.max(16, Math.min(top, window.innerHeight - calendarHeight - 16))}px`, 

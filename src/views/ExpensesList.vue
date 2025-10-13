@@ -171,8 +171,9 @@
               </div>
             </button>
 
-            <!-- Filtrar por Fecha (sin funcionalidad) -->
+            <!-- Filtrar por Fecha -->
             <button
+              @click="openDateFilter"
               class="w-full flex items-center px-4 py-3 text-left text-gray-700 hover:bg-primary-50 hover:text-primary-700 transition-colors duration-200 group"
             >
               <div class="flex-shrink-0 w-8 h-8 bg-green-100 rounded-lg flex items-center justify-center mr-3 group-hover:bg-green-200 transition-colors duration-200">
@@ -229,6 +230,14 @@ const openAddExpense = () => {
 
 const toggleQuickActions = () => {
   showQuickActions.value = !showQuickActions.value
+}
+
+const openDateFilter = () => {
+  showQuickActions.value = false
+  // Abrir el calendario de rango usando la lógica del componente ExpensesList
+  if (expensesListRef.value && expensesListRef.value.toggleRange) {
+    expensesListRef.value.toggleRange()
+  }
 }
 
 const confirmDelete = async (expense) => {
