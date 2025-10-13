@@ -733,7 +733,6 @@ const {
   showRange,
   rangeBtnRef,
   rangeBtnRefMobile,
-  rangePopoverRef,
   rangeStart,
   rangeEnd,
   tempStart,
