@@ -456,9 +456,12 @@ const calendarDays = computed(() => {
 })
 
 const selectDate = (dateString) => {
-  const d = new Date(dateString)
-  selectedDate.value = d
-  emit('update:modelValue', format(d, 'yyyy-MM-dd'))
+  // Parsear la fecha en zona horaria local para evitar problemas de UTC
+  const [y, m, d] = dateString.split('-').map(Number)
+  const localDate = new Date(y, m - 1, d)
+  selectedDate.value = localDate
+  // Emitir el string original sin reparsear
+  emit('update:modelValue', dateString)
   show.value = false
 }
 const selectToday = () => {
