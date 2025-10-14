@@ -70,6 +70,20 @@
               </svg>
               Resumen
             </router-link>
+            
+            <!-- Botón de Logout -->
+            <div class="ml-2 pl-2 border-l border-gray-200">
+              <button
+                @click="handleLogout"
+                class="flex items-center px-3 py-2 rounded-lg text-sm font-medium text-red-600 hover:text-red-700 hover:bg-red-50 transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2"
+                role="menuitem"
+              >
+                <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+                </svg>
+                Salir
+              </button>
+            </div>
           </div>
 
           <!-- Botón Hamburguesa Mobile -->
@@ -181,6 +195,20 @@
                 </svg>
                 Resumen
               </router-link>
+              
+              <!-- Logout en menú móvil -->
+              <div class="mt-2 pt-2 border-t border-gray-200">
+                <button
+                  @click="handleLogout"
+                  class="w-full flex items-center px-3 py-2 rounded-md text-base font-medium text-red-600 hover:text-red-700 hover:bg-red-50 transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2"
+                  role="menuitem"
+                >
+                  <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+                  </svg>
+                  Cerrar Sesión
+                </button>
+              </div>
             </div>
           </div>
         </Transition>
@@ -218,9 +246,12 @@ import { Notivue, Notification } from 'notivue'
 import ConfirmDialog from './components/ui/ConfirmDialog.vue'
 import { useExpenseStore } from './stores/expenseStore'
 import { useDebtStore } from './stores/debtStore'
+import { logout, isAuthenticated } from './services/auth.js'
+import { useRouter } from 'vue-router'
 
 const expenseStore = useExpenseStore()
 const debtStore = useDebtStore()
+const router = useRouter()
 const appTitle = ref(import.meta.env.VITE_APP_TITLE)
 
 // Estado del menú mobile
@@ -235,12 +266,21 @@ const closeMobileMenu = () => {
   mobileMenuOpen.value = false
 }
 
+// Función para cerrar sesión
+const handleLogout = () => {
+  closeMobileMenu()
+  logout()
+}
+
 onMounted(async () => {
-  await expenseStore.loadExpenses()
-  await expenseStore.loadCategories()
-  await expenseStore.loadBudget()
-  await expenseStore.loadFixedExpenses()
-  await debtStore.loadDebts()
+  // Solo cargar datos si el usuario está autenticado
+  if (isAuthenticated()) {
+    await expenseStore.loadExpenses()
+    await expenseStore.loadCategories()
+    await expenseStore.loadBudget()
+    await expenseStore.loadFixedExpenses()
+    await debtStore.loadDebts()
+  }
 })
 
 </script>

@@ -1,4 +1,6 @@
-// Ligero cliente HTTP con manejo de baseURL, headers y mensajes de error
+// Ligero cliente HTTP con manejo de baseURL, headers, autenticación y mensajes de error
+
+import { getToken, removeToken } from './auth.js'
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || ''
 
@@ -13,6 +15,21 @@ function joinUrl(base, endpoint) {
 export async function makeRequest(endpoint, options = {}) {
   const url = joinUrl(API_BASE_URL, endpoint)
 
+  // Obtener token de autenticación
+  const token = getToken()
+  
+  // Preparar headers con token si existe
+  const headers = {
+    'Content-Type': 'application/json',
+    'Accept': 'application/json',
+    ...(options.headers || {})
+  }
+  
+  // Agregar Authorization header si hay token
+  if (token) {
+    headers['Authorization'] = `Bearer ${token}`
+  }
+
   // Opcional: timeout simple
   const controller = new AbortController()
   const timeoutId = setTimeout(() => controller.abort(), options.timeoutMs || 30000)
@@ -21,14 +38,17 @@ export async function makeRequest(endpoint, options = {}) {
     const response = await fetch(url, {
       ...options,
       signal: controller.signal,
-      headers: {
-        'Content-Type': 'application/json',
-        'Accept': 'application/json',
-        ...(options.headers || {})
-      }
+      headers
     })
 
     if (!response.ok) {
+      // Manejar error 401 (no autorizado o token expirado)
+      if (response.status === 401) {
+        removeToken()
+        window.location.href = '/login'
+        throw new Error('Sesión expirada. Por favor inicia sesión nuevamente.')
+      }
+      
       let errorMessage = `Error ${response.status}: ${response.statusText}`
       try {
         const data = await response.json()
