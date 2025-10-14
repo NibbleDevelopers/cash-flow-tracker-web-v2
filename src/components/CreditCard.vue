@@ -205,8 +205,11 @@ const cardRef = ref(null)
 const swipeOffset = ref(0)
 const isDragging = ref(false)
 const startX = ref(0)
+const startY = ref(0)
 const currentX = ref(0)
+const currentY = ref(0)
 const isMouseDown = ref(false)
+const isHorizontalSwipe = ref(false)
 
 // Mobile animation state
 const isTouching = ref(false)
@@ -232,46 +235,62 @@ const onTouchStart = (e) => {
   checkIfMobile()
   if (!isMobile.value) return
   
-  isTouching.value = true
-  isDragging.value = true
   startX.value = e.touches[0].clientX
+  startY.value = e.touches[0].clientY
   currentX.value = e.touches[0].clientX
+  currentY.value = e.touches[0].clientY
+  isDragging.value = true
+  isTouching.value = true
+  isHorizontalSwipe.value = false
 }
 
 const onTouchMove = (e) => {
-  if (!isMobile.value || !isDragging.value) return
+  if (!isDragging.value || !isMobile.value) return
   
   currentX.value = e.touches[0].clientX
-  const deltaX = currentX.value - startX.value
+  currentY.value = e.touches[0].clientY
   
-  // Limit swipe distance
-  const maxSwipe = 120
-  swipeOffset.value = Math.max(-maxSwipe, Math.min(maxSwipe, deltaX))
+  const deltaX = Math.abs(currentX.value - startX.value)
+  const deltaY = Math.abs(currentY.value - startY.value)
+  
+  // Detectar dirección del movimiento solo la primera vez
+  if (!isHorizontalSwipe.value && (deltaX > 5 || deltaY > 5)) {
+    // Si el movimiento horizontal es mayor que el vertical, es un swipe
+    isHorizontalSwipe.value = deltaX > deltaY
+  }
+  
+  // Solo prevenir scroll si es un swipe horizontal y el evento es cancelable
+  if (isHorizontalSwipe.value && e.cancelable) {
+    e.preventDefault()
+    const swipeDelta = currentX.value - startX.value
+    const maxSwipe = 120
+    swipeOffset.value = Math.max(-maxSwipe, Math.min(maxSwipe, swipeDelta))
+  }
 }
 
 const onTouchEnd = () => {
-  if (!isMobile.value || !isDragging.value) return
-  
+  if (!isDragging.value || !isMobile.value) return
   isDragging.value = false
   
-  // Determine if swipe was significant enough
-  const swipeThreshold = 60
-  const deltaX = currentX.value - startX.value
-  
-  if (Math.abs(deltaX) > swipeThreshold) {
-    if (deltaX > 0) {
-      // Swipe right - Edit
-      emit('edit', props.credit)
-    } else {
-      // Swipe left - Delete
-      emit('delete', props.credit)
+  // Solo procesar acciones si fue un swipe horizontal
+  if (isHorizontalSwipe.value) {
+    const swipeThreshold = 60
+    const deltaX = currentX.value - startX.value
+    
+    if (Math.abs(deltaX) > swipeThreshold) {
+      if (deltaX > 0) {
+        // Swipe right - Edit
+        emit('edit', props.credit)
+      } else {
+        // Swipe left - Delete
+        emit('delete', props.credit)
+      }
     }
   }
   
   // Reset position
   swipeOffset.value = 0
-  startX.value = 0
-  currentX.value = 0
+  isHorizontalSwipe.value = false
   
   setTimeout(() => {
     isTouching.value = false
@@ -330,6 +349,7 @@ const onMouseEnd = () => {
   }
   
   swipeOffset.value = 0
+  isHorizontalSwipe.value = false
   startX.value = 0
   currentX.value = 0
 }

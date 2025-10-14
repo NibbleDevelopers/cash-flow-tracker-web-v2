@@ -48,6 +48,25 @@
       </div>
     </div>
     
+    <div v-else-if="type === 'table'" class="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden">
+      <div class="space-y-0">
+        <div class="bg-gray-50 p-3 sm:p-4 border-b border-gray-200">
+          <div class="grid grid-cols-3 gap-4">
+            <div class="h-3 bg-gradient-to-r from-gray-200 to-gray-300 rounded w-3/4"></div>
+            <div class="h-3 bg-gradient-to-r from-gray-200 to-gray-300 rounded w-3/4"></div>
+            <div class="h-3 bg-gradient-to-r from-gray-200 to-gray-300 rounded w-3/4"></div>
+          </div>
+        </div>
+        <div v-for="i in rows" :key="i" class="p-3 sm:p-4 border-b border-gray-100">
+          <div class="grid grid-cols-3 gap-4">
+            <div class="h-4 bg-gradient-to-r from-gray-200 to-gray-300 rounded w-full"></div>
+            <div class="h-4 bg-gradient-to-r from-gray-200 to-gray-300 rounded w-full"></div>
+            <div class="h-4 bg-gradient-to-r from-gray-200 to-gray-300 rounded w-full"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+    
     <div v-else-if="type === 'text'" class="space-y-2">
       <div class="h-3 sm:h-4 bg-gradient-to-r from-gray-200 to-gray-300 rounded" :style="{ width: width }"></div>
     </div>
@@ -61,7 +80,7 @@ defineProps({
   type: {
     type: String,
     default: 'text',
-    validator: (value) => ['text', 'card', 'metrics', 'chart', 'calendar'].includes(value)
+    validator: (value) => ['text', 'card', 'metrics', 'chart', 'calendar', 'table'].includes(value)
   },
   width: {
     type: String,

@@ -271,8 +271,8 @@ const onTouchMove = (e) => {
     isHorizontalSwipe.value = deltaX > deltaY
   }
   
-  // Solo prevenir scroll si es un swipe horizontal
-  if (isHorizontalSwipe.value) {
+  // Solo prevenir scroll si es un swipe horizontal y el evento es cancelable
+  if (isHorizontalSwipe.value && e.cancelable) {
     e.preventDefault()
     const swipeDelta = currentX.value - startX.value
     swipeOffset.value = Math.max(-100, Math.min(100, swipeDelta))
