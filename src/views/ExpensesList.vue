@@ -156,18 +156,19 @@
               </div>
             </button>
 
-            <!-- Filtrar por Categoría (sin funcionalidad) -->
+            <!-- Filtros Avanzados -->
             <button
+              @click="openAdvancedFilters"
               class="w-full flex items-center px-4 py-3 text-left text-gray-700 hover:bg-primary-50 hover:text-primary-700 transition-colors duration-200 group"
             >
               <div class="flex-shrink-0 w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center mr-3 group-hover:bg-blue-200 transition-colors duration-200">
                 <svg class="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" />
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" />
                 </svg>
               </div>
               <div>
-                <div class="text-sm font-medium">Filtrar Categoría</div>
-                <div class="text-xs text-gray-500">Ver por categoría</div>
+                <div class="text-sm font-medium">Filtros Avanzados</div>
+                <div class="text-xs text-gray-500">Categoría, tipo, período</div>
               </div>
             </button>
 
@@ -200,7 +201,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted, onUnmounted } from 'vue'
+import { ref, onMounted, onUnmounted, nextTick } from 'vue'
 import ExpenseModal from '../components/ExpenseModal.vue'
 import { notify } from '../services/notifications.js'
 import ExpensesListComponent from '../components/ExpensesList.vue'
@@ -232,12 +233,19 @@ const toggleQuickActions = () => {
   showQuickActions.value = !showQuickActions.value
 }
 
+const openAdvancedFilters = async () => {
+  showQuickActions.value = false
+  activeTab.value = 'expenses'
+  
+  // Esperar a que Vue renderice el cambio de tab antes de expandir
+  await nextTick()
+  
+  expensesListRef.value?.expandFilters?.()
+}
+
 const openDateFilter = () => {
   showQuickActions.value = false
-  // Abrir el calendario de rango usando la lógica del componente ExpensesList
-  if (expensesListRef.value && expensesListRef.value.toggleRange) {
-    expensesListRef.value.toggleRange()
-  }
+  expensesListRef.value?.toggleRange?.()
 }
 
 const confirmDelete = async (expense) => {

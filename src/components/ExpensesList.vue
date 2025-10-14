@@ -1098,8 +1098,28 @@ watch([shownCount, totalFiltered], () => {
   })
 }, { flush: 'post' })
 
+// Método para expandir filtros desde el componente padre (solo móvil)
+const expandFilters = async () => {
+  // Solo expandir si los filtros no están ya expandidos
+  if (!filtersExpanded.value) {
+    filtersExpanded.value = true
+    await nextTick()
+  }
+  
+  // Hacer scroll suave a la sección de filtros
+  const filtersSection = document.getElementById('filters-section')
+  if (filtersSection) {
+    // Ajustar el offset para tener en cuenta la navbar fija (64px)
+    const yOffset = -80
+    const y = filtersSection.getBoundingClientRect().top + window.pageYOffset + yOffset
+    
+    window.scrollTo({ top: y, behavior: 'smooth' })
+  }
+}
+
 // Exponer métodos al componente padre
 defineExpose({
-  toggleRange
+  toggleRange,
+  expandFilters
 })
 </script>
