@@ -282,9 +282,9 @@
               leave-from="opacity-100 translate-y-0 sm:scale-100"
               leave-to="opacity-0 translate-y-8 sm:translate-y-0 sm:scale-95"
             >
-              <DialogPanel class="relative transform overflow-hidden bg-white text-left shadow-xl transition-all w-full h-full sm:h-auto sm:my-8 sm:w-full sm:max-w-6xl sm:rounded-lg flex flex-col sm:flex-none">
+              <DialogPanel class="relative transform overflow-hidden bg-white text-left shadow-xl transition-all w-full h-full sm:h-auto sm:max-h-[90vh] sm:my-6 sm:w-full sm:max-w-3xl lg:max-w-4xl sm:rounded-lg flex flex-col">
                 <!-- Header -->
-                <div class="bg-white px-4 pb-4 pt-5 sm:p-6 sm:pb-4 flex-shrink-0">
+                <div class="bg-white px-4 pb-3 pt-4 sm:px-5 sm:py-4 flex-shrink-0">
                   <div class="flex items-center justify-between mb-4 sm:mb-6">
                     <div class="flex-1 min-w-0">
                       <DialogTitle as="h3" class="text-lg font-semibold leading-6 text-gray-900">
@@ -305,137 +305,132 @@
                     </button>
                   </div>
 
-                  <!-- Resumen del Plan -->
-                  <div v-if="installmentsData?.totals" class="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 mb-4 sm:mb-6">
-                    <div class="bg-blue-50 rounded-lg p-3 sm:p-4 border border-blue-200">
-                      <div class="flex items-center">
-                        <div class="w-6 h-6 sm:w-8 sm:h-8 bg-blue-500 rounded-lg flex items-center justify-center mr-2 sm:mr-3 flex-shrink-0">
-                          <svg class="w-3 h-3 sm:w-4 sm:h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1" />
-                          </svg>
+                  <!-- Resumen del Plan - Compacto -->
+                  <div v-if="installmentsData?.totals" class="space-y-2.5 sm:space-y-3 mb-3 sm:mb-4">
+                    <!-- Métrica Principal -->
+                    <div class="bg-gradient-to-r from-primary-50 to-primary-100 rounded-xl p-3 sm:p-3.5 border border-primary-200">
+                      <div class="flex items-center justify-between">
+                        <div>
+                          <p class="text-xs text-primary-600 font-medium mb-1">Pago Mensual</p>
+                          <p class="text-2xl sm:text-3xl font-bold text-primary-900">{{ formatCurrency(installmentsData.payment) }}</p>
                         </div>
-                        <div class="min-w-0 flex-1">
-                          <p class="text-xs text-blue-600 font-medium">Pago Mensual</p>
-                          <p class="text-sm sm:text-lg font-bold text-blue-900 truncate">{{ formatCurrency(installmentsData.payment) }}</p>
-                        </div>
-                      </div>
-                    </div>
-                    
-                    <div class="bg-orange-50 rounded-lg p-3 sm:p-4 border border-orange-200">
-                      <div class="flex items-center">
-                        <div class="w-6 h-6 sm:w-8 sm:h-8 bg-orange-500 rounded-lg flex items-center justify-center mr-2 sm:mr-3 flex-shrink-0">
-                          <svg class="w-3 h-3 sm:w-4 sm:h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
-                          </svg>
-                        </div>
-                        <div class="min-w-0 flex-1">
-                          <p class="text-xs text-orange-600 font-medium">Total a Pagar</p>
-                          <p class="text-sm sm:text-lg font-bold text-orange-900 truncate">{{ formatCurrency(installmentsData.totals.totalPaid) }}</p>
+                        <div class="text-right">
+                          <p class="text-xs text-primary-600 font-medium mb-1">Duración</p>
+                          <p class="text-xl sm:text-2xl font-bold text-primary-900">{{ installmentsData?.schedule?.length || 0 }} <span class="text-sm font-medium">cuotas</span></p>
                         </div>
                       </div>
                     </div>
                     
-                    <div class="bg-red-50 rounded-lg p-3 sm:p-4 border border-red-200">
-                      <div class="flex items-center">
-                        <div class="w-6 h-6 sm:w-8 sm:h-8 bg-red-500 rounded-lg flex items-center justify-center mr-2 sm:mr-3 flex-shrink-0">
-                          <svg class="w-3 h-3 sm:w-4 sm:h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1" />
-                          </svg>
+                    <!-- Métricas Secundarias -->
+                    <div class="grid grid-cols-3 gap-2">
+                      <div class="bg-white rounded-lg p-2 sm:p-2.5 border border-gray-200">
+                        <p class="text-xs text-gray-500 mb-1">Total</p>
+                        <p class="text-sm sm:text-base font-semibold text-gray-900 truncate">{{ formatCurrency(installmentsData.totals.totalPaid) }}</p>
                         </div>
-                        <div class="min-w-0 flex-1">
-                          <p class="text-xs text-red-600 font-medium">Total Intereses</p>
-                          <p class="text-sm sm:text-lg font-bold text-red-900 truncate">{{ formatCurrency(installmentsData.totals.totalInterest) }}</p>
+                      <div class="bg-white rounded-lg p-2 sm:p-2.5 border border-gray-200">
+                        <p class="text-xs text-red-500 mb-1">Intereses</p>
+                        <p class="text-sm sm:text-base font-semibold text-red-600 truncate">{{ formatCurrency(installmentsData.totals.totalInterest) }}</p>
                         </div>
+                      <div class="bg-white rounded-lg p-2 sm:p-2.5 border border-gray-200">
+                        <p class="text-xs text-green-500 mb-1">Capital</p>
+                        <p class="text-sm sm:text-base font-semibold text-green-600 truncate">{{ formatCurrency(installmentsData.totals.totalPrincipal) }}</p>
                       </div>
                     </div>
                     
-                    <div class="bg-green-50 rounded-lg p-3 sm:p-4 border border-green-200">
-                      <div class="flex items-center">
-                        <div class="w-6 h-6 sm:w-8 sm:h-8 bg-green-500 rounded-lg flex items-center justify-center mr-2 sm:mr-3 flex-shrink-0">
-                          <svg class="w-3 h-3 sm:w-4 sm:h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                          </svg>
+                    <!-- Barra de Progreso -->
+                    <div class="bg-gray-50 rounded-lg p-2.5 border border-gray-200">
+                      <div class="flex items-center justify-between mb-2">
+                        <span class="text-xs font-medium text-gray-600">Composición del Plan</span>
+                        <span class="text-xs text-gray-500">{{ ((installmentsData.totals.totalInterest / installmentsData.totals.totalPaid) * 100).toFixed(1) }}% intereses</span>
                         </div>
-                        <div class="min-w-0 flex-1">
-                          <p class="text-xs text-green-600 font-medium">Capital</p>
-                          <p class="text-sm sm:text-lg font-bold text-green-900 truncate">{{ formatCurrency(installmentsData.totals.totalPrincipal) }}</p>
+                      <div class="w-full h-2 bg-gray-200 rounded-full overflow-hidden">
+                        <div class="h-full flex">
+                          <div class="bg-green-500" :style="{ width: `${(installmentsData.totals.totalPrincipal / installmentsData.totals.totalPaid) * 100}%` }"></div>
+                          <div class="bg-red-500" :style="{ width: `${(installmentsData.totals.totalInterest / installmentsData.totals.totalPaid) * 100}%` }"></div>
                         </div>
                       </div>
+                      <div class="flex items-center justify-between mt-2 text-xs">
+                        <span class="text-green-600 flex items-center">
+                          <span class="w-2 h-2 bg-green-500 rounded-full mr-1"></span>
+                          Capital
+                        </span>
+                        <span class="text-red-600 flex items-center">
+                          <span class="w-2 h-2 bg-red-500 rounded-full mr-1"></span>
+                          Intereses
+                        </span>
+                    </div>
                     </div>
                   </div>
 
-                  <!-- Información de fechas recomendadas -->
-                  <div v-if="installmentsData?.debt" class="mb-4 p-3 rounded-lg border" 
-                       :class="(installmentsData.debt.dueDay && installmentsData.debt.cutOffDay && installmentsData.debt.dueDay > 0 && installmentsData.debt.cutOffDay > 0)
-                         ? 'bg-blue-50 border-blue-200' 
-                         : 'bg-yellow-50 border-yellow-200'"
-                       @click="void 0">
-                    <div class="flex items-start space-x-2">
-                      <svg v-if="installmentsData.debt.dueDay && installmentsData.debt.cutOffDay && installmentsData.debt.dueDay > 0 && installmentsData.debt.cutOffDay > 0" 
-                           class="w-5 h-5 text-blue-600 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <!-- Banner de Configuración - Simplificado -->
+                  <div v-if="installmentsData?.debt" class="mb-3">
+                    <!-- Configuración OK -->
+                    <div v-if="installmentsData.debt.dueDay && installmentsData.debt.cutOffDay && installmentsData.debt.dueDay > 0 && installmentsData.debt.cutOffDay > 0" 
+                         class="flex items-center gap-2 p-2.5 rounded-lg bg-blue-50 border border-blue-200">
+                      <svg class="w-4 h-4 text-blue-600 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                       </svg>
-                      <svg v-else class="w-5 h-5 text-yellow-600 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <p class="text-xs text-blue-700">
+                        <span class="font-medium">Fechas configuradas:</span> Pago día {{ installmentsData.debt.dueDay }}, Corte día {{ installmentsData.debt.cutOffDay }}. Las cuotas se calcularán automáticamente.
+                      </p>
+                    </div>
+                    
+                    <!-- Configuración Faltante -->
+                    <div v-else class="flex items-center gap-2 p-2.5 rounded-lg bg-yellow-50 border border-yellow-200">
+                      <svg class="w-4 h-4 text-yellow-600 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.732-.833-2.5 0L4.268 19.5c-.77.833.192 2.5 1.732 2.5z" />
                       </svg>
-                      <div>
-                        <h4 class="text-sm font-medium" 
-                            :class="(installmentsData.debt.dueDay && installmentsData.debt.cutOffDay && installmentsData.debt.dueDay > 0 && installmentsData.debt.cutOffDay > 0)
-                              ? 'text-blue-900' 
-                              : 'text-yellow-900'">
-                          {{ (installmentsData.debt.dueDay && installmentsData.debt.cutOffDay && installmentsData.debt.dueDay > 0 && installmentsData.debt.cutOffDay > 0)
-                             ? 'Fechas de Pago Recomendadas' 
-                             : 'Configuración Requerida' }}
-                        </h4>
-                        <p class="text-xs mt-1"
-                           :class="(installmentsData.debt.dueDay && installmentsData.debt.cutOffDay && installmentsData.debt.dueDay > 0 && installmentsData.debt.cutOffDay > 0)
-                             ? 'text-blue-700' 
-                             : 'text-yellow-700'">
-                          Día de vencimiento: {{ (installmentsData.debt.dueDay && installmentsData.debt.dueDay > 0) ? installmentsData.debt.dueDay : 'No configurado' }} | 
-                          Día de corte: {{ (installmentsData.debt.cutOffDay && installmentsData.debt.cutOffDay > 0) ? installmentsData.debt.cutOffDay : 'No configurado' }}
-                        </p>
-                        <p class="text-xs mt-1"
-                           :class="(installmentsData.debt.dueDay && installmentsData.debt.cutOffDay && installmentsData.debt.dueDay > 0 && installmentsData.debt.cutOffDay > 0)
-                             ? 'text-blue-600' 
-                             : 'text-yellow-600'">
-                          {{ (installmentsData.debt.dueDay && installmentsData.debt.cutOffDay && installmentsData.debt.dueDay > 0 && installmentsData.debt.cutOffDay > 0)
-                             ? 'Las fechas se calcularán automáticamente basándose en estos días para optimizar tus pagos.'
-                             : 'Debes configurar los días de vencimiento y corte para generar fechas de pago óptimas.' }}
-                        </p>
-                      </div>
+                      <p class="text-xs text-yellow-700 flex-1">
+                        <span class="font-medium">Configura días de pago y corte</span> para generar fechas automáticas.
+                      </p>
+                      <button 
+                        @click="openEdit(installmentsData.debt)"
+                        class="text-xs font-medium text-yellow-700 hover:text-yellow-900 underline whitespace-nowrap"
+                      >
+                        Editar tarjeta
+                      </button>
                     </div>
                   </div>
 
-                  <!-- Controles -->
-                  <div class="space-y-3 sm:space-y-0 sm:flex sm:items-center sm:justify-between mb-4">
-                    <div class="space-y-3 sm:space-y-0 sm:flex sm:items-center sm:space-x-4">
-                      <div class="flex items-center space-x-2">
+                  <!-- Controles Reorganizados -->
+                  <div class="bg-white border border-gray-200 rounded-lg p-2.5 sm:p-3 mb-3">
+                    <div class="flex flex-col gap-3">
+                      <!-- Fila 1: Configuración del Plan -->
+                      <div class="flex flex-col sm:flex-row sm:items-center gap-3">
+                        <div class="flex-1">
+                          <label class="block text-xs font-medium text-gray-600 mb-1">Configuración del Plan</label>
+                          <div class="flex items-center gap-3">
+                            <div class="flex items-center gap-2">
                         <label class="text-sm font-medium text-gray-700">Duración:</label>
                         <input 
                           v-model.number="installmentMonths" 
                           type="number" 
                           min="1" 
                           max="48" 
-                          class="input-field w-16 sm:w-20 h-8 text-center" 
+                                class="input-field w-16 h-9 text-center font-medium" 
                         />
                         <span class="text-sm text-gray-500">meses</span>
                       </div>
-                      <div class="flex items-center space-x-2">
+                            <div class="flex items-center gap-2 pl-3 border-l border-gray-200">
                         <input id="biweeklyToggle" v-model="biweeklyPayments" type="checkbox" class="h-4 w-4 text-primary-600 focus:ring-primary-500 border-gray-300 rounded" />
                         <label for="biweeklyToggle" class="text-sm font-medium text-gray-700">Pagos quincenales</label>
                       </div>
                     </div>
-                    <div class="flex flex-col sm:flex-row gap-2 sm:gap-0 sm:items-center sm:space-x-2">
-                      <button class="btn-primary px-3 py-2 text-sm inline-flex items-center justify-center" @click="reloadInstallments">
+                        </div>
+                      </div>
+
+                      <!-- Fila 2: Botones de Acción -->
+                      <div class="flex flex-col sm:flex-row gap-2 sm:justify-between sm:items-center pt-2 border-t border-gray-100">
+                        <div class="flex gap-2">
+                          <button class="btn-primary px-4 py-2 text-sm inline-flex items-center justify-center flex-1 sm:flex-none" @click="reloadInstallments">
                         <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
                         </svg>
-                        <span class="hidden sm:inline">Generar Plan</span>
-                        <span class="sm:hidden">Generar</span>
+                            <span>Recalcular</span>
                       </button>
                       <button 
                         v-if="installmentsData?.schedule?.length > 0"
-                        class="btn-secondary px-3 py-2 text-sm inline-flex items-center justify-center" 
+                            class="btn-secondary px-4 py-2 text-sm inline-flex items-center justify-center flex-1 sm:flex-none" 
                         @click="createExpensesFromInstallments"
                         :disabled="creatingExpenses || !installmentsData?.debt?.dueDay || !installmentsData?.debt?.cutOffDay || installmentsData?.debt?.dueDay === 0 || installmentsData?.debt?.cutOffDay === 0"
                         :title="(!installmentsData?.debt?.dueDay || !installmentsData?.debt?.cutOffDay || installmentsData?.debt?.dueDay === 0 || installmentsData?.debt?.cutOffDay === 0) ? 'Configura primero los días de vencimiento y corte' : ''"
@@ -447,73 +442,137 @@
                         <svg v-else class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
                         </svg>
-                        <span class="hidden sm:inline">{{ creatingExpenses ? 'Creando...' : (biweeklyPayments ? 'Crear Gastos Quincenales' : 'Crear Gastos Automáticos') }}</span>
-                        <span class="sm:hidden">{{ creatingExpenses ? 'Creando...' : 'Crear' }}</span>
+                            <span>{{ creatingExpenses ? 'Creando...' : 'Crear Gastos' }}</span>
                       </button>
                     </div>
-                    <div class="text-sm text-gray-500 text-center sm:text-right">
-                      Mostrando {{ installmentsData?.schedule?.length || 0 }} cuotas
+                        <div class="text-xs text-gray-500 text-center sm:text-right">
+                          {{ installmentsData?.schedule?.length || 0 }} cuotas generadas
+                        </div>
+                      </div>
                     </div>
                   </div>
                 </div>
 
-                <!-- Tabla de Cuotas -->
-                <div class="bg-gray-50 px-4 py-3 sm:px-6 flex-1 overflow-hidden">
-                  <div class="overflow-x-auto h-full max-h-64 sm:max-h-96">
+                <!-- Vista de Cuotas -->
+                <div class="bg-gray-50 px-3 py-2.5 sm:px-5 sm:py-3 flex-1 overflow-y-auto min-h-[200px]">
+                  <!-- Vista Cards (Mobile) -->
+                  <div class="sm:hidden space-y-3 pb-4">
+                    <div v-for="(row, index) in installmentsData?.schedule" :key="row.period"
+                         :class="[getInstallmentStatus(index).class, 'rounded-lg border border-gray-200 p-3 transition-colors duration-200']">
+                      <!-- Header de la Card -->
+                      <div class="flex items-center justify-between mb-2">
+                        <div class="flex items-center gap-2">
+                          <span class="text-base font-bold text-gray-900">Cuota {{ row.period }}</span>
+                          <span v-if="getInstallmentStatus(index).status === 'next'" 
+                                class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-primary-100 text-primary-800">
+                            {{ getInstallmentStatus(index).emoji }} {{ getInstallmentStatus(index).label }}
+                          </span>
+                        </div>
+                        <span class="text-lg font-bold text-gray-900">{{ formatCurrency(row.payment) }}</span>
+                      </div>
+
+                      <!-- Fechas -->
+                      <div class="mb-3">
+                        <div v-if="!biweeklyPayments" class="flex items-center gap-2 text-sm">
+                          <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                          </svg>
+                          <span class="font-medium text-gray-700">{{ formatShortDate(calculatedInstallmentDates?.[index]?.date) || row.date }}</span>
+                        </div>
+                        <div v-else class="space-y-1.5">
+                          <div class="flex items-center gap-2 text-xs">
+                            <span class="inline-flex items-center px-2 py-0.5 rounded bg-primary-100 text-primary-700 font-medium">1/2</span>
+                            <span class="font-medium">{{ formatShortDate(getBiweeklyForRow(index)?.display[0]) }}</span>
+                            <span class="ml-auto font-semibold">{{ formatCurrency(getBiweeklyAmountsForRow(index).first) }}</span>
+                          </div>
+                          <div class="flex items-center gap-2 text-xs">
+                            <span class="inline-flex items-center px-2 py-0.5 rounded bg-primary-100 text-primary-700 font-medium">2/2</span>
+                            <span class="font-medium">{{ formatShortDate(getBiweeklyForRow(index)?.display[1]) }}</span>
+                            <span class="ml-auto font-semibold">{{ formatCurrency(getBiweeklyAmountsForRow(index).second) }}</span>
+                          </div>
+                        </div>
+                      </div>
+
+                      <!-- Detalles -->
+                      <div class="grid grid-cols-3 gap-2 text-xs border-t border-gray-100 pt-2">
+                        <div class="text-center">
+                          <p class="text-gray-500 mb-0.5">Interés</p>
+                          <p class="font-semibold text-red-600">{{ formatCurrency(row.interest) }}</p>
+                        </div>
+                        <div class="text-center border-x border-gray-100">
+                          <p class="text-gray-500 mb-0.5">Capital</p>
+                          <p class="font-semibold text-green-600">{{ formatCurrency(row.principal) }}</p>
+                        </div>
+                        <div class="text-center">
+                          <p class="text-gray-500 mb-0.5">Saldo</p>
+                          <p class="font-semibold text-gray-700">{{ formatCurrency(row.remainingBalance) }}</p>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <!-- Vista Tabla (Desktop) -->
+                  <div class="hidden sm:block overflow-x-auto">
                     <table class="min-w-full divide-y divide-gray-200">
-                      <thead class="bg-gray-100 sticky top-0">
+                      <thead class="bg-gray-100 sticky top-0 z-10">
                         <tr>
-                          <th class="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">#</th>
-                          <th class="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Fecha</th>
-                          <th class="px-3 py-2 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Pago</th>
-                          <th class="px-3 py-2 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Interés</th>
-                          <th class="px-3 py-2 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Capital</th>
-                          <th class="px-3 py-2 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Saldo</th>
+                          <th class="px-3 py-2.5 text-left text-xs font-medium text-gray-500 uppercase tracking-wider bg-gray-100">#</th>
+                          <th class="px-3 py-2.5 text-left text-xs font-medium text-gray-500 uppercase tracking-wider bg-gray-100">Fecha</th>
+                          <th class="px-3 py-2.5 text-right text-xs font-medium text-gray-500 uppercase tracking-wider bg-gray-100">Pago</th>
+                          <th class="px-3 py-2.5 text-right text-xs font-medium text-gray-500 uppercase tracking-wider bg-gray-100">Interés</th>
+                          <th class="px-3 py-2.5 text-right text-xs font-medium text-gray-500 uppercase tracking-wider bg-gray-100">Capital</th>
+                          <th class="px-3 py-2.5 text-right text-xs font-medium text-gray-500 uppercase tracking-wider bg-gray-100">Saldo</th>
                         </tr>
                       </thead>
                       <tbody class="bg-white divide-y divide-gray-200">
                         <tr v-for="(row, index) in installmentsData?.schedule" :key="row.period" 
-                            :class="index % 2 === 0 ? 'bg-white' : 'bg-gray-50'">
-                          <td class="px-3 py-2 whitespace-nowrap text-sm font-medium text-gray-900">
-                            {{ row.period }}
+                            :class="[getInstallmentStatus(index).class, 'transition-colors duration-200']">
+                          <td class="px-3 py-3 whitespace-nowrap">
+                            <div class="flex items-center gap-2">
+                              <span class="text-sm font-medium text-gray-900">{{ row.period }}</span>
+                              <span v-if="getInstallmentStatus(index).status === 'next'" 
+                                    class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-primary-100 text-primary-800">
+                                {{ getInstallmentStatus(index).emoji }} {{ getInstallmentStatus(index).label }}
+                              </span>
+                            </div>
                           </td>
-                          <td class="px-3 py-2 whitespace-nowrap text-sm text-gray-500">
+                          <td class="px-3 py-3 text-sm text-gray-700">
                             <div v-if="!biweeklyPayments">
-                              {{ calculatedInstallmentDates?.[index]?.displayDate || row.date }}
+                              <span class="font-medium">{{ formatShortDate(calculatedInstallmentDates?.[index]?.date) || row.date }}</span>
                             </div>
                             <div v-else class="space-y-1">
-                              <div>
-                                <span class="inline-block px-1.5 py-0.5 rounded bg-gray-100 mr-1 text-gray-700">1/2</span>
-                                <span>{{ getBiweeklyForRow(index)?.display[0] }}</span>
+                              <div class="text-xs">
+                                <span class="inline-block px-1.5 py-0.5 rounded bg-primary-100 text-primary-700 mr-1 font-medium">1/2</span>
+                                <span class="font-medium">{{ formatShortDate(getBiweeklyForRow(index)?.display[0]) }}</span>
                               </div>
-                              <div>
-                                <span class="inline-block px-1.5 py-0.5 rounded bg-gray-100 mr-1 text-gray-700">2/2</span>
-                                <span>{{ getBiweeklyForRow(index)?.display[1] }}</span>
+                              <div class="text-xs">
+                                <span class="inline-block px-1.5 py-0.5 rounded bg-primary-100 text-primary-700 mr-1 font-medium">2/2</span>
+                                <span class="font-medium">{{ formatShortDate(getBiweeklyForRow(index)?.display[1]) }}</span>
                               </div>
                             </div>
                           </td>
-                          <td class="px-3 py-2 whitespace-nowrap text-sm text-right font-medium text-gray-900">
+                          <td class="px-3 py-3 whitespace-nowrap text-sm text-right font-medium text-gray-900">
                             <div v-if="!biweeklyPayments">
                               {{ formatCurrency(row.payment) }}
                             </div>
-                            <div v-else class="space-y-1 text-right">
+                            <div v-else class="space-y-1 text-right text-xs">
                               <div>
-                                <span class="inline-block px-1.5 py-0.5 rounded bg-gray-100 mr-1 text-gray-700">1/2</span>
+                                <span class="inline-block px-1.5 py-0.5 rounded bg-primary-100 text-primary-700 mr-1 font-medium">1/2</span>
                                 <span>{{ formatCurrency(getBiweeklyAmountsForRow(index).first) }}</span>
                               </div>
                               <div>
-                                <span class="inline-block px-1.5 py-0.5 rounded bg-gray-100 mr-1 text-gray-700">2/2</span>
+                                <span class="inline-block px-1.5 py-0.5 rounded bg-primary-100 text-primary-700 mr-1 font-medium">2/2</span>
                                 <span>{{ formatCurrency(getBiweeklyAmountsForRow(index).second) }}</span>
                               </div>
                             </div>
                           </td>
-                          <td class="px-3 py-2 whitespace-nowrap text-sm text-right text-red-600">
+                          <td class="px-3 py-3 whitespace-nowrap text-sm text-right text-red-600">
                             {{ formatCurrency(row.interest) }}
                           </td>
-                          <td class="px-3 py-2 whitespace-nowrap text-sm text-right text-green-600">
+                          <td class="px-3 py-3 whitespace-nowrap text-sm text-right text-green-600">
                             {{ formatCurrency(row.principal) }}
                           </td>
-                          <td class="px-3 py-2 whitespace-nowrap text-sm text-right text-gray-500">
+                          <td class="px-3 py-3 whitespace-nowrap text-sm text-right text-gray-500">
                             {{ formatCurrency(row.remainingBalance) }}
                           </td>
                         </tr>
@@ -523,7 +582,7 @@
                 </div>
 
                 <!-- Footer -->
-                <div class="bg-gray-50 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse flex-shrink-0">
+                <div class="bg-gray-50 px-3 py-2.5 sm:px-5 sm:py-3 sm:flex sm:flex-row-reverse flex-shrink-0">
                   <button
                     type="button"
                     class="btn-secondary w-full sm:w-auto sm:ml-3"
@@ -1105,5 +1164,80 @@ const ensureCreditPaymentCategory = async () => {
   }
   
   return creditCategory
+}
+
+/**
+ * Formatea una fecha de manera amigable
+ * @param {string|Date} dateStr - Fecha en formato YYYY-MM-DD, DD/MM/YYYY o Date object
+ * @returns {string} - Fecha formateada (ej: "15 Mar 2025")
+ */
+const formatShortDate = (dateStr) => {
+  if (!dateStr) return ''
+  
+  // Si ya está en formato DD/MM/YYYY, convertir a Date
+  if (typeof dateStr === 'string' && dateStr.includes('/')) {
+    const [day, month, year] = dateStr.split('/')
+    const date = new Date(`${year}-${month}-${day}T00:00:00`)
+    const months = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic']
+    return `${date.getDate()} ${months[date.getMonth()]}`
+  }
+  
+  const date = typeof dateStr === 'string' ? new Date(dateStr + 'T00:00:00') : dateStr
+  const months = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic']
+  return `${date.getDate()} ${months[date.getMonth()]}`
+}
+
+/**
+ * Calcula el índice de la próxima cuota a pagar
+ * @returns {number} - Índice de la próxima cuota (-1 si no hay)
+ */
+const nextInstallmentIndex = computed(() => {
+  if (!calculatedInstallmentDates.value?.length) return 0
+  const today = new Date()
+  today.setHours(0, 0, 0, 0)
+  
+  for (let i = 0; i < calculatedInstallmentDates.value.length; i++) {
+    const installmentDate = calculatedInstallmentDates.value[i]?.date
+    if (installmentDate) {
+      const date = new Date(installmentDate)
+      date.setHours(0, 0, 0, 0)
+      if (date >= today) {
+        return i
+      }
+    }
+  }
+  return -1 // Todas las cuotas ya pasaron
+})
+
+/**
+ * Determina el estado de una cuota
+ * @param {number} index - Índice de la cuota
+ * @returns {Object} - {status: 'next'|'future'|'past', label: string, class: string}
+ */
+const getInstallmentStatus = (index) => {
+  const nextIndex = nextInstallmentIndex.value
+  
+  if (index < nextIndex) {
+    return {
+      status: 'past',
+      label: 'Vencida',
+      emoji: '⏱️',
+      class: 'bg-gray-50'
+    }
+  } else if (index === nextIndex) {
+    return {
+      status: 'next',
+      label: 'PRÓXIMA',
+      emoji: '🔔',
+      class: 'bg-primary-50 border-l-4 border-primary-500'
+    }
+  } else {
+    return {
+      status: 'future',
+      label: 'Pendiente',
+      emoji: '📅',
+      class: 'bg-white'
+    }
+  }
 }
 </script>
