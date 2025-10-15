@@ -4,7 +4,7 @@
       <Notification :item="item" />
     </Notivue>
     <div id="confirm"></div>
-    <nav class="bg-white shadow-sm border-b border-gray-200 sticky top-0 z-40" role="navigation" aria-label="Navegación principal">
+    <nav v-if="userAuthenticated" class="bg-white shadow-sm border-b border-gray-200 sticky top-0 z-40" role="navigation" aria-label="Navegación principal">
       <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div class="flex justify-between h-16">
           <!-- Logo/Título -->
@@ -231,7 +231,11 @@
       </div>
     </nav>
 
-    <main class="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8" role="main" aria-label="Contenido principal">
+    <main 
+      :class="userAuthenticated ? 'max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8' : ''" 
+      role="main" 
+      aria-label="Contenido principal"
+    >
       <div v-motion="{ initial: { opacity: 0, y: 6 }, enter: { opacity: 1, y: 0, transition: { duration: 0.3 } } }">
         <router-view />
       </div>
@@ -241,21 +245,33 @@
 </template>
 
 <script setup>
-import { onMounted, ref } from 'vue'
+import { onMounted, onBeforeUnmount, ref, watch } from 'vue'
 import { Notivue, Notification } from 'notivue'
 import ConfirmDialog from './components/ui/ConfirmDialog.vue'
 import { useExpenseStore } from './stores/expenseStore'
 import { useDebtStore } from './stores/debtStore'
-import { logout, isAuthenticated } from './services/auth.js'
-import { useRouter } from 'vue-router'
+import { logout, isAuthenticated, startTokenRefreshTimer } from './services/auth.js'
+import { useRouter, useRoute } from 'vue-router'
 
 const expenseStore = useExpenseStore()
 const debtStore = useDebtStore()
 const router = useRouter()
+const route = useRoute()
 const appTitle = ref(import.meta.env.VITE_APP_TITLE)
+
+// Estado de autenticación
+const userAuthenticated = ref(isAuthenticated())
 
 // Estado del menú mobile
 const mobileMenuOpen = ref(false)
+
+// Función para detener el auto-refresh
+let stopTokenRefresh = null
+
+// Actualizar estado de autenticación cuando cambia la ruta
+watch(() => route.path, () => {
+  userAuthenticated.value = isAuthenticated()
+})
 
 // Funciones para manejar el menú mobile
 const toggleMobileMenu = () => {
@@ -275,11 +291,22 @@ const handleLogout = () => {
 onMounted(async () => {
   // Solo cargar datos si el usuario está autenticado
   if (isAuthenticated()) {
+    // Iniciar sistema de auto-refresh del token
+    stopTokenRefresh = startTokenRefreshTimer()
+    
+    // Cargar datos de la aplicación
     await expenseStore.loadExpenses()
     await expenseStore.loadCategories()
     await expenseStore.loadBudget()
     await expenseStore.loadFixedExpenses()
     await debtStore.loadDebts()
+  }
+})
+
+onBeforeUnmount(() => {
+  // Limpiar el timer de auto-refresh al desmontar
+  if (stopTokenRefresh) {
+    stopTokenRefresh()
   }
 })
 
